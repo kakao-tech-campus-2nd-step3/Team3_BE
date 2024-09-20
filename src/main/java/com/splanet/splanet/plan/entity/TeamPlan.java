@@ -1,6 +1,7 @@
 package com.splanet.splanet.plan.entity;
 
 import com.splanet.splanet.core.BaseEntity;
+import com.splanet.splanet.team.entity.Team;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -12,9 +13,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class TeamPlan extends BaseEntity {
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "team_id", nullable = false)
-//    private Team team;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "team_id", nullable = false)
+    private Team team;
 
     @Column(length = 100)
     private String title;
