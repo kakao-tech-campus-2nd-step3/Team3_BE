@@ -1,10 +1,12 @@
-package com.splanet.splanet.user;
+package com.splanet.splanet.user.entity;
 
 import com.splanet.splanet.core.BaseEntity;
 import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import lombok.Getter;
 
 @Getter
+@Entity
 public class User extends BaseEntity {
 
   @Column(name = "nickname", nullable = false, length = 100, unique = true)
