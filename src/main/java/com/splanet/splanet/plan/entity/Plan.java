@@ -3,6 +3,8 @@ package com.splanet.splanet.plan.entity;
 import com.splanet.splanet.core.BaseEntity;
 import com.splanet.splanet.user.entity.User;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import java.time.LocalDateTime;
 
@@ -17,9 +19,12 @@ public class Plan extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(length = 100)
+    @NotBlank
+    @Size(max = 100)
+    @Column(length = 100, nullable = false)
     private String title;
 
+    @Size(max = 1000)
     @Column(columnDefinition = "TEXT")
     private String description;
 

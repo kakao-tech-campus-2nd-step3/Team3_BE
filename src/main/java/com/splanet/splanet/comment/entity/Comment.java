@@ -2,6 +2,7 @@ package com.splanet.splanet.comment.entity;
 
 import com.splanet.splanet.core.BaseEntity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -19,6 +20,7 @@ public class Comment extends BaseEntity {
     @Column(name = "writer_id", nullable = false)
     private Long writerId;
 
+    @Size(max = 255)
     @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 }
