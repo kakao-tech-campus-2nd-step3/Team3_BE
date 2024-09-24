@@ -1,4 +1,4 @@
-package com.splanet.splanet.Payment.entity;
+package com.splanet.splanet.payment.entity;
 
 import com.splanet.splanet.core.BaseEntity;
 import jakarta.persistence.*;
@@ -9,9 +9,9 @@ import java.time.LocalDateTime;
 
 @SuperBuilder
 @Getter
-@Setter(value = AccessLevel.PROTECTED)
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PUBLIC)
 @Entity
 public class Payment extends BaseEntity {
 
@@ -27,6 +27,13 @@ public class Payment extends BaseEntity {
 
     @Column(name = "payment_date")
     private LocalDateTime paymentDate;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.status == null) {
+            this.status = Status.PENDING;
+        }
+    }
 
     public enum Status {
         COMPLETED,
