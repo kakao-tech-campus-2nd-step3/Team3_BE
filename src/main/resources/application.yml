@@ -14,3 +14,7 @@ spring:
         format_sql: true
   config:
     import: env.properties
+
+springdoc:
+  swagger-ui:
+    path: /swagger
