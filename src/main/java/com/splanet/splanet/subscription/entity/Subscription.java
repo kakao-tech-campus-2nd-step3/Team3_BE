@@ -1,4 +1,4 @@
-package com.splanet.splanet.Subscription.entity;
+package com.splanet.splanet.subscription.entity;
 
 import com.splanet.splanet.core.BaseEntity;
 import jakarta.persistence.*;
