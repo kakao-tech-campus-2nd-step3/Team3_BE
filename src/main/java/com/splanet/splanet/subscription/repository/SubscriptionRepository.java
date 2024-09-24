@@ -1,6 +1,6 @@
-package com.splanet.splanet.Subscription.repository;
+package com.splanet.splanet.subscription.repository;
 
-import com.splanet.splanet.Subscription.entity.Subscription;
+import com.splanet.splanet.subscription.entity.Subscription;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
