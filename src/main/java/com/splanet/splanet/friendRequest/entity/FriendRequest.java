@@ -7,9 +7,9 @@ import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @Getter
-@Setter(value = AccessLevel.PROTECTED)
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PUBLIC)
 @Entity
 public class FriendRequest extends BaseEntity {
 
