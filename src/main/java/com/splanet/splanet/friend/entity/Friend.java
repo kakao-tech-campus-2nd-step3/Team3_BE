@@ -1,4 +1,4 @@
-package com.splanet.splanet.Comment.entity;
+package com.splanet.splanet.friend.entity;
 
 import com.splanet.splanet.core.BaseEntity;
 import jakarta.persistence.*;
@@ -11,14 +11,11 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-public class Comment extends BaseEntity {
+public class Friend extends BaseEntity {
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "writer_id", nullable = false)
-    private Long writerId;
-
-    @Column(name = "content", columnDefinition = "TEXT")
-    private String content;
+    @Column(name = "friend_id", nullable = false)
+    private Long friendId;
 }

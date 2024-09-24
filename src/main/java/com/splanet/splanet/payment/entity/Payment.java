@@ -1,9 +1,11 @@
-package com.splanet.splanet.FriendRequest.entity;
+package com.splanet.splanet.payment.entity;
 
 import com.splanet.splanet.core.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+
+import java.time.LocalDateTime;
 
 @SuperBuilder
 @Getter
@@ -11,21 +13,24 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-public class FriendRequest extends BaseEntity {
+public class Payment extends BaseEntity {
 
-    @Column(name = "requester_id", nullable = false)
-    private Long requesterId;
-
-    @Column(name = "receiver_id", nullable = false)
-    private Long receiverId;
+    @Column(name = "subscription_id", nullable = false)
+    private Long subscriptionId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private Status status;
 
+    @Column(name = "price")
+    private int price;
+
+    @Column(name = "payment_date")
+    private LocalDateTime paymentDate;
+
     public enum Status {
+        COMPLETED,
         PENDING,
-        ACCEPTED,
-        REJECTED
+        FAILED
     }
 }
