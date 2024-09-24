@@ -1,6 +1,6 @@
-package com.splanet.splanet.Friend.repository;
+package com.splanet.splanet.friend.repository;
 
-import com.splanet.splanet.Friend.entity.Friend;
+import com.splanet.splanet.friend.entity.Friend;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
