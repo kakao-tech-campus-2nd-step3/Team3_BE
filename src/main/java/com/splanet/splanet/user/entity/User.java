@@ -21,6 +21,6 @@ public class User extends BaseEntity {
   private String profileImage;
 
   @Column(name = "is_premium")
-  private Boolean isPremium;
+  private Boolean isPremium = false;
 
 }

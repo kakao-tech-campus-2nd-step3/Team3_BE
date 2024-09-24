@@ -35,6 +35,6 @@ public class TeamPlan extends BaseEntity {
     private LocalDateTime endDate;
 
     @Column(nullable = true)
-    private Boolean accessibility;
+    private Boolean accessibility = true;
 
 }

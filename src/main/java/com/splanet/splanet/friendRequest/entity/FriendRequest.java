@@ -23,6 +23,12 @@ public class FriendRequest extends BaseEntity {
     @Column(name = "status")
     private Status status;
 
+    @PrePersist
+    public void prePersist() {
+        if (this.status == null) {
+            this.status = Status.PENDING;
+        }
+    }
     public enum Status {
         PENDING,
         ACCEPTED,
