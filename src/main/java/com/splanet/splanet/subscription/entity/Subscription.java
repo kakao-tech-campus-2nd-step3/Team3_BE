@@ -29,6 +29,13 @@ public class Subscription extends BaseEntity {
     @Column(name = "end_date")
     private LocalDateTime endDate;
 
+    @PrePersist
+    public void prePersist() {
+        if (this.status == null) {
+            this.status = Status.ACTIVE;
+        }
+    }
+
     public enum Status {
         ACTIVE,
         CANCELED,

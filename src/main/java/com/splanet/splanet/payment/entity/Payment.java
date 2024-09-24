@@ -28,6 +28,13 @@ public class Payment extends BaseEntity {
     @Column(name = "payment_date")
     private LocalDateTime paymentDate;
 
+    @PrePersist
+    public void prePersist() {
+        if (this.status == null) {
+            this.status = Status.PENDING;
+        }
+    }
+
     public enum Status {
         COMPLETED,
         PENDING,
