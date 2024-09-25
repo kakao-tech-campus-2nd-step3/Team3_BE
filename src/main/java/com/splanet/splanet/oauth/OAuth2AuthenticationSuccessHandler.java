@@ -47,7 +47,6 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     }
     String token = jwtTokenProvider.createToken(authentication);
     String redirectUrl = "http://localhost:5173?token=" + token;
-    System.out.println("Redirecting to: " + redirectUrl); // 디버그를 위해 출력
     response.sendRedirect(redirectUrl);
   }
 }

@@ -23,15 +23,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
           throws ServletException, IOException {
-    // JWT 토큰 추출
+
     String token = resolveToken(request);
 
-    // 토큰이 유효한지 확인
     if (token != null && jwtTokenProvider.validateToken(token)) {
-      // 토큰에서 userId 추출
+
       Long userId = jwtTokenProvider.getUserIdFromToken(token);
 
-      // userId 기반으로 인증 설정
       UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(userId, null, null);
       SecurityContextHolder.getContext().setAuthentication(auth);
     }
@@ -39,7 +37,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     filterChain.doFilter(request, response);
   }
 
-  // Request에서 JWT 토큰 추출
   private String resolveToken(HttpServletRequest request) {
     String bearerToken = request.getHeader("Authorization");
     if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
