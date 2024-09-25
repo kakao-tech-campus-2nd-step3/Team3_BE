@@ -3,62 +3,68 @@ package com.splanet.splanet.oauth;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Component;
 import org.springframework.security.core.Authentication;
-
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets; // 변경된 부분
+import java.security.Key;
 import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
+  private Key secretKey;
+  @Value("${jwt.secret}")
+  private String secret;
 
-  private final String SECRET_KEY = "yourSecretKey";
+  @PostConstruct
+  protected void init() {
+    this.secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), SignatureAlgorithm.HS256.getJcaName());
+  }
 
-  // JWT 생성
   public String createToken(Authentication authentication) {
     String nickname = ((OAuth2User) authentication.getPrincipal()).getAttribute("nickname");
     Long userId = ((OAuth2User) authentication.getPrincipal()).getAttribute("id");
 
     Date now = new Date();
-    Date expiryDate = new Date(now.getTime() + 3600000); // 1시간 유효
+    Date expiryDate = new Date(now.getTime() + 3600000);
 
     return Jwts.builder()
             .setSubject(nickname)
             .claim("userId", userId)
             .setIssuedAt(now)
             .setExpiration(expiryDate)
-            .signWith(SignatureAlgorithm.HS512, SECRET_KEY)
+            .signWith(SignatureAlgorithm.HS256, secretKey)
             .compact();
   }
 
-  // JWT에서 userId 추출
   public Long getUserIdFromToken(String token) {
     Claims claims = Jwts.parser()
-            .setSigningKey(SECRET_KEY)
+            .setSigningKey(secretKey)
             .parseClaimsJws(token)
             .getBody();
 
     return claims.get("userId", Long.class);
   }
 
-  // JWT에서 userName(subject) 추출
   public String getUserNameFromToken(String token) {
     Claims claims = Jwts.parser()
-            .setSigningKey(SECRET_KEY)
+            .setSigningKey(secretKey)
             .parseClaimsJws(token)
             .getBody();
 
-    return claims.getSubject();  // subject에서 userName 추출
+    return claims.getSubject();
   }
 
-  // JWT 유효성 검증
-// JWT 유효성 검증
   public boolean validateToken(String token) {
     try {
-      Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token);
+      Jwts.parser()
+              .setSigningKey(secretKey)
+              .parseClaimsJws(token);
       return true;
     } catch (Exception e) {
-      System.out.println("Invalid JWT token: " + e.getMessage());
       return false;
     }
   }
