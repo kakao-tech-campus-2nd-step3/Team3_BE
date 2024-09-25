@@ -1,6 +1,6 @@
-package com.splanet.splanet.Payment.repository;
+package com.splanet.splanet.payment.repository;
 
-import com.splanet.splanet.Payment.entity.Payment;
+import com.splanet.splanet.payment.entity.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

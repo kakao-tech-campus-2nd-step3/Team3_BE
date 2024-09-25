@@ -1,4 +1,4 @@
-package com.splanet.splanet.Friend.entity;
+package com.splanet.splanet.friend.entity;
 
 import com.splanet.splanet.core.BaseEntity;
 import jakarta.persistence.*;
@@ -7,9 +7,9 @@ import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @Getter
-@Setter(value = AccessLevel.PROTECTED)
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PUBLIC)
 @Entity
 public class Friend extends BaseEntity {
 

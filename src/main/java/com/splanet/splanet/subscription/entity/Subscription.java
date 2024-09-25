@@ -1,4 +1,4 @@
-package com.splanet.splanet.Subscription.entity;
+package com.splanet.splanet.subscription.entity;
 
 import com.splanet.splanet.core.BaseEntity;
 import jakarta.persistence.*;
@@ -9,9 +9,9 @@ import java.time.LocalDateTime;
 
 @SuperBuilder
 @Getter
-@Setter(value = AccessLevel.PROTECTED)
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PUBLIC)
 @Entity
 public class Subscription extends BaseEntity {
 
@@ -28,6 +28,13 @@ public class Subscription extends BaseEntity {
 
     @Column(name = "end_date")
     private LocalDateTime endDate;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.status == null) {
+            this.status = Status.ACTIVE;
+        }
+    }
 
     public enum Status {
         ACTIVE,
