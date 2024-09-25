@@ -26,9 +26,9 @@ spring:
 
         registration:
           kakao:
-            client-id: ${CLIENT_ID}  # 여기 있는 값이 Kakao Developers에서 제공하는 ID와 일치하는지 확인
-            client-secret: ${CLIENT_SECRET}  # Kakao Developers에 입력한 secret과 일치하는지 확인
-            redirect-uri: http://localhost:8080/login/oauth2/code/kakao  # redirect-uri가 정확한지 재확인
+            client-id: ${CLIENT_ID}
+            client-secret: ${CLIENT_SECRET}
+            redirect-uri: http://localhost:8080/login/oauth2/code/kakao
             client-authentication-method: client_secret_post
             authorization-grant-type: authorization_code
             scope: profile_nickname, profile_image, account_email
