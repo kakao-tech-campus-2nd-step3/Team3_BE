@@ -15,6 +15,9 @@ import java.time.LocalDateTime;
 @Entity
 public class Subscription extends BaseEntity {
 
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private Status status;
@@ -30,13 +33,15 @@ public class Subscription extends BaseEntity {
     private LocalDateTime endDate;
 
     public enum Status {
-        ACTIVE,
-        CANCELED,
-        EXPIRED
+        ACTIVE, CANCELED, EXPIRED
     }
 
     public enum Type {
-        MONTHLY,
-        YEARLY
+        MONTHLY, YEARLY
+    }
+
+    public void cancel() {
+        this.status = Status.CANCELED;
+        this.endDate = LocalDateTime.now();
     }
 }
