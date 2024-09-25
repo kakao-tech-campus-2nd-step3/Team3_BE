@@ -1,4 +1,4 @@
-package com.splanet.splanet.FriendRequest.entity;
+package com.splanet.splanet.friendRequest.entity;
 
 import com.splanet.splanet.core.BaseEntity;
 import jakarta.persistence.*;
@@ -7,9 +7,9 @@ import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @Getter
-@Setter(value = AccessLevel.PROTECTED)
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PUBLIC)
 @Entity
 public class FriendRequest extends BaseEntity {
 
@@ -23,6 +23,12 @@ public class FriendRequest extends BaseEntity {
     @Column(name = "status")
     private Status status;
 
+    @PrePersist
+    public void prePersist() {
+        if (this.status == null) {
+            this.status = Status.PENDING;
+        }
+    }
     public enum Status {
         PENDING,
         ACCEPTED,
