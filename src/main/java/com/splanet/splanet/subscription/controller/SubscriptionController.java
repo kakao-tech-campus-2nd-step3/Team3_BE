@@ -10,7 +10,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -37,7 +40,7 @@ public class SubscriptionController {
                     description = "활성화된 구독을 찾을 수 없습니다.",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    public ResponseEntity<SubscriptionDto> getSubscription(@RequestParam Long userId) {
+    public ResponseEntity<SubscriptionDto> getSubscription(@AuthenticationPrincipal Long userId) {
         return subscriptionService.getSubscription(userId);
     }
 
@@ -48,7 +51,7 @@ public class SubscriptionController {
             @ApiResponse(responseCode = "400", description = "이미 취소된 구독입니다."),
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자입니다.")
     })
-    public ResponseEntity<String> cancelSubscription(@RequestParam Long userId) {
+    public ResponseEntity<String> cancelSubscription(@AuthenticationPrincipal Long userId) {
         return subscriptionService.cancelSubscription(userId);
     }
 
@@ -58,9 +61,8 @@ public class SubscriptionController {
             @ApiResponse(responseCode = "200", description = "구독이 성공적으로 구매되었습니다.")
     })
     public ResponseEntity<SubscriptionDto> subscribe(
-            @RequestParam Long userId,
+            @AuthenticationPrincipal Long userId,
             @RequestParam Subscription.Type type) {
-
         return subscriptionService.subscribe(userId, type);
     }
 }
