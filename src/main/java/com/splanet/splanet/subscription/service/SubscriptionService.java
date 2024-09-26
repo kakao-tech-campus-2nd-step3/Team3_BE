@@ -17,13 +17,13 @@ public class SubscriptionService {
         this.subscriptionDao = subscriptionDao;
     }
 
-    // 구독 조회
     public ResponseEntity<SubscriptionDto> getSubscription(Long userId) {
         if (userId == null) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
-        Subscription subscription = subscriptionDao.findActiveSubscription(userId)
+        // 가장 최근의 ACTIVE 구독 조회
+        Subscription subscription = subscriptionDao.findLatestActiveSubscription(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SUBSCRIPSTION_NOT_FOUND));
 
         SubscriptionDto responseDto = SubscriptionDto.fromSubscription(subscription);
@@ -38,7 +38,7 @@ public class SubscriptionService {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
-        Subscription subscription = subscriptionDao.findActiveSubscription(userId)
+        Subscription subscription = subscriptionDao.findLatestActiveSubscription(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SUBSCRIPSTION_NOT_FOUND));
 
         if (subscription.getStatus() == Subscription.Status.CANCELED) {
