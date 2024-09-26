@@ -44,7 +44,7 @@ class SubscriptionControllerTest {
     @Test
     void 구독실패() {
         Long userId = 1L;
-        when(subscriptionService.getSubscription(userId)).thenThrow(new BusinessException(ErrorCode.NOT_FOUND));
+        when(subscriptionService.getSubscription(userId)).thenThrow(new BusinessException(ErrorCode.SUBSCRIPSTION_NOT_FOUND));
 
         BusinessException exception = assertThrows(BusinessException.class, () -> subscriptionController.getSubscription(userId));
         assertEquals("활성화된 구독을 찾을 수 없습니다.", exception.getMessage());

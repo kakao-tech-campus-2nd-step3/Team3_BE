@@ -24,7 +24,7 @@ public class SubscriptionService {
         }
 
         Subscription subscription = subscriptionDao.findActiveSubscription(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.SUBSCRIPSTION_NOT_FOUND));
 
         SubscriptionDto responseDto = SubscriptionDto.fromSubscription(subscription);
         return ResponseEntity.ok()
@@ -39,7 +39,7 @@ public class SubscriptionService {
         }
 
         Subscription subscription = subscriptionDao.findActiveSubscription(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.SUBSCRIPSTION_NOT_FOUND));
 
         if (subscription.getStatus() == Subscription.Status.CANCELED) {
             throw new BusinessException(ErrorCode.ALREADY_CANCELED);

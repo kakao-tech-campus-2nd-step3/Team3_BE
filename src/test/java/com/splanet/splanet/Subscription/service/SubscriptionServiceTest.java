@@ -68,7 +68,7 @@ class SubscriptionServiceTest {
         when(subscriptionDao.findActiveSubscription(userId)).thenReturn(Optional.empty());
 
         BusinessException exception = assertThrows(BusinessException.class, () -> subscriptionService.getSubscription(userId));
-        assertEquals(ErrorCode.NOT_FOUND, exception.getErrorCode());
+        assertEquals(ErrorCode.SUBSCRIPSTION_NOT_FOUND, exception.getErrorCode());
     }
 
     // 구독 취소 성공 케이스
@@ -108,7 +108,7 @@ class SubscriptionServiceTest {
         when(subscriptionDao.findActiveSubscription(userId)).thenReturn(Optional.empty());
 
         BusinessException exception = assertThrows(BusinessException.class, () -> subscriptionService.cancelSubscription(userId));
-        assertEquals(ErrorCode.NOT_FOUND, exception.getErrorCode());
+        assertEquals(ErrorCode.SUBSCRIPSTION_NOT_FOUND, exception.getErrorCode());
     }
 
     // 구독 취소 실패: 이미 취소된 구독
