@@ -1,35 +1,36 @@
 package com.splanet.splanet.oauth;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import com.splanet.splanet.core.exception.BusinessException;
+import com.splanet.splanet.core.exception.ErrorCode;
+import io.jsonwebtoken.*;
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Component;
-import org.springframework.security.core.Authentication;
+
 import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets; // 변경된 부분
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
+
   private Key secretKey;
+
   @Value("${jwt.secret}")
   private String secret;
+
+  private static final long TOKEN_VALIDITY_IN_MILLISECONDS = 3600000; // 1시간
 
   @PostConstruct
   protected void init() {
     this.secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), SignatureAlgorithm.HS256.getJcaName());
   }
 
-  public String createToken(Authentication authentication) {
-    String nickname = ((OAuth2User) authentication.getPrincipal()).getAttribute("nickname");
-    Long userId = ((OAuth2User) authentication.getPrincipal()).getAttribute("id");
-
+  public String createToken(Long userId, String nickname) {
     Date now = new Date();
-    Date expiryDate = new Date(now.getTime() + 3600000);
+    Date expiryDate = new Date(now.getTime() + TOKEN_VALIDITY_IN_MILLISECONDS);
 
     return Jwts.builder()
             .setSubject(nickname)
@@ -40,32 +41,54 @@ public class JwtTokenProvider {
             .compact();
   }
 
-  public Long getUserIdFromToken(String token) {
-    Claims claims = Jwts.parser()
-            .setSigningKey(secretKey)
-            .parseClaimsJws(token)
-            .getBody();
+  public String extractToken(HttpServletRequest request) {
+    String header = request.getHeader("Authorization");
+    if (header == null || !header.startsWith("Bearer ")) {
+      throw new BusinessException(ErrorCode.UNAUTHORIZED);
+    }
+    return header.substring(7);
+  }
 
-    return claims.get("userId", Long.class);
+  public Long getUserIdFromToken(String token) {
+    return getClaimsFromToken(token).get("userId", Long.class);
   }
 
   public String getUserNameFromToken(String token) {
-    Claims claims = Jwts.parser()
-            .setSigningKey(secretKey)
-            .parseClaimsJws(token)
-            .getBody();
-
-    return claims.getSubject();
+    return getClaimsFromToken(token).getSubject();
   }
 
   public boolean validateToken(String token) {
     try {
-      Jwts.parser()
-              .setSigningKey(secretKey)
-              .parseClaimsJws(token);
+      Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
       return true;
-    } catch (Exception e) {
+    } catch (JwtException | IllegalArgumentException e) {
       return false;
+    }
+  }
+
+  private Claims getClaimsFromToken(String token) {
+    try {
+      return Jwts.parser()
+              .setSigningKey(secretKey)
+              .parseClaimsJws(token)
+              .getBody();
+    } catch (JwtException e) {
+      handleJwtException(e);
+      return null; // 이 라인은 실제로 도달하지 않습니다. 예외 발생 시 이 메서드에서 종료됩니다.
+    }
+  }
+
+  private void handleJwtException(JwtException e) {
+    if (e instanceof ExpiredJwtException) {
+      throw new BusinessException(ErrorCode.UNAUTHORIZED, "만료된 토큰입니다.");
+    } else if (e instanceof UnsupportedJwtException) {
+      throw new BusinessException(ErrorCode.UNAUTHORIZED, "지원되지 않는 토큰입니다.");
+    } else if (e instanceof MalformedJwtException) {
+      throw new BusinessException(ErrorCode.UNAUTHORIZED, "유효하지 않은 토큰입니다.");
+    } else if (e instanceof SignatureException) {
+      throw new BusinessException(ErrorCode.UNAUTHORIZED, "서명 검증에 실패했습니다.");
+    } else {
+      throw new BusinessException(ErrorCode.UNAUTHORIZED, "토큰이 비어 있거나 유효하지 않습니다.");
     }
   }
 }
