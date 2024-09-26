@@ -2,11 +2,11 @@ package com.splanet.splanet.subscription.dto;
 
 import com.splanet.splanet.subscription.entity.Subscription;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 
-@Data
+@Getter
 @Builder
 public class SubscriptionDto {
     private Long id;
@@ -23,6 +23,7 @@ public class SubscriptionDto {
     public static SubscriptionDto fromSubscription(Subscription subscription) {
         return SubscriptionDto.builder()
                 .id(subscription.getId())
+                .userId(subscription.getUserId())
                 .subscriptionType(subscription.getType().name().toLowerCase())
                 .startDate(subscription.getStartDate())
                 .endDate(subscription.getEndDate())
