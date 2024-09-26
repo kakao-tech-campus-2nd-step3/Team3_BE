@@ -1,9 +1,11 @@
 package com.splanet.splanet.Subscription.service;
 
 import com.splanet.splanet.Subscription.dao.SubscriptionDao;
+import com.splanet.splanet.Subscription.dto.SubscriptionDto;
 import com.splanet.splanet.Subscription.entity.Subscription;
+import com.splanet.splanet.core.exception.BusinessException;
+import com.splanet.splanet.core.exception.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -11,14 +13,13 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDateTime;
-import java.util.Map;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
-public class SubscriptionServiceTest {
+class SubscriptionServiceTest {
 
     @Mock
     private SubscriptionDao subscriptionDao;
@@ -27,98 +28,113 @@ public class SubscriptionServiceTest {
     private SubscriptionService subscriptionService;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
+    // 구독 조회 성공 케이스
     @Test
-    @DisplayName("구독 조회 성공")
-    public void testGetSubscription_Success() {
-        // Given
+    void 구독성공() {
         Long userId = 1L;
         Subscription subscription = Subscription.builder()
-                .id(1L)
                 .userId(userId)
                 .type(Subscription.Type.MONTHLY)
+                .status(Subscription.Status.ACTIVE)
                 .startDate(LocalDateTime.now())
                 .endDate(LocalDateTime.now().plusMonths(1))
-                .status(Subscription.Status.ACTIVE)
                 .build();
 
         when(subscriptionDao.findActiveSubscription(userId)).thenReturn(Optional.of(subscription));
 
-        // When
-        ResponseEntity<Map<String, Object>> response = subscriptionService.getSubscription(userId);
+        ResponseEntity<SubscriptionDto> response = subscriptionService.getSubscription(userId);
 
-        // Then
         assertEquals(200, response.getStatusCodeValue());
-        Map<String, Object> body = response.getBody();
-        assertNotNull(body);
-        assertEquals("monthly", body.get("subscription_type"));
-        assertNotNull(body.get("start_date"));
-        assertNotNull(body.get("end_date"));
-        assertEquals("active", body.get("status"));
-
-        verify(subscriptionDao).findActiveSubscription(userId);
+        assertEquals("구독 정보가 성공적으로 조회되었습니다.", response.getHeaders().getFirst("Message"));
     }
 
+    // 구독 조회 실패: 인증되지 않은 사용자
     @Test
-    @DisplayName("구독 조회 실패")
-    public void testGetSubscription_NotFound() {
-        // Given
+    void 구독실패인증되지않음() {
+        Long userId = null;
+
+        BusinessException exception = assertThrows(BusinessException.class, () -> subscriptionService.getSubscription(userId));
+        assertEquals(ErrorCode.UNAUTHORIZED, exception.getErrorCode());
+    }
+
+    // 구독 조회 실패: 활성화된 구독이 없음
+    @Test
+    void 구독실패구독없음() {
         Long userId = 1L;
         when(subscriptionDao.findActiveSubscription(userId)).thenReturn(Optional.empty());
 
-        // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            subscriptionService.getSubscription(userId);
-        });
-        assertEquals("구독 정보를 찾을 수 없습니다.", exception.getMessage());
+        BusinessException exception = assertThrows(BusinessException.class, () -> subscriptionService.getSubscription(userId));
+        assertEquals(ErrorCode.NOT_FOUND, exception.getErrorCode());
     }
 
+    // 구독 취소 성공 케이스
     @Test
-    @DisplayName("구독 취소 성공")
-    public void testCancelSubscription_Success() {
-        // Given
+    void 구독취소성공() {
         Long userId = 1L;
         Subscription subscription = Subscription.builder()
-                .id(1L)
                 .userId(userId)
+                .type(Subscription.Type.MONTHLY)
                 .status(Subscription.Status.ACTIVE)
+                .startDate(LocalDateTime.now())
+                .endDate(LocalDateTime.now().plusMonths(1))
                 .build();
 
         when(subscriptionDao.findActiveSubscription(userId)).thenReturn(Optional.of(subscription));
 
-        // When
-        subscriptionService.cancelSubscription(userId);
+        ResponseEntity<String> response = subscriptionService.cancelSubscription(userId);
 
-        // Then
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals("구독이 성공적으로 취소되었습니다.", response.getBody());
         verify(subscriptionDao).cancelSubscription(subscription);
     }
 
+    // 구독 취소 실패: 인증되지 않은 사용자
     @Test
-    @DisplayName("구독 취소 실패")
-    public void testCancelSubscription_NotFound() {
-        // Given
+    void 구독취소실패인증되지않음() {
+        Long userId = null;
+
+        BusinessException exception = assertThrows(BusinessException.class, () -> subscriptionService.cancelSubscription(userId));
+        assertEquals(ErrorCode.UNAUTHORIZED, exception.getErrorCode());
+    }
+
+    // 구독 취소 실패: 활성화된 구독이 없음
+    @Test
+    void 구독취소실패구독없음() {
         Long userId = 1L;
         when(subscriptionDao.findActiveSubscription(userId)).thenReturn(Optional.empty());
 
-        // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            subscriptionService.cancelSubscription(userId);
-        });
-        assertEquals("구독 정보를 찾을 수 없습니다.", exception.getMessage());
+        BusinessException exception = assertThrows(BusinessException.class, () -> subscriptionService.cancelSubscription(userId));
+        assertEquals(ErrorCode.NOT_FOUND, exception.getErrorCode());
     }
 
+    // 구독 취소 실패: 이미 취소된 구독
     @Test
-    @DisplayName("구독하기 성공")
-    public void testSubscribe_Success() {
-        // Given
+    void 구독취소실패이미취소됨() {
+        Long userId = 1L;
+        Subscription subscription = Subscription.builder()
+                .userId(userId)
+                .type(Subscription.Type.MONTHLY)
+                .status(Subscription.Status.CANCELED) // 이미 취소된 상태
+                .startDate(LocalDateTime.now())
+                .endDate(LocalDateTime.now().plusMonths(1))
+                .build();
+
+        when(subscriptionDao.findActiveSubscription(userId)).thenReturn(Optional.of(subscription));
+
+        BusinessException exception = assertThrows(BusinessException.class, () -> subscriptionService.cancelSubscription(userId));
+        assertEquals(ErrorCode.ALREADY_CANCELED, exception.getErrorCode());
+    }
+
+    // 구독하기 성공 케이스
+    @Test
+    void 구독하기성공() {
         Long userId = 1L;
         Subscription.Type type = Subscription.Type.MONTHLY;
-
         Subscription subscription = Subscription.builder()
-                .id(1L)
                 .userId(userId)
                 .type(type)
                 .status(Subscription.Status.ACTIVE)
@@ -128,16 +144,9 @@ public class SubscriptionServiceTest {
 
         when(subscriptionDao.saveSubscription(any(Subscription.class))).thenReturn(subscription);
 
-        // When
-        Map<String, Object> result = subscriptionService.subscribe(userId, type);
+        ResponseEntity<SubscriptionDto> response = subscriptionService.subscribe(userId, type);
 
-        // Then
-        assertEquals("구독이 성공적으로 구매되었습니다.", result.get("message"));
-        Map<String, Object> subscriptionInfo = (Map<String, Object>) result.get("subscription");
-        assertEquals(1L, subscriptionInfo.get("id"));
-        assertNotNull(subscriptionInfo.get("start_date"));
-        assertNotNull(subscriptionInfo.get("end_date"));
-
-        verify(subscriptionDao).saveSubscription(any(Subscription.class));
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals("구독이 성공적으로 구매되었습니다.", response.getBody().getMessage());
     }
 }
