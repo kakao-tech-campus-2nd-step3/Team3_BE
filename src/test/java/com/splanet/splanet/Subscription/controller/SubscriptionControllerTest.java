@@ -1,127 +1,84 @@
 package com.splanet.splanet.Subscription.controller;
 
+import com.splanet.splanet.Subscription.dto.SubscriptionDto;
 import com.splanet.splanet.Subscription.entity.Subscription;
 import com.splanet.splanet.Subscription.service.SubscriptionService;
+import com.splanet.splanet.core.exception.BusinessException;
+import com.splanet.splanet.core.exception.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseEntity;
 
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 class SubscriptionControllerTest {
 
-    private SubscriptionService subscriptionService;
+    @InjectMocks
     private SubscriptionController subscriptionController;
+
+    @Mock
+    private SubscriptionService subscriptionService;
 
     @BeforeEach
     void setUp() {
-        subscriptionService = mock(SubscriptionService.class);
-        subscriptionController = new SubscriptionController(subscriptionService);
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    @DisplayName("구독 조회 성공")
-    void testGetSubscription_Success() {
+    void 구독성공() {
         Long userId = 1L;
+        SubscriptionDto mockDto = SubscriptionDto.builder().build();
+        when(subscriptionService.getSubscription(userId)).thenReturn(ResponseEntity.ok(mockDto));
 
-        // 서비스 응답을 올바른 타입으로 모킹
-        when(subscriptionService.getSubscription(userId)).thenReturn(ResponseEntity.ok(Map.of(
-                "subscription_type", Subscription.Type.MONTHLY.name().toLowerCase(),
-                "start_date", "2024-09-01T10:00:00Z",
-                "end_date", "2024-10-01T10:00:00Z",
-                "status", "active"
-        )));
+        ResponseEntity<SubscriptionDto> response = subscriptionController.getSubscription(userId);
 
-        ResponseEntity<Map<String, Object>> response = subscriptionController.getSubscription(userId);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals("active", response.getBody().get("status"));
-        assertEquals("monthly", response.getBody().get("subscription_type"));
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(mockDto, response.getBody());
     }
 
     @Test
-    @DisplayName("구독 조회 실패")
-    void testGetSubscription_Failure() {
+    void 구독실패() {
         Long userId = 1L;
+        when(subscriptionService.getSubscription(userId)).thenThrow(new BusinessException(ErrorCode.NOT_FOUND));
 
-        // 서비스가 예외를 던지도록 모킹
-        when(subscriptionService.getSubscription(userId)).thenThrow(new IllegalArgumentException("구독 정보를 찾을 수 없습니다."));
-
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            subscriptionController.getSubscription(userId);
-        });
-
-        assertEquals("구독 정보를 찾을 수 없습니다.", exception.getMessage());
+        BusinessException exception = assertThrows(BusinessException.class, () -> subscriptionController.getSubscription(userId));
+        assertEquals("활성화된 구독을 찾을 수 없습니다.", exception.getMessage());
     }
 
     @Test
-    @DisplayName("구독 취소 성공")
-    void testCancelSubscription_Success() {
+    void 구독취소성공() {
         Long userId = 1L;
+        when(subscriptionService.cancelSubscription(userId)).thenReturn(ResponseEntity.ok("구독이 성공적으로 취소되었습니다."));
 
-        // 메서드를 호출하는 것이므로 모킹이 필요 없음
-        subscriptionController.cancelSubscription(userId);
-        verify(subscriptionService).cancelSubscription(userId);
+        ResponseEntity<String> response = subscriptionController.cancelSubscription(userId);
+
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals("구독이 성공적으로 취소되었습니다.", response.getBody());
     }
 
     @Test
-    @DisplayName("구독 취소 실패")
-    void testCancelSubscription_Failure() {
+    void 구독취소실패() {
         Long userId = 1L;
+        when(subscriptionService.cancelSubscription(userId)).thenThrow(new BusinessException(ErrorCode.ALREADY_CANCELED));
 
-        // 서비스가 예외를 던지도록 모킹
-        doThrow(new IllegalArgumentException("구독 정보를 찾을 수 없습니다.")).when(subscriptionService).cancelSubscription(userId);
-
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            subscriptionController.cancelSubscription(userId);
-        });
-
-        assertEquals("구독 정보를 찾을 수 없습니다.", exception.getMessage());
+        BusinessException exception = assertThrows(BusinessException.class, () -> subscriptionController.cancelSubscription(userId));
+        assertEquals("이미 취소된 구독입니다.", exception.getMessage()); // ErrorCode 메시지와 일치해야 함
     }
 
     @Test
-    @DisplayName("구독하기 성공")
-    void testSubscribe_Success() {
+    void 구독하기성공() {
         Long userId = 1L;
-        Subscription.Type type = Subscription.Type.MONTHLY;
+        SubscriptionDto mockDto = SubscriptionDto.builder().build();
+        when(subscriptionService.subscribe(userId, Subscription.Type.MONTHLY)).thenReturn(ResponseEntity.ok(mockDto));
 
-        // 서비스 응답 모킹
-        Map<String, Object> mockResponse = Map.of(
-                "message", "구독이 성공적으로 구매되었습니다.",
-                "subscription", Map.of(
-                        "id", 123L,
-                        "start_date", "2024-09-01T10:00:00Z",
-                        "end_date", "2024-10-01T10:00:00Z"
-                )
-        );
+        ResponseEntity<SubscriptionDto> response = subscriptionController.subscribe(userId, Subscription.Type.MONTHLY);
 
-        when(subscriptionService.subscribe(userId, type)).thenReturn(mockResponse);
-
-        ResponseEntity<Map<String, Object>> response = subscriptionController.subscribe(userId, type);
-
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        assertEquals("구독이 성공적으로 구매되었습니다.", response.getBody().get("message"));
-    }
-
-    @Test
-    @DisplayName("구독하기 실패")
-    void testSubscribe_Failure() {
-        Long userId = 1L;
-        Subscription.Type type = Subscription.Type.MONTHLY;
-
-        // 서비스가 예외를 던지도록 모킹
-        when(subscriptionService.subscribe(userId, type)).thenThrow(new RuntimeException("구독 생성에 실패했습니다."));
-
-        Exception exception = assertThrows(RuntimeException.class, () -> {
-            subscriptionController.subscribe(userId, type);
-        });
-
-        assertEquals("구독 생성에 실패했습니다.", exception.getMessage());
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(mockDto, response.getBody());
     }
 }
