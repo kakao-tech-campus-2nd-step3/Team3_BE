@@ -1,11 +1,12 @@
 package com.splanet.splanet.Subscription.service;
 
 import com.splanet.splanet.Subscription.dao.SubscriptionDao;
+import com.splanet.splanet.Subscription.dto.SubscriptionDto;
 import com.splanet.splanet.Subscription.entity.Subscription;
+import com.splanet.splanet.core.exception.BusinessException;
+import com.splanet.splanet.core.exception.ErrorCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
-import java.util.Map;
 
 @Service
 public class SubscriptionService {
@@ -17,29 +18,39 @@ public class SubscriptionService {
     }
 
     // 구독 조회
-    public ResponseEntity<Map<String, Object>> getSubscription(Long userId) {
+    public ResponseEntity<SubscriptionDto> getSubscription(Long userId) {
+        if (userId == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+
         Subscription subscription = subscriptionDao.findActiveSubscription(userId)
-                .orElseThrow(() -> new IllegalArgumentException("구독 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
-        Map<String, Object> response = Map.of(
-                "subscription_type", subscription.getType().name().toLowerCase(),
-                "start_date", subscription.getStartDate(),
-                "end_date", subscription.getEndDate(),
-                "status", subscription.getStatus().name().toLowerCase()
-        );
-
-        return ResponseEntity.ok(response);
+        SubscriptionDto responseDto = SubscriptionDto.fromSubscription(subscription);
+        return ResponseEntity.ok()
+                .header("Message", "구독 정보가 성공적으로 조회되었습니다.")
+                .body(responseDto);
     }
 
     // 구독 취소
-    public void cancelSubscription(Long userId) {
+    public ResponseEntity<String> cancelSubscription(Long userId) {
+        if (userId == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+
         Subscription subscription = subscriptionDao.findActiveSubscription(userId)
-                .orElseThrow(() -> new IllegalArgumentException("구독 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        if (subscription.getStatus() == Subscription.Status.CANCELED) {
+            throw new BusinessException(ErrorCode.ALREADY_CANCELED);
+        }
+
         subscriptionDao.cancelSubscription(subscription);
+        return ResponseEntity.ok("구독이 성공적으로 취소되었습니다.");
     }
 
     // 구독하기
-    public Map<String, Object> subscribe(Long userId, Subscription.Type type) {
+    public ResponseEntity<SubscriptionDto> subscribe(Long userId, Subscription.Type type) {
         // 구독 객체 생성
         Subscription subscription = Subscription.builder()
                 .userId(userId)
@@ -49,17 +60,11 @@ public class SubscriptionService {
                 .endDate(java.time.LocalDateTime.now().plusMonths(type == Subscription.Type.MONTHLY ? 1 : 12))
                 .build();
 
-        // 구독 저장
         Subscription savedSubscription = subscriptionDao.saveSubscription(subscription);
 
-        // 응답 맵 생성
-        return Map.of(
-                "message", "구독이 성공적으로 구매되었습니다.",
-                "subscription", Map.of(
-                        "id", savedSubscription.getId(),
-                        "start_date", savedSubscription.getStartDate(),
-                        "end_date", savedSubscription.getEndDate()
-                )
-        );
+        SubscriptionDto responseDto = SubscriptionDto.withMessageAndDetails(
+                "구독이 성공적으로 구매되었습니다.", savedSubscription);
+
+        return ResponseEntity.ok(responseDto);
     }
 }
