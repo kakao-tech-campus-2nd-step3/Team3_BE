@@ -16,8 +16,8 @@ public class SubscriptionDao {
     }
 
     // 구독 조회
-    public Optional<Subscription> findActiveSubscription(Long userId) {
-        return subscriptionRepository.findByUserIdAndStatus(userId, Subscription.Status.ACTIVE);
+    public Optional<Subscription> findLatestActiveSubscription(Long userId) {
+        return subscriptionRepository.findTopByUserIdAndStatusOrderByStartDateDesc(userId, Subscription.Status.ACTIVE);
     }
 
     // 구독 취소
