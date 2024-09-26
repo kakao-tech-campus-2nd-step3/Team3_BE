@@ -32,7 +32,6 @@ class SubscriptionServiceTest {
         MockitoAnnotations.openMocks(this);
     }
 
-    // 구독 조회 성공 케이스
     @Test
     void 구독성공() {
         Long userId = 1L;
@@ -52,7 +51,6 @@ class SubscriptionServiceTest {
         assertEquals("구독 정보가 성공적으로 조회되었습니다.", response.getHeaders().getFirst("Message"));
     }
 
-    // 구독 조회 실패: 인증되지 않은 사용자
     @Test
     void 구독실패인증되지않음() {
         Long userId = null;
@@ -61,7 +59,6 @@ class SubscriptionServiceTest {
         assertEquals(ErrorCode.UNAUTHORIZED, exception.getErrorCode());
     }
 
-    // 구독 조회 실패: 활성화된 구독이 없음
     @Test
     void 구독실패구독없음() {
         Long userId = 1L;
@@ -71,7 +68,6 @@ class SubscriptionServiceTest {
         assertEquals(ErrorCode.SUBSCRIPSTION_NOT_FOUND, exception.getErrorCode());
     }
 
-    // 구독 취소 성공 케이스
     @Test
     void 구독취소성공() {
         Long userId = 1L;
@@ -92,7 +88,6 @@ class SubscriptionServiceTest {
         verify(subscriptionDao).cancelSubscription(subscription);
     }
 
-    // 구독 취소 실패: 인증되지 않은 사용자
     @Test
     void 구독취소실패인증되지않음() {
         Long userId = null;
@@ -101,7 +96,6 @@ class SubscriptionServiceTest {
         assertEquals(ErrorCode.UNAUTHORIZED, exception.getErrorCode());
     }
 
-    // 구독 취소 실패: 활성화된 구독이 없음
     @Test
     void 구독취소실패구독없음() {
         Long userId = 1L;
@@ -111,7 +105,6 @@ class SubscriptionServiceTest {
         assertEquals(ErrorCode.SUBSCRIPSTION_NOT_FOUND, exception.getErrorCode());
     }
 
-    // 구독 취소 실패: 이미 취소된 구독
     @Test
     void 구독취소실패이미취소됨() {
         Long userId = 1L;
@@ -129,11 +122,11 @@ class SubscriptionServiceTest {
         assertEquals(ErrorCode.ALREADY_CANCELED, exception.getErrorCode());
     }
 
-    // 구독하기 성공 케이스
     @Test
     void 구독하기성공() {
         Long userId = 1L;
         Subscription.Type type = Subscription.Type.MONTHLY;
+
         Subscription subscription = Subscription.builder()
                 .userId(userId)
                 .type(type)
@@ -147,6 +140,6 @@ class SubscriptionServiceTest {
         ResponseEntity<SubscriptionDto> response = subscriptionService.subscribe(userId, type);
 
         assertEquals(200, response.getStatusCodeValue());
-        assertEquals("구독이 성공적으로 구매되었습니다.", response.getBody().getMessage());
+        assertEquals("구독이 성공적으로 구매되었습니다.", response.getHeaders().getFirst("Message")); // 헤더에서 메시지 확인
     }
 }
