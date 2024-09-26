@@ -22,19 +22,14 @@ public class SubscriptionDto {
 
     public static SubscriptionDto fromSubscription(Subscription subscription) {
         return SubscriptionDto.builder()
+                .id(subscription.getId())
                 .subscriptionType(subscription.getType().name().toLowerCase())
                 .startDate(subscription.getStartDate())
                 .endDate(subscription.getEndDate())
                 .status(subscription.getStatus().name().toLowerCase())
-                .build();
-    }
-
-    public static SubscriptionDto withMessageAndDetails(String message, Subscription subscription) {
-        return SubscriptionDto.builder()
-                .message(message)
-                .id(subscription.getId())
-                .startDate(subscription.getStartDate())
-                .endDate(subscription.getEndDate())
+                .createdAt(subscription.getCreatedAt())
+                .updatedAt(subscription.getUpdatedAt())
+                .deleted(subscription.getDeleted())
                 .build();
     }
 }

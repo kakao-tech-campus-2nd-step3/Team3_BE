@@ -62,9 +62,10 @@ public class SubscriptionService {
 
         Subscription savedSubscription = subscriptionDao.saveSubscription(subscription);
 
-        SubscriptionDto responseDto = SubscriptionDto.withMessageAndDetails(
-                "구독이 성공적으로 구매되었습니다.", savedSubscription);
+        SubscriptionDto responseDto = SubscriptionDto.fromSubscription(savedSubscription);
 
-        return ResponseEntity.ok(responseDto);
+        return ResponseEntity.ok()
+                .header("Message", "구독이 성공적으로 구매되었습니다.")
+                .body(responseDto);
     }
 }

@@ -3,7 +3,10 @@ package com.splanet.splanet.Subscription.controller;
 import com.splanet.splanet.Subscription.dto.SubscriptionDto;
 import com.splanet.splanet.Subscription.entity.Subscription;
 import com.splanet.splanet.Subscription.service.SubscriptionService;
+import com.splanet.splanet.core.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,9 +27,15 @@ public class SubscriptionController {
     @GetMapping
     @Operation(summary = "구독 조회", description = "사용자의 구독 정보를 조회합니다.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "구독 정보가 성공적으로 조회되었습니다."),
-            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자입니다."),
-            @ApiResponse(responseCode = "404", description = "활성화된 구독을 찾을 수 없습니다.")
+            @ApiResponse(responseCode = "200",
+                    description = "구독 정보가 성공적으로 조회되었습니다.",
+                    content = @Content(schema = @Schema(implementation = SubscriptionDto.class))),
+            @ApiResponse(responseCode = "401",
+                    description = "인증되지 않은 사용자입니다.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404",
+                    description = "활성화된 구독을 찾을 수 없습니다.",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public ResponseEntity<SubscriptionDto> getSubscription(@RequestParam Long userId) {
         return subscriptionService.getSubscription(userId);
