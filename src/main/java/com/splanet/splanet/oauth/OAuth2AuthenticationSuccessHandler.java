@@ -35,17 +35,22 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
     String nickname = (String) properties.get("nickname");
     String profileImage = (String) properties.get("profile_image_url");
-    String email = (String) kakaoAccount.get("email");
 
     Optional<User> existingUser = userRepository.findByNickname(nickname);
+    User user;
+
     if (existingUser.isEmpty()) {
-      User newUser = User.builder()
+      user = User.builder()
               .nickname(nickname)
               .profileImage(profileImage)
               .build();
-      userRepository.save(newUser);
+      userRepository.save(user);
+    } else {
+      user = existingUser.get();
     }
-    String token = jwtTokenProvider.createToken(authentication);
+
+    String token = jwtTokenProvider.createToken(user.getId(), user.getNickname());
+
     String redirectUrl = "http://localhost:5173?token=" + token;
     response.sendRedirect(redirectUrl);
   }

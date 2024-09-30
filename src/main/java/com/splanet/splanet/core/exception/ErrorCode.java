@@ -9,8 +9,8 @@ public enum ErrorCode {
     ALREADY_CANCELED("이미 취소된 구독입니다.", HttpStatus.BAD_REQUEST),
     SUBSCRIPSTION_NOT_FOUND("활성화된 구독을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     TEAM_NOT_FOUND("팀을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
-    USER_NOT_FOUND("유저를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
-    TEAM_MEMBER_NOT_FOUND("해당 유저는 팀에 속해 있지 않습니다.", HttpStatus.NOT_FOUND);
+    TEAM_MEMBER_NOT_FOUND("해당 유저는 팀에 속해 있지 않습니다.", HttpStatus.NOT_FOUND),
+    USER_NOT_FOUND("유저가 존재하지 않습니다.", HttpStatus.NOT_FOUND);
 
 
   private final String message;

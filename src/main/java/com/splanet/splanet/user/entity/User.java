@@ -15,7 +15,7 @@ import lombok.experimental.SuperBuilder;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 public class User extends BaseEntity {
 
   @NotBlank
