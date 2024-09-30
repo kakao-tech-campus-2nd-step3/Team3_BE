@@ -30,8 +30,7 @@ public class TeamService {
 
   @Transactional
   public Team createTeam(String teamName, Long userId) {
-    User user = userRepository.findById(userId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    User user = findUserById(userId);
 
     Team team = Team.builder()
             .teamName(teamName)
@@ -47,10 +46,8 @@ public class TeamService {
 
   @Transactional
   public Team addUserToTeam(Long teamId, Long userId) {
-    Team team = teamRepository.findById(teamId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_NOT_FOUND));
-    User user = userRepository.findById(userId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    Team team = findTeamById(teamId);
+    User user = findUserById(userId);
 
     TeamUserRelation teamUserRelation = new TeamUserRelation(team, user, UserTeamRole.MEMBER);
     teamUserRelationRepository.save(teamUserRelation);
@@ -60,57 +57,43 @@ public class TeamService {
 
   @Transactional
   public void promoteUserToAdmin(Long teamId, Long userId, Long adminId) {
-    Team team = teamRepository.findById(teamId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_NOT_FOUND));
-    User adminUser = userRepository.findById(adminId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-    User userToPromote = userRepository.findById(userId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    Team team = findTeamById(teamId);
+    User adminUser = findUserById(adminId);
+    User userToPromote = findUserById(userId);
 
-    TeamUserRelation adminRelation = teamUserRelationRepository.findByTeamAndUser(team, adminUser)
-            .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_MEMBER_NOT_FOUND));
+    TeamUserRelation adminRelation = findTeamUserRelation(team, adminUser);
 
     if (adminRelation.getRole() != UserTeamRole.ADMIN) {
       throw new BusinessException(ErrorCode.ACCESS_DENIED);
     }
 
-    TeamUserRelation teamUserRelation = teamUserRelationRepository.findByTeamAndUser(team, userToPromote)
-            .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_MEMBER_NOT_FOUND));
-
+    TeamUserRelation teamUserRelation = findTeamUserRelation(team, userToPromote);
     teamUserRelation.promoteToAdmin();
     teamUserRelationRepository.save(teamUserRelation);
   }
 
   @Transactional
   public void removeUserFromTeam(Long teamId, Long userId, Long adminId) {
-    Team team = teamRepository.findById(teamId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_NOT_FOUND));
-    User adminUser = userRepository.findById(adminId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-    User userToRemove = userRepository.findById(userId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    Team team = findTeamById(teamId);
+    User adminUser = findUserById(adminId);
+    User userToRemove = findUserById(userId);
 
-    TeamUserRelation adminRelation = teamUserRelationRepository.findByTeamAndUser(team, adminUser)
-            .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_MEMBER_NOT_FOUND));
+    TeamUserRelation adminRelation = findTeamUserRelation(team, adminUser);
 
     if (adminRelation.getRole() != UserTeamRole.ADMIN) {
       throw new BusinessException(ErrorCode.ACCESS_DENIED);
     }
 
-    TeamUserRelation relation = teamUserRelationRepository.findByTeamAndUser(team, userToRemove)
-            .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_MEMBER_NOT_FOUND));
+    TeamUserRelation relation = findTeamUserRelation(team, userToRemove);
     teamUserRelationRepository.delete(relation);
   }
 
   @Transactional
   public Team addUserToTeamByNickname(Long teamId, String nickname, Long adminId) {
-    Team team = teamRepository.findById(teamId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_NOT_FOUND));
-    User adminUser = userRepository.findById(adminId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    Team team = findTeamById(teamId);
+    User adminUser = findUserById(adminId);
 
-    TeamUserRelation adminRelation = teamUserRelationRepository.findByTeamAndUser(team, adminUser)
-            .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_MEMBER_NOT_FOUND));
+    TeamUserRelation adminRelation = findTeamUserRelation(team, adminUser);
 
     if (adminRelation.getRole() != UserTeamRole.ADMIN) {
       throw new BusinessException(ErrorCode.ACCESS_DENIED);
@@ -127,17 +110,29 @@ public class TeamService {
 
   @Transactional(readOnly = true)
   public List<User> getTeamMembers(Long teamId, Long userId) {
-    Team team = teamRepository.findById(teamId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_NOT_FOUND));
-    User user = userRepository.findById(userId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    Team team = findTeamById(teamId);
+    User user = findUserById(userId);
 
-    teamUserRelationRepository.findByTeamAndUser(team, user)
-            .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_MEMBER_NOT_FOUND));
+    findTeamUserRelation(team, user);
 
     List<TeamUserRelation> teamUserRelations = teamUserRelationRepository.findAllByTeam(team);
     return teamUserRelations.stream()
             .map(TeamUserRelation::getUser)
             .collect(Collectors.toList());
+  }
+
+  private User findUserById(Long userId) {
+    return userRepository.findById(userId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+  }
+
+  private Team findTeamById(Long teamId) {
+    return teamRepository.findById(teamId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_NOT_FOUND));
+  }
+
+  private TeamUserRelation findTeamUserRelation(Team team, User user) {
+    return teamUserRelationRepository.findByTeamAndUser(team, user)
+            .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_MEMBER_NOT_FOUND));
   }
 }
