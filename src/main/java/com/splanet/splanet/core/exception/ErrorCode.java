@@ -17,7 +17,10 @@ public enum ErrorCode {
 
     // Subscription
     ALREADY_CANCELED("이미 취소된 구독입니다.", HttpStatus.BAD_REQUEST),
-    SUBSCRIPSTION_NOT_FOUND("활성화된 구독을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+    SUBSCRIPSTION_NOT_FOUND("활성화된 구독을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+
+    // Payments
+    PAYMENT_NOT_FOUND("결제 정보가 존재하지 않습니다.", HttpStatus.NOT_FOUND);
 
     private final String message;
     private final HttpStatus status;
