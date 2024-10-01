@@ -164,4 +164,51 @@ public class TeamService {
     return teamUserRelationRepository.findByTeamAndUser(team, user)
             .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_MEMBER_NOT_FOUND));
   }
+  @Transactional
+  public void inviteUserToTeam(Long teamId, Long adminId, Long userId) {
+    Team team = findTeamById(teamId);
+    User adminUser = findUserById(adminId);
+    User userToInvite = findUserById(userId);
+
+    TeamUserRelation adminRelation = findTeamUserRelation(team, adminUser);
+    if (adminRelation.getRole() != UserTeamRole.ADMIN) {
+      throw new BusinessException(ErrorCode.ACCESS_DENIED);
+    }
+
+    if (teamUserRelationRepository.findByTeamAndUser(team, userToInvite).isPresent()) {
+      throw new BusinessException(ErrorCode.USER_ALREADY_IN_TEAM);
+    }
+
+    TeamInvitation invitation = new TeamInvitation(team, userToInvite);
+    teamInvitationRepository.save(invitation);
+  }
+
+  @Transactional
+  public void acceptTeamInvitation(Long invitationId) {
+    TeamInvitation invitation = teamInvitationRepository.findById(invitationId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.INVITATION_NOT_FOUND));
+
+    if (invitation.getStatus() != InvitationStatus.PENDING) {
+      throw new BusinessException(ErrorCode.INVITATION_ALREADY_PROCESSED);
+    }
+
+    invitation.accept();
+    teamInvitationRepository.save(invitation);
+
+    TeamUserRelation teamUserRelation = new TeamUserRelation(invitation.getTeam(), invitation.getUser(), UserTeamRole.MEMBER);
+    teamUserRelationRepository.save(teamUserRelation);
+  }
+  @Transactional
+  public void rejectTeamInvitation(Long invitationId) {
+    TeamInvitation invitation = teamInvitationRepository.findById(invitationId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.INVITATION_NOT_FOUND));
+
+    if (invitation.getStatus() != InvitationStatus.PENDING) {
+      throw new BusinessException(ErrorCode.INVITATION_ALREADY_PROCESSED);
+    }
+
+    invitation.reject();
+    teamInvitationRepository.save(invitation);
+  }
+
 }
