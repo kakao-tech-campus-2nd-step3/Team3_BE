@@ -6,29 +6,40 @@ import com.splanet.splanet.comment.entity.Comment;
 import com.splanet.splanet.comment.repository.CommentRepository;
 import com.splanet.splanet.core.exception.BusinessException;
 import com.splanet.splanet.core.exception.ErrorCode;
+import com.splanet.splanet.user.entity.User;
+import com.splanet.splanet.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class CommentService {
     private final CommentRepository commentRepository;
+    private final UserRepository userRepository;
 
     // 댓글 조회
     public List<CommentResponse> getComments(Long userId) {
         List<Comment> comments = commentRepository.findByUserId(userId);
-        return CommentResponse.fromCommentList(comments);
+        return comments.stream()
+                .map(CommentResponse::fromComment)
+                .collect(Collectors.toList());
     }
 
     // 댓글 작성
     @Transactional
     public void createComment(Long userId, CommentRequest request) {
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        User writer = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
         Comment comment = Comment.builder()
-                .userId(request.getUserId())
-                .writerId(userId)
+                .user(user)
+                .writer(writer)
                 .content(request.getContent())
                 .build();
         commentRepository.save(comment);
@@ -40,8 +51,7 @@ public class CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
 
-        // 댓글 작성자 확인
-        if (!comment.getWriterId().equals(userId)) {
+        if (!comment.getWriter().getId().equals(userId)) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
 
@@ -55,8 +65,7 @@ public class CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
 
-        // 댓글 작성자 확인
-        if (!comment.getWriterId().equals(userId)) {
+        if (!comment.getWriter().getId().equals(userId)) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
 

@@ -1,6 +1,7 @@
 package com.splanet.splanet.comment.entity;
 
 import com.splanet.splanet.core.BaseEntity;
+import com.splanet.splanet.user.entity.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.*;
@@ -14,11 +15,13 @@ import lombok.experimental.SuperBuilder;
 @Entity
 public class Comment extends BaseEntity {
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user; // 댓글이 달린자
 
-    @Column(name = "writer_id", nullable = false)
-    private Long writerId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "writer_id", nullable = false)
+    private User writer; // 댓글 작성자
 
     @Size(max = 255)
     @Column(name = "content", columnDefinition = "TEXT")

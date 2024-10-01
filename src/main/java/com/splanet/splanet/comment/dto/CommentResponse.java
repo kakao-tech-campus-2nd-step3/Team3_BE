@@ -5,8 +5,6 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Getter
 @Builder
@@ -19,17 +17,15 @@ public class CommentResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static List<CommentResponse> fromCommentList(List<Comment> comments) {
-        return comments.stream()
-                .map(comment -> CommentResponse.builder()
-                        .id(comment.getId())
-                        .writerId(comment.getWriterId())
-                        .content(comment.getContent())
-                        .createdAt(comment.getCreatedAt())
-                        .updatedAt(comment.getUpdatedAt())
-                        .writerNickname("작성자 닉네임")
-                        .writerProfileImage("프로필 이미지 URL")
-                        .build())
-                .collect(Collectors.toList());
+    public static CommentResponse fromComment(Comment comment) {
+        return CommentResponse.builder()
+                .id(comment.getId())
+                .writerId(comment.getWriter().getId())
+                .content(comment.getContent())
+                .createdAt(comment.getCreatedAt())
+                .updatedAt(comment.getUpdatedAt())
+                .writerNickname(comment.getWriter().getNickname())
+                .writerProfileImage(comment.getWriter().getProfileImage())
+                .build();
     }
 }
