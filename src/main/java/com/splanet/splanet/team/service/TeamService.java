@@ -140,20 +140,27 @@ public class TeamService {
             .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_MEMBER_NOT_FOUND));
   }
   @Transactional
-  public void inviteUserToTeam(Long teamId, Long adminId, Long userId) {
+  public void inviteUserToTeamByNickname(Long teamId, Long adminId, String nickname) {
     Team team = findTeamById(teamId);
     User adminUser = findUserById(adminId);
-    User userToInvite = findUserById(userId);
 
+    // 관리자 권한 검증
     TeamUserRelation adminRelation = findTeamUserRelation(team, adminUser);
     if (adminRelation.getRole() != UserTeamRole.ADMIN) {
       throw new BusinessException(ErrorCode.ACCESS_DENIED);
     }
 
-    if (teamUserRelationRepository.findByTeamAndUser(team, userToInvite).isPresent()) {
+    // 초대할 사용자를 닉네임으로 찾기
+    User userToInvite = userRepository.findByNickname(nickname)
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+    // 초대할 사용자가 이미 팀에 있는지 확인
+    boolean isUserInTeam = teamUserRelationRepository.findByTeamAndUser(team, userToInvite).isPresent();
+    if (isUserInTeam) {
       throw new BusinessException(ErrorCode.USER_ALREADY_IN_TEAM);
     }
 
+    // 팀에 없는 사용자를 초대함
     TeamInvitation invitation = new TeamInvitation(team, userToInvite);
     teamInvitationRepository.save(invitation);
   }
