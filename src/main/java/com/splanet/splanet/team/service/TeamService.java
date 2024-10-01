@@ -31,10 +31,14 @@ public class TeamService {
 
   @Transactional
   public Team createTeam(String teamName, Long userId) {
-    User user = findUserById(userId);
+    if (teamName == null || teamName.isBlank()) {
+      throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+    }
 
+    User user = findUserById(userId);
     Team team = Team.builder()
             .teamName(teamName)
+            .user(user)
             .build();
 
     teamRepository.save(team);
@@ -44,7 +48,6 @@ public class TeamService {
 
     return team;
   }
-
   @Transactional
   public Team addUserToTeam(Long teamId, Long userId) {
     Team team = findTeamById(teamId);
