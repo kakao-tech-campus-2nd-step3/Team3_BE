@@ -48,7 +48,6 @@ public class TeamService {
 
     return team;
   }
-
   @Transactional
   public void promoteUserToAdmin(Long teamId, Long userId, Long adminId) {
     Team team = findTeamById(teamId);
