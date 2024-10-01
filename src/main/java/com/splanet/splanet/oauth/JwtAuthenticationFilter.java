@@ -29,7 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
           throws ServletException, IOException {
     String requestURI = request.getRequestURI();
 
-    if (isSwaggerPath(requestURI)) {
+    if (isSwaggerPath(requestURI) || isExemptedPath(requestURI)) {
       filterChain.doFilter(request, response);
       return;
     }
@@ -73,6 +73,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private boolean isApiPath(String requestURI) {
     return requestURI.startsWith("/api/");
+  }
+
+  private boolean isExemptedPath(String requestURI) {
+    return requestURI.equals("/api/users/create") || requestURI.equals("/api/token/issue");
   }
 
   private void sendErrorResponse(HttpServletResponse response, int status, String message) throws IOException {
