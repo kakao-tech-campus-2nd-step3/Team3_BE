@@ -28,6 +28,7 @@ public class Team extends BaseEntity {
 
   @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<TeamUserRelation> teamUserRelations;
+
   public Team(String teamName, User user) {
     this.teamName = teamName;
     this.user = user;

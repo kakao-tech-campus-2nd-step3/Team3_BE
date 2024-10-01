@@ -94,7 +94,7 @@ public class TeamController {
     return ResponseEntity.ok(members);
   }
 
-  @Operation(summary = "유저 초대", description = "팀 관리자가 특정 유저를 팀에 초대합니다.")
+  @Operation(summary = "유저 초대", description = "팀 관리자가 닉네임으로 특정 유저를 팀에 초대합니다.")
   @ApiResponses(value = {
           @ApiResponse(responseCode = "204", description = "유저가 성공적으로 초대되었습니다."),
           @ApiResponse(responseCode = "403", description = "권한이 없습니다."),
@@ -105,8 +105,8 @@ public class TeamController {
   public ResponseEntity<Void> inviteUserToTeam(
           @Parameter(description = "팀의 ID", example = "1") @PathVariable Long teamId,
           @Parameter(description = "초대하는 관리자의 ID", example = "3") @AuthenticationPrincipal Long adminId,
-          @Parameter(description = "초대할 유저의 ID", example = "2") @AuthenticationPrincipal Long userId) {
-    teamService.inviteUserToTeam(teamId, adminId, userId);
+          @Parameter(description = "초대할 유저의 닉네임", example = "nickname123") @RequestParam String nickname) {
+    teamService.inviteUserToTeamByNickname(teamId, adminId, nickname);
     return ResponseEntity.noContent().build();
   }
 
