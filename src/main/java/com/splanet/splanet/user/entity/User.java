@@ -27,7 +27,7 @@ public class User extends BaseEntity {
   @Column(name = "profile_image", length = 2083)
   private String profileImage;
 
-  @Column(name = "kakao_id", unique = true, nullable = false)
+  @Column(name = "kakao_id", unique = true)
   private Long kakaoId;
 
   @Builder.Default

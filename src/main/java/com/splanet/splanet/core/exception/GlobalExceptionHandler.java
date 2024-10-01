@@ -30,7 +30,15 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     protected ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
-        ErrorResponse response = new ErrorResponse("입력값이 유효하지 않습니다. ", 400);
+        String errorMessage = ex.getMostSpecificCause().getMessage();
+
+        // 닉네임 중복에 대한 처리
+        if (errorMessage.contains("nickname")) {
+            ErrorResponse response = new ErrorResponse("닉네임이 중복되었습니다.", 400);
+            return new ResponseEntity<>(response, org.springframework.http.HttpStatus.BAD_REQUEST);
+        }
+
+        ErrorResponse response = new ErrorResponse("입력값이 유효하지 않습니다.", 400);
         return new ResponseEntity<>(response, org.springframework.http.HttpStatus.BAD_REQUEST);
     }
 }
