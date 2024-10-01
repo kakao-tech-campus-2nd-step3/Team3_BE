@@ -33,21 +33,20 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     Map<String, Object> properties = (Map<String, Object>) attributes.get("properties");
     Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
 
+    Long kakaoId = (Long) attributes.get("id");
     String nickname = (String) properties.get("nickname");
     String profileImage = (String) properties.get("profile_image_url");
 
-    Optional<User> existingUser = userRepository.findByNickname(nickname);
-    User user;
+    User user = userRepository.findByKakaoId(kakaoId)
+            .orElseGet(() -> {
+              User newUser = User.builder()
+                      .kakaoId(kakaoId)
+                      .nickname(nickname)
+                      .profileImage(profileImage)
+                      .build();
+              return userRepository.save(newUser);
+            });
 
-    if (existingUser.isEmpty()) {
-      user = User.builder()
-              .nickname(nickname)
-              .profileImage(profileImage)
-              .build();
-      userRepository.save(user);
-    } else {
-      user = existingUser.get();
-    }
 
     String token = jwtTokenProvider.createToken(user.getId(), user.getNickname());
 
