@@ -49,9 +49,7 @@ public class CommentController {
     @PostMapping
     @Operation(summary = "댓글 작성", description = "댓글을 작성합니다.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200",
-                    description = "댓글이 성공적으로 작성되었습니다.",
-                    content = @Content(schema = @Schema(implementation = CommentResponse.class))),
+            @ApiResponse(responseCode = "200", description = "댓글이 성공적으로 작성되었습니다."),
             @ApiResponse(responseCode = "400",
                     description = "잘못된 요청입니다 (유효하지 않은 유저 ID).",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
@@ -63,7 +61,7 @@ public class CommentController {
             @AuthenticationPrincipal Long userId,
             @RequestBody CommentRequest request) {
         commentService.createComment(userId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body("댓글이 성공적으로 작성되었습니다.");
+        return ResponseEntity.status(HttpStatus.OK).body("댓글이 성공적으로 작성되었습니다.");
     }
 
     @PutMapping("/{comment_id}")
