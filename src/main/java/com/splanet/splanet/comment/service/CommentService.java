@@ -55,8 +55,7 @@ public class CommentService {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
 
-        comment.setContent(request.getContent());
-        commentRepository.save(comment);
+        comment.updateContent(request.getContent());
     }
 
     // 댓글 삭제
