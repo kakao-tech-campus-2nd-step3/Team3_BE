@@ -24,6 +24,10 @@ public class Comment extends BaseEntity {
     private User writer; // 댓글 작성자
 
     @Size(max = 255)
-    @Column(name = "content", columnDefinition = "TEXT")
+    @Column(name = "content", columnDefinition = "VARCHAR(255)")
     private String content;
+
+    public void updateContent(String content) {
+        this.content = content;
+    }
 }
