@@ -1,4 +1,4 @@
-package com.splanet.splanet.oauth;
+package com.splanet.splanet.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.splanet.splanet.core.exception.BusinessException;
@@ -76,7 +76,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   }
 
   private boolean isExemptedPath(String requestURI) {
-    return requestURI.equals("/api/users/create") || requestURI.equals("/api/token/issue");
+    return requestURI.equals("/api/users/create") || requestURI.startsWith("/api/token");
   }
 
   private void sendErrorResponse(HttpServletResponse response, int status, String message) throws IOException {
