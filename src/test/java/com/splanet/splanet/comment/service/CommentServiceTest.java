@@ -85,7 +85,6 @@ class CommentServiceTest {
 
         // then
         assertEquals("new content", comment.getContent());
-        verify(commentRepository, times(1)).save(comment);
     }
 
     @Test

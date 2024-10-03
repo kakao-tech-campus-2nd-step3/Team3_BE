@@ -21,14 +21,14 @@ class CommentTest {
         comment = Comment.builder()
                 .user(mockUser)
                 .writer(mockWriter)
-                .content("첫번째 댓글")
+                .content("first content")
                 .build();
     }
 
     @Test
     void 댓글_내용_수정_테스트() {
         // Given
-        String updatedContent = "수정된 댓글";
+        String updatedContent = "updated content";
 
         // When
         comment.updateContent(updatedContent);
