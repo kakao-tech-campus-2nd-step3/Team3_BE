@@ -2,10 +2,8 @@ package com.splanet.splanet.user.entity;
 
 import com.splanet.splanet.comment.entity.Comment;
 import com.splanet.splanet.core.BaseEntity;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.OneToMany;
+import com.splanet.splanet.subscription.entity.Subscription;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -23,6 +21,15 @@ import java.util.List;
 @SuperBuilder(toBuilder = true)
 public class User extends BaseEntity {
 
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = false)
+  private Subscription subscription;
+
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<Comment> comments;
+
+  @OneToMany(mappedBy = "writer", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<Comment> writtenComments;
+
   @NotBlank
   @Size(max = 100)
   @Column(name = "nickname", nullable = false, length = 100, unique = true)
@@ -38,11 +45,5 @@ public class User extends BaseEntity {
   @Builder.Default
   @Column(name = "is_premium")
   private Boolean isPremium = false;
-
-  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<Comment> comments;
-
-  @OneToMany(mappedBy = "writer", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<Comment> writtenComments;
 
 }
