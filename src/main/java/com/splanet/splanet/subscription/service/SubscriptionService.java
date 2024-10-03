@@ -6,16 +6,23 @@ import com.splanet.splanet.subscription.entity.Subscription;
 import com.splanet.splanet.subscription.repository.SubscriptionRepository;
 import com.splanet.splanet.core.exception.BusinessException;
 import com.splanet.splanet.core.exception.ErrorCode;
+import com.splanet.splanet.user.entity.User;
+import com.splanet.splanet.user.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 @Service
 public class SubscriptionService {
 
     private final SubscriptionRepository subscriptionRepository;
 
-    public SubscriptionService(SubscriptionRepository subscriptionRepository) {
+    private final UserRepository userRepository;
+
+    public SubscriptionService(SubscriptionRepository subscriptionRepository, UserRepository userRepository) {
         this.subscriptionRepository = subscriptionRepository;
+        this.userRepository = userRepository;
     }
 
     // 구독 조회
@@ -50,21 +57,23 @@ public class SubscriptionService {
         return ResponseEntity.ok("{\"message\": \"구독이 성공적으로 취소되었습니다.\"}");
     }
 
-    // 구독하기
     public ResponseEntity<SubscriptionResponse> subscribe(Long userId, SubscriptionRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
         // 구독 객체 생성
-        Subscription subscription = createSubscription(userId, request.getType());
+        Subscription subscription = createSubscription(user, request.getType());
         Subscription savedSubscription = subscriptionRepository.save(subscription);
         return createSubscriptionResponse(savedSubscription);
     }
 
-    private Subscription createSubscription(Long userId, Subscription.Type type) {
+    private Subscription createSubscription(User user, Subscription.Type type) {
         return Subscription.builder()
-                .userId(userId)
+                .user(user)
                 .type(type)
                 .status(Subscription.Status.ACTIVE)
-                .startDate(java.time.LocalDateTime.now())
-                .endDate(java.time.LocalDateTime.now().plusMonths(type == Subscription.Type.MONTHLY ? 1 : 12))
+                .startDate(LocalDateTime.now())
+                .endDate(LocalDateTime.now().plusMonths(type == Subscription.Type.MONTHLY ? 1 : 12))
                 .build();
     }
 
