@@ -31,27 +31,32 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
     Map<String, Object> attributes = oAuth2User.getAttributes();
     Map<String, Object> properties = (Map<String, Object>) attributes.get("properties");
-    Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
 
+    Long kakaoId = (Long) attributes.get("id");
     String nickname = (String) properties.get("nickname");
     String profileImage = (String) properties.get("profile_image_url");
 
-    Optional<User> existingUser = userRepository.findByNickname(nickname);
-    User user;
+    String uniqueNickname = generateUniqueNickname(nickname);
 
-    if (existingUser.isEmpty()) {
-      user = User.builder()
-              .nickname(nickname)
-              .profileImage(profileImage)
-              .build();
-      userRepository.save(user);
-    } else {
-      user = existingUser.get();
-    }
+    User user = userRepository.findByKakaoId(kakaoId)
+            .orElseGet(() -> {
+              User newUser = User.builder()
+                      .kakaoId(kakaoId)
+                      .nickname(uniqueNickname)
+                      .profileImage(profileImage)
+                      .build();
+              return userRepository.save(newUser);
+            });
 
     String token = jwtTokenProvider.createToken(user.getId(), user.getNickname());
 
     String redirectUrl = "http://localhost:5173?token=" + token;
     response.sendRedirect(redirectUrl);
+  }
+
+  private String generateUniqueNickname(String nickname) {
+    return userRepository.findByNickname(nickname)
+            .map(existingUser -> nickname + "#" + System.currentTimeMillis() % 10000) // 중복되면 임의값 추가
+            .orElse(nickname);
   }
 }
