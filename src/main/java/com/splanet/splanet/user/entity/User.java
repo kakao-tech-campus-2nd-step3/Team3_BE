@@ -1,8 +1,11 @@
 package com.splanet.splanet.user.entity;
 
+import com.splanet.splanet.comment.entity.Comment;
 import com.splanet.splanet.core.BaseEntity;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -10,6 +13,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+
+import java.util.List;
 
 @Getter
 @Entity
@@ -33,5 +38,11 @@ public class User extends BaseEntity {
   @Builder.Default
   @Column(name = "is_premium")
   private Boolean isPremium = false;
+
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<Comment> comments;
+
+  @OneToMany(mappedBy = "writer", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<Comment> writtenComments;
 
 }
