@@ -64,4 +64,21 @@ public class UserController {
         userService.deleteUser(userId);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/create")
+    @Operation(summary = "유저 생성", description = "테스트용 새로운 유저를 생성합니다. 닉네임 중복 시 예외가 발생합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "유저가 성공적으로 생성되었습니다.",
+                    content = @Content(schema = @Schema(implementation = UserResponseDto.class))),
+            @ApiResponse(responseCode = "400", description = "닉네임이 중복되었습니다.", content = @Content),
+            @ApiResponse(responseCode = "500", description = "서버 오류.", content = @Content)
+    })
+    public ResponseEntity<UserResponseDto> createUser(
+            @RequestParam String nickname,
+            @RequestParam(required = false) String profileImage,
+            @RequestParam(required = false) Boolean isPremium) {
+        UserResponseDto newUser = userService.createUser(nickname, profileImage, isPremium);
+        return ResponseEntity.status(201).body(newUser);
+    }
+
 }
