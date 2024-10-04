@@ -1,35 +1,42 @@
 package com.splanet.splanet.subscription.service;
 
-import com.splanet.splanet.subscription.dao.SubscriptionDao;
-import com.splanet.splanet.subscription.dto.SubscriptionDto;
+import com.splanet.splanet.subscription.dto.SubscriptionRequest;
+import com.splanet.splanet.subscription.dto.SubscriptionResponse;
 import com.splanet.splanet.subscription.entity.Subscription;
+import com.splanet.splanet.subscription.repository.SubscriptionRepository;
 import com.splanet.splanet.core.exception.BusinessException;
 import com.splanet.splanet.core.exception.ErrorCode;
+import com.splanet.splanet.user.entity.User;
+import com.splanet.splanet.user.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 @Service
 public class SubscriptionService {
 
-    private final SubscriptionDao subscriptionDao;
+    private final SubscriptionRepository subscriptionRepository;
 
-    public SubscriptionService(SubscriptionDao subscriptionDao) {
-        this.subscriptionDao = subscriptionDao;
+    private final UserRepository userRepository;
+
+    public SubscriptionService(SubscriptionRepository subscriptionRepository, UserRepository userRepository) {
+        this.subscriptionRepository = subscriptionRepository;
+        this.userRepository = userRepository;
     }
 
-    public ResponseEntity<SubscriptionDto> getSubscription(Long userId) {
+    // 구독 조회
+    public ResponseEntity<SubscriptionResponse> getSubscription(Long userId) {
         if (userId == null) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
-        // 가장 최근의 ACTIVE 구독 조회
-        Subscription subscription = subscriptionDao.findLatestActiveSubscription(userId)
+        // 가장 최근 ACTIVE 구독
+        Subscription subscription = subscriptionRepository.findTopByUserIdAndStatusOrderByStartDateDesc(userId, Subscription.Status.ACTIVE)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SUBSCRIPSTION_NOT_FOUND));
 
-        SubscriptionDto responseDto = SubscriptionDto.fromSubscription(subscription);
-        return ResponseEntity.ok()
-                .header("Message", "구독 정보가 성공적으로 조회되었습니다.")
-                .body(responseDto);
+        SubscriptionResponse response = new SubscriptionResponse("구독 정보가 성공적으로 조회되었습니다.", subscription);
+        return ResponseEntity.ok(response);
     }
 
     // 구독 취소
@@ -38,34 +45,40 @@ public class SubscriptionService {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
-        Subscription subscription = subscriptionDao.findLatestActiveSubscription(userId)
+        Subscription subscription = subscriptionRepository.findTopByUserIdAndStatusOrderByStartDateDesc(userId, Subscription.Status.ACTIVE)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SUBSCRIPSTION_NOT_FOUND));
 
         if (subscription.getStatus() == Subscription.Status.CANCELED) {
             throw new BusinessException(ErrorCode.ALREADY_CANCELED);
         }
 
-        subscriptionDao.cancelSubscription(subscription);
-        return ResponseEntity.ok("구독이 성공적으로 취소되었습니다.");
+        subscription.cancel();
+        subscriptionRepository.save(subscription);
+        return ResponseEntity.ok("{\"message\": \"구독이 성공적으로 취소되었습니다.\"}");
     }
 
-    // 구독하기
-    public ResponseEntity<SubscriptionDto> subscribe(Long userId, Subscription.Type type) {
+    public ResponseEntity<SubscriptionResponse> subscribe(Long userId, SubscriptionRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
         // 구독 객체 생성
-        Subscription subscription = Subscription.builder()
-                .userId(userId)
+        Subscription subscription = createSubscription(user, request.getType());
+        Subscription savedSubscription = subscriptionRepository.save(subscription);
+        return createSubscriptionResponse(savedSubscription);
+    }
+
+    private Subscription createSubscription(User user, Subscription.Type type) {
+        return Subscription.builder()
+                .user(user)
                 .type(type)
                 .status(Subscription.Status.ACTIVE)
-                .startDate(java.time.LocalDateTime.now())
-                .endDate(java.time.LocalDateTime.now().plusMonths(type == Subscription.Type.MONTHLY ? 1 : 12))
+                .startDate(LocalDateTime.now())
+                .endDate(LocalDateTime.now().plusMonths(type == Subscription.Type.MONTHLY ? 1 : 12))
                 .build();
+    }
 
-        Subscription savedSubscription = subscriptionDao.saveSubscription(subscription);
-
-        SubscriptionDto responseDto = SubscriptionDto.fromSubscription(savedSubscription);
-
-        return ResponseEntity.ok()
-                .header("Message", "구독이 성공적으로 구매되었습니다.")
-                .body(responseDto);
+    private ResponseEntity<SubscriptionResponse> createSubscriptionResponse(Subscription savedSubscription) {
+        SubscriptionResponse response = new SubscriptionResponse("구독이 성공적으로 구매되었습니다.", savedSubscription);
+        return ResponseEntity.ok(response);
     }
 }
