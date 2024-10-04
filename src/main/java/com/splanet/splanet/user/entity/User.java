@@ -24,12 +24,6 @@ public class User extends BaseEntity {
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = false)
   private Subscription subscription;
 
-  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<Comment> comments;
-
-  @OneToMany(mappedBy = "writer", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<Comment> writtenComments;
-
   @NotBlank
   @Size(max = 100)
   @Column(name = "nickname", nullable = false, length = 100, unique = true)
