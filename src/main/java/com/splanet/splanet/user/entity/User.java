@@ -1,8 +1,9 @@
 package com.splanet.splanet.user.entity;
 
+import com.splanet.splanet.comment.entity.Comment;
 import com.splanet.splanet.core.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
+import com.splanet.splanet.subscription.entity.Subscription;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -11,12 +12,17 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.util.List;
+
 @Getter
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder(toBuilder = true)
 public class User extends BaseEntity {
+
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = false)
+  private Subscription subscription;
 
   @NotBlank
   @Size(max = 100)
