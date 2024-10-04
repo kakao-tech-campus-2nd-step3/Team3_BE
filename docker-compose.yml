@@ -17,6 +17,15 @@ services:
     networks:
       - splanet
 
+  redis:
+    container_name: redis
+    image: redis
+    ports:
+      - 6379:6379
+    networks:
+      - splanet
+
+
 # 개발할때는 주석처리하여 로컬로 개발합니다.
 #  springboot:
 #    container_name: springboot_splanet

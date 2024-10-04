@@ -1,5 +1,7 @@
 package com.splanet.splanet.oauth;
 
+import com.splanet.splanet.jwt.JwtTokenProvider;
+import com.splanet.splanet.jwt.service.TokenService;
 import com.splanet.splanet.user.entity.User;
 import com.splanet.splanet.user.repository.UserRepository;
 import jakarta.servlet.ServletException;
@@ -9,20 +11,23 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Optional;
 
 @Component
 public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
   private final JwtTokenProvider jwtTokenProvider;
   private final UserRepository userRepository;
+  private final TokenService tokenService;
 
-  public OAuth2AuthenticationSuccessHandler(JwtTokenProvider jwtTokenProvider, UserRepository userRepository) {
+
+  public OAuth2AuthenticationSuccessHandler(JwtTokenProvider jwtTokenProvider, UserRepository userRepository, TokenService tokenService) {
     this.jwtTokenProvider = jwtTokenProvider;
     this.userRepository = userRepository;
+    this.tokenService = tokenService;
   }
 
   @Override
@@ -48,9 +53,17 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
               return userRepository.save(newUser);
             });
 
-    String token = jwtTokenProvider.createToken(user.getId(), user.getNickname());
+    String accessToken = jwtTokenProvider.createAccessToken(user.getId());
+    String refreshToken = jwtTokenProvider.createRefreshToken();
 
-    String redirectUrl = "http://localhost:5173?token=" + token;
+
+    tokenService.storeRefreshToken(refreshToken, user.getId());
+
+    String redirectUrl = UriComponentsBuilder.fromUriString("http://localhost:5173/oauth2/redirect")
+            .queryParam("access", accessToken)
+            .queryParam("refresh", refreshToken)
+            .build().toUriString();
+
     response.sendRedirect(redirectUrl);
   }
 

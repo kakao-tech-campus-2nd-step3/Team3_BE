@@ -1,4 +1,4 @@
-package com.splanet.splanet.oauth;
+package com.splanet.splanet.jwt;
 
 import com.splanet.splanet.core.exception.BusinessException;
 import com.splanet.splanet.core.exception.ErrorCode;
@@ -22,19 +22,33 @@ public class JwtTokenProvider {
   private String secret;
 
   private static final long TOKEN_VALIDITY_IN_MILLISECONDS = 3600000; // 1시간
+  private static final long REFRESH_TOKEN_VALIDITY_IN_MILLISECONDS = 604800000; // 7일
+
 
   @PostConstruct
   protected void init() {
     this.secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), SignatureAlgorithm.HS256.getJcaName());
   }
 
-  public String createToken(Long userId, String nickname) {
+  public String createAccessToken(Long userId) {
     Date now = new Date();
     Date expiryDate = new Date(now.getTime() + TOKEN_VALIDITY_IN_MILLISECONDS);
 
     return Jwts.builder()
-            .setSubject(nickname)
+            .setSubject(String.valueOf(userId))
             .claim("userId", userId)
+            .setIssuedAt(now)
+            .setExpiration(expiryDate)
+            .signWith(SignatureAlgorithm.HS256, secretKey)
+            .compact();
+  }
+
+
+  public String createRefreshToken() {
+    Date now = new Date();
+    Date expiryDate = new Date(now.getTime() + REFRESH_TOKEN_VALIDITY_IN_MILLISECONDS);
+
+    return Jwts.builder()
             .setIssuedAt(now)
             .setExpiration(expiryDate)
             .signWith(SignatureAlgorithm.HS256, secretKey)
