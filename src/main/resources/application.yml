@@ -12,6 +12,10 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
+  data:
+    redis:
+      host: localhost # 로컬에서 실행하기 때문
+      port: 6379
   config:
     import: env.properties
   security:
@@ -33,6 +37,7 @@ spring:
             authorization-grant-type: authorization_code
             scope: profile_nickname, profile_image, account_email
             client-name: Kakao
+
 
 logging:
   level:
