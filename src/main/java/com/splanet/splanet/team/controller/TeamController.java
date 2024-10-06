@@ -38,19 +38,6 @@ public class TeamController {
     return ResponseEntity.ok(createdTeam);
   }
 
-  @Operation(summary = "유저를 팀에 추가", description = "특정 유저를 팀에 멤버로 추가합니다.")
-  @ApiResponses(value = {
-          @ApiResponse(responseCode = "200", description = "유저가 성공적으로 팀에 추가되었습니다."),
-          @ApiResponse(responseCode = "404", description = "팀 또는 유저를 찾을 수 없습니다.")
-  })
-  @PostMapping("/{teamId}/users/{userId}")
-  public ResponseEntity<Team> addUserToTeam(
-          @Parameter(description = "팀의 ID", example = "1") @PathVariable Long teamId,
-          @Parameter(description = "추가할 유저의 ID", example = "2") @AuthenticationPrincipal Long userId) {
-    Team updatedTeam = teamService.addUserToTeam(teamId, userId);
-    return ResponseEntity.ok(updatedTeam);
-  }
-
   @Operation(summary = "유저를 팀 관리자 권한으로 승격", description = "기존 팀 관리자가 다른 유저에게 팀 관리자 권한을 부여합니다.")
   @ApiResponses(value = {
           @ApiResponse(responseCode = "204", description = "유저가 성공적으로 팀 관리자 권한으로 승격되었습니다."),
