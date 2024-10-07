@@ -1,6 +1,7 @@
 package com.splanet.splanet.payment.entity;
 
 import com.splanet.splanet.core.BaseEntity;
+import com.splanet.splanet.subscription.entity.Subscription;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -15,8 +16,9 @@ import java.time.LocalDateTime;
 @Entity
 public class Payment extends BaseEntity {
 
-    @Column(name = "subscription_id", nullable = false)
-    private Long subscriptionId;
+    @OneToOne
+    @JoinColumn(name = "subscription_id", nullable = false, unique = true)
+    private Subscription subscription;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")

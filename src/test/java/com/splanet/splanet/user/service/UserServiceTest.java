@@ -93,7 +93,6 @@ class UserServiceTest {
         assertThat(updatedUser.getProfileImage()).isEqualTo("newProfile.png");
         assertThat(updatedUser.getIsPremium()).isTrue();
 
-        // verify that save method was called
         verify(userRepository).save(any(User.class));
     }
 
