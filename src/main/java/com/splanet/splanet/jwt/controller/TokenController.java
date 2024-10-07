@@ -46,8 +46,9 @@ public class TokenController {
             @ApiResponse(responseCode = "400", description = "유효하지 않은 리프레시 토큰입니다.", content = @Content),
             @ApiResponse(responseCode = "500", description = "서버 오류.", content = @Content)
     })
-    public ResponseEntity<String> refreshAccessToken(@RequestParam String refreshToken) {
-        String newAccessToken = tokenService.regenerateAccessToken(refreshToken);
+    public ResponseEntity<String> refreshAccessToken(@RequestParam String refreshToken,
+                                                     @RequestParam String deviceId) {
+        String newAccessToken = tokenService.regenerateAccessToken(refreshToken, deviceId);
         return ResponseEntity.ok(newAccessToken);
     }
 
@@ -58,8 +59,8 @@ public class TokenController {
             @ApiResponse(responseCode = "400", description = "유효하지 않은 리프레시 토큰입니다.", content = @Content),
             @ApiResponse(responseCode = "500", description = "서버 오류.", content = @Content)
     })
-    public ResponseEntity<Void> deleteRefreshToken(@RequestParam String refreshToken) {
-        tokenService.deleteRefreshToken(refreshToken);
+    public ResponseEntity<Void> deleteRefreshToken(@RequestParam Long userId, @RequestParam String deviceId) {
+        tokenService.deleteRefreshToken(userId, deviceId);
         return ResponseEntity.ok().build();
     }
 }
