@@ -15,6 +15,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccessHandler {
@@ -53,15 +54,18 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
               return userRepository.save(newUser);
             });
 
+    String deviceId = UUID.randomUUID().toString();
+
     String accessToken = jwtTokenProvider.createAccessToken(user.getId());
-    String refreshToken = jwtTokenProvider.createRefreshToken();
+    String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
 
+    tokenService.storeRefreshToken(refreshToken, user.getId(), deviceId);
 
-    tokenService.storeRefreshToken(refreshToken, user.getId());
 
     String redirectUrl = UriComponentsBuilder.fromUriString("http://localhost:5173/oauth2/redirect")
             .queryParam("access", accessToken)
             .queryParam("refresh", refreshToken)
+            .queryParam("deviceId", deviceId)
             .build().toUriString();
 
     response.sendRedirect(redirectUrl);
