@@ -7,6 +7,7 @@ import com.splanet.splanet.user.repository.UserRepository;
 import com.splanet.splanet.core.exception.BusinessException;
 import com.splanet.splanet.core.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,6 +45,26 @@ public class UserService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         userRepository.delete(user);
+    }
+
+    @Transactional
+    public UserResponseDto createUser(String nickname, String profileImage, Boolean isPremium) {
+        Long testKakaoId = System.currentTimeMillis();
+
+        try {
+            User newUser = User.builder()
+                    .nickname(nickname)
+                    .profileImage(profileImage)
+                    .isPremium(isPremium)
+                    .kakaoId(testKakaoId)
+                    .build();
+
+            userRepository.save(newUser);
+
+            return toUserResponseDto(newUser);
+        } catch (DataIntegrityViolationException ex) {
+            throw new BusinessException(ErrorCode.DUPLICATE_NICKNAME);
+        }
     }
 
     private UserResponseDto toUserResponseDto(User user) {
