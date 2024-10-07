@@ -75,8 +75,10 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
   }
 
   private String generateUniqueNickname(String nickname) {
+    String uniqueSuffix = UUID.randomUUID().toString().split("-")[0];
+
     return userRepository.findByNickname(nickname)
-            .map(existingUser -> nickname + "#" + System.currentTimeMillis() % 10000) // 중복되면 임의값 추가
+            .map(existingUser -> nickname + "#" + uniqueSuffix)
             .orElse(nickname);
   }
 }
