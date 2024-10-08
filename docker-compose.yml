@@ -17,24 +17,33 @@ services:
     networks:
       - splanet
 
-# 개발할때는 주석처리하여 로컬로 개발합니다.
-  springboot:
-    container_name: springboot_splanet
-    build:
-      context: .
-      dockerfile: Dockerfile
-    restart: always
-    depends_on:
-      - mysql
+  redis:
+    container_name: redis
+    image: redis
     ports:
-      - 8080:8080
-    environment:
-      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
-      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      - 6379:6379
     networks:
       - splanet
+
+
+# 개발할때는 주석처리하여 로컬로 개발합니다.
+#  springboot:
+#    container_name: springboot_splanet
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    restart: always
+#    depends_on:
+#      - mysql
+#    ports:
+#      - 8080:8080
+#    environment:
+#      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+#      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+#      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+#      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+#    networks:
+#      - splanet
 
 networks:
   splanet:
