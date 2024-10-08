@@ -26,7 +26,7 @@ public class CommentController {
 
     private final CommentService commentService;
 
-    @GetMapping("/{user_id}")
+    @GetMapping("/{userId}")
     @Operation(summary = "댓글 조회", description = "특정 사용자의 댓글 목록을 조회 합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200",
@@ -40,9 +40,9 @@ public class CommentController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public ResponseEntity<List<CommentResponse>> getComments(
-            @AuthenticationPrincipal Long userId,
-            @PathVariable("user_id") Long userIdPath) {
-        List<CommentResponse> comments = commentService.getComments(userIdPath);
+            @AuthenticationPrincipal Long authenticatedUserId,
+            @PathVariable Long userId) {
+        List<CommentResponse> comments = commentService.getComments(userId);
         return ResponseEntity.ok(comments);
     }
 
