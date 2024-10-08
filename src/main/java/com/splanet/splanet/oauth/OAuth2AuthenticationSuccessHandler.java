@@ -12,9 +12,11 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccessHandler {
@@ -23,6 +25,8 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
   private final UserRepository userRepository;
   private final TokenService tokenService;
 
+  @Value("${spring.security.oauth2.redirect-url}")
+  private String redirectUrl;
 
   public OAuth2AuthenticationSuccessHandler(JwtTokenProvider jwtTokenProvider, UserRepository userRepository, TokenService tokenService) {
     this.jwtTokenProvider = jwtTokenProvider;
@@ -53,23 +57,28 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
               return userRepository.save(newUser);
             });
 
+    String deviceId = UUID.randomUUID().toString();
+
     String accessToken = jwtTokenProvider.createAccessToken(user.getId());
-    String refreshToken = jwtTokenProvider.createRefreshToken();
+    String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
+
+    tokenService.storeRefreshToken(refreshToken, user.getId(), deviceId);
 
 
-    tokenService.storeRefreshToken(refreshToken, user.getId());
-
-    String redirectUrl = UriComponentsBuilder.fromUriString("http://localhost:5173/oauth2/redirect")
+    String redirectUrlWithParams = UriComponentsBuilder.fromUriString(redirectUrl)
             .queryParam("access", accessToken)
             .queryParam("refresh", refreshToken)
+            .queryParam("deviceId", deviceId)
             .build().toUriString();
 
-    response.sendRedirect(redirectUrl);
+    response.sendRedirect(redirectUrlWithParams);
   }
 
   private String generateUniqueNickname(String nickname) {
+    String uniqueSuffix = UUID.randomUUID().toString().split("-")[0];
+
     return userRepository.findByNickname(nickname)
-            .map(existingUser -> nickname + "#" + System.currentTimeMillis() % 10000) // 중복되면 임의값 추가
+            .map(existingUser -> nickname + "#" + uniqueSuffix)
             .orElse(nickname);
   }
 }
