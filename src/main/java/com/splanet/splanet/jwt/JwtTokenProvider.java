@@ -44,11 +44,12 @@ public class JwtTokenProvider {
   }
 
 
-  public String createRefreshToken() {
+  public String createRefreshToken(Long userId) {
     Date now = new Date();
     Date expiryDate = new Date(now.getTime() + REFRESH_TOKEN_VALIDITY_IN_MILLISECONDS);
 
     return Jwts.builder()
+            .claim("userId", userId)
             .setIssuedAt(now)
             .setExpiration(expiryDate)
             .signWith(SignatureAlgorithm.HS256, secretKey)
