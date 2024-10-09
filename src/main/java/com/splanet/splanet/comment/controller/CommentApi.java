@@ -20,7 +20,7 @@ import java.util.List;
 @Tag(name = "Comments", description = "댓글 관련 API")
 public interface CommentApi {
 
-    @GetMapping("/{user_id}")
+    @GetMapping("/{userId}")
     @Operation(summary = "댓글 조회", description = "특정 사용자의 댓글 목록을 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "특정 사용자에게 달린 댓글이 성공적으로 조회되었습니다.",
@@ -32,7 +32,7 @@ public interface CommentApi {
     })
     ResponseEntity<List<CommentResponse>> getComments(
             @Parameter(description = "인증된 유저의 ID", required = true) @AuthenticationPrincipal Long userId,
-            @Parameter(description = "댓글을 조회할 유저의 ID", required = true) @PathVariable("user_id") Long userIdPath);
+            @Parameter(description = "댓글을 조회할 유저의 ID", required = true) @PathVariable("userId") Long userIdPath);
 
     @PostMapping
     @Operation(summary = "댓글 작성", description = "댓글을 작성합니다.")
@@ -47,7 +47,7 @@ public interface CommentApi {
             @Parameter(description = "인증된 유저의 ID", required = true) @AuthenticationPrincipal Long userId,
             @Parameter(description = "댓글 작성 요청 정보", required = true) @RequestBody CommentRequest request);
 
-    @PutMapping("/{comment_id}")
+    @PutMapping("/{commentId}")
     @Operation(summary = "댓글 수정", description = "댓글을 수정합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "댓글이 성공적으로 수정되었습니다.",
@@ -59,10 +59,10 @@ public interface CommentApi {
     })
     ResponseEntity<String> updateComment(
             @Parameter(description = "인증된 유저의 ID", required = true) @AuthenticationPrincipal Long userId,
-            @Parameter(description = "수정할 댓글 ID", required = true) @PathVariable("comment_id") Long commentId,
+            @Parameter(description = "수정할 댓글 ID", required = true) @PathVariable("commentId") Long commentId,
             @Parameter(description = "댓글 수정 요청 정보", required = true) @RequestBody CommentRequest request);
 
-    @DeleteMapping("/{comment_id}")
+    @DeleteMapping("/{commentId}")
     @Operation(summary = "댓글 삭제", description = "댓글을 삭제합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "댓글이 성공적으로 삭제되었습니다.",
@@ -74,5 +74,5 @@ public interface CommentApi {
     })
     ResponseEntity<String> deleteComment(
             @Parameter(description = "인증된 유저의 ID", required = true) @AuthenticationPrincipal Long userId,
-            @Parameter(description = "삭제할 댓글 ID", required = true) @PathVariable("comment_id") Long commentId);
+            @Parameter(description = "삭제할 댓글 ID", required = true) @PathVariable("commentId") Long commentId);
 }
