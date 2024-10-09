@@ -120,4 +120,32 @@ public class TeamController {
     teamService.promoteUserToAdmin(teamId, userId, adminId);
     return ResponseEntity.noContent().build();
   }
+
+  @Operation(summary = "팀 관리자가 보낸 초대 목록 조회", description = "팀 관리자가 보낸 초대 중 대기 상태인 초대를 조회합니다.")
+  @ApiResponses(value = {
+          @ApiResponse(responseCode = "200", description = "초대 목록 조회 성공"),
+          @ApiResponse(responseCode = "403", description = "권한이 없습니다."),
+          @ApiResponse(responseCode = "404", description = "팀을 찾을 수 없습니다.")
+  })
+  @GetMapping("/{teamId}/invitations")
+  public ResponseEntity<List<TeamInvitationDto>> getAdminPendingInvitations(
+          @Parameter(description = "팀의 ID", example = "1") @PathVariable Long teamId,
+          @AuthenticationPrincipal Long adminId) {
+    List<TeamInvitationDto> invitations = teamService.getAdminPendingInvitations(teamId, adminId);
+    return ResponseEntity.ok(invitations);
+  }
+
+  @Operation(summary = "팀 관리자가 초대 취소", description = "팀 관리자가 보낸 초대를 취소합니다.")
+  @ApiResponses(value = {
+          @ApiResponse(responseCode = "204", description = "초대가 성공적으로 취소되었습니다."),
+          @ApiResponse(responseCode = "403", description = "권한이 없습니다."),
+          @ApiResponse(responseCode = "404", description = "초대를 찾을 수 없습니다.")
+  })
+  @DeleteMapping("/invitation/{invitationId}/cancel")
+  public ResponseEntity<Void> cancelTeamInvitation(
+          @Parameter(description = "초대 ID", example = "1") @PathVariable Long invitationId,
+          @AuthenticationPrincipal Long adminId) {
+    teamService.cancelTeamInvitation(invitationId, adminId);
+    return ResponseEntity.noContent().build();
+  }
 }
