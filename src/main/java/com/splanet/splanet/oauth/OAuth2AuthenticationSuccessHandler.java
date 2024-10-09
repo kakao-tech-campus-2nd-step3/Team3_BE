@@ -1,5 +1,6 @@
 package com.splanet.splanet.oauth;
 
+import com.splanet.splanet.core.properties.OAuth2Properties;
 import com.splanet.splanet.jwt.JwtTokenProvider;
 import com.splanet.splanet.jwt.service.TokenService;
 import com.splanet.splanet.user.entity.User;
@@ -12,7 +13,6 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 import java.util.Map;
@@ -22,17 +22,19 @@ import java.util.UUID;
 public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
   private final JwtTokenProvider jwtTokenProvider;
+
   private final UserRepository userRepository;
   private final TokenService tokenService;
+  private final OAuth2Properties oAuth2Properties;
 
-  @Value("${spring.security.oauth2.redirect-url}")
-  private String redirectUrl;
-
-  public OAuth2AuthenticationSuccessHandler(JwtTokenProvider jwtTokenProvider, UserRepository userRepository, TokenService tokenService) {
+  public OAuth2AuthenticationSuccessHandler(JwtTokenProvider jwtTokenProvider, UserRepository userRepository, TokenService tokenService, OAuth2Properties oAuth2Properties) {
     this.jwtTokenProvider = jwtTokenProvider;
     this.userRepository = userRepository;
     this.tokenService = tokenService;
+    this.oAuth2Properties = oAuth2Properties;
   }
+
+
 
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -65,7 +67,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     tokenService.storeRefreshToken(refreshToken, user.getId(), deviceId);
 
 
-    String redirectUrlWithParams = UriComponentsBuilder.fromUriString(redirectUrl)
+    String redirectUrlWithParams = UriComponentsBuilder.fromUriString(oAuth2Properties.getRedirectUrl())
             .queryParam("access", accessToken)
             .queryParam("refresh", refreshToken)
             .queryParam("deviceId", deviceId)
