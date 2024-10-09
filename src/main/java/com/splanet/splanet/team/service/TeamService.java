@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -167,8 +168,8 @@ public class TeamService {
     User adminUser = findUserById(adminId);
     User userToPromote = findUserById(userId);
 
-    TeamUserRelation adminRelation = findTeamUserRelation(team, adminUser);
-    if (adminRelation.getRole() != UserTeamRole.ADMIN) {
+    Optional<TeamUserRelation> adminRelation = teamUserRelationRepository.findByTeamAndUser(team, adminUser);
+    if (adminRelation.isEmpty() || adminRelation.get().getRole() != UserTeamRole.ADMIN) {
       throw new BusinessException(ErrorCode.ACCESS_DENIED);
     }
 
