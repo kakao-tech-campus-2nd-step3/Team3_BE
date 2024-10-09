@@ -32,7 +32,13 @@ public class TeamUserRelation {
     this.role = role;
   }
 
+  // 관리자 권한으로 승격
   public void promoteToAdmin() {
     this.role = UserTeamRole.ADMIN;
+  }
+
+  // 일반 유저로 강등
+  public void demoteToMember() {
+    this.role = UserTeamRole.MEMBER;
   }
 }

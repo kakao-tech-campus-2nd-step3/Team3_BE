@@ -14,8 +14,9 @@ import com.splanet.splanet.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,6 +34,7 @@ public class TeamService {
     this.teamInvitationRepository = teamInvitationRepository;
   }
 
+  // 1. 팀 생성
   @Transactional
   public TeamDto createTeam(String teamName, Long userId) {
     if (teamName == null || teamName.isBlank()) {
@@ -54,6 +56,7 @@ public class TeamService {
     return new TeamDto(team.getId(), team.getTeamName(), new UserDto(user.getId(), user.getNickname()), null);
   }
 
+  // 2. 팀 초대
   @Transactional
   public TeamInvitationDto inviteUserToTeamByNickname(Long teamId, Long adminId, String nickname) {
     Team team = findTeamById(teamId);
@@ -81,60 +84,147 @@ public class TeamService {
     teamInvitationRepository.save(invitation);
 
     // 초대 정보를 DTO로 반환
-    return new TeamInvitationDto(invitation.getId(), invitation.getTeam().getId(), invitation.getTeam().getTeamName(), invitation.getStatus());
+    return new TeamInvitationDto(
+            invitation.getId(),
+            invitation.getTeam().getId(),
+            invitation.getTeam().getTeamName(),
+            userToInvite.getId(),
+            userToInvite.getNickname(),
+            userToInvite.getProfileImage(),
+            invitation.getStatus()
+    );
   }
 
+  // 3. 초대 수락/거절 처리
+  @Transactional
+  public void handleInvitationResponse(Long invitationId, Long userId, boolean isAccepted) {
+    TeamInvitation invitation = teamInvitationRepository.findById(invitationId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.INVITATION_NOT_FOUND));
+
+    // 유저 본인인지 확인
+    if (!invitation.getUser().getId().equals(userId)) {
+      throw new BusinessException(ErrorCode.ACCESS_DENIED);
+    }
+
+    if (invitation.getStatus() != InvitationStatus.PENDING) {
+      throw new BusinessException(ErrorCode.INVITATION_ALREADY_PROCESSED);
+    }
+
+    // 초대 수락/거절
+    if (isAccepted) {
+      invitation.accept();
+      TeamUserRelation teamUserRelation = new TeamUserRelation(invitation.getTeam(), invitation.getUser(), UserTeamRole.MEMBER);
+      teamUserRelationRepository.save(teamUserRelation);
+    } else {
+      invitation.reject();
+    }
+
+    teamInvitationRepository.save(invitation);
+  }
+
+  // 4. 팀에서 유저 내보내기
+  @Transactional
+  public void kickUserFromTeam(Long teamId, Long userId, Long adminId) {
+    Team team = findTeamById(teamId);
+    User adminUser = findUserById(adminId);
+    User targetUser = findUserById(userId);
+
+    // 관리자인지 확인
+    TeamUserRelation adminRelation = teamUserRelationRepository.findByTeamAndUser(team, adminUser)
+            .orElseThrow(() -> new BusinessException(ErrorCode.ACCESS_DENIED));
+
+    if (adminRelation.getRole() != UserTeamRole.ADMIN) {
+      throw new BusinessException(ErrorCode.ACCESS_DENIED);
+    }
+
+    TeamUserRelation userRelation = teamUserRelationRepository.findByTeamAndUser(team, targetUser)
+            .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_MEMBER_NOT_FOUND));
+
+    teamUserRelationRepository.delete(userRelation);
+  }
+
+  @Transactional
+  public Map<String, Object> updateUserRole(Long teamId, Long userId, Long adminId) {
+    Team team = findTeamById(teamId);
+    User adminUser = findUserById(adminId);
+    User userToPromote = findUserById(userId);
+
+    TeamUserRelation adminRelation = teamUserRelationRepository.findByTeamAndUser(team, adminUser)
+            .orElseThrow(() -> new BusinessException(ErrorCode.ACCESS_DENIED));
+
+    if (adminRelation.getRole() != UserTeamRole.ADMIN) {
+      throw new BusinessException(ErrorCode.ACCESS_DENIED);
+    }
+
+    TeamUserRelation userRelation = teamUserRelationRepository.findByTeamAndUser(team, userToPromote)
+            .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_MEMBER_NOT_FOUND));
+
+    // 권한 수정
+    if (userRelation.getRole() == UserTeamRole.ADMIN) {
+      userRelation.demoteToMember();
+    } else {
+      userRelation.promoteToAdmin();
+    }
+
+    teamUserRelationRepository.save(userRelation);
+
+    // 반환할 정보를 Map으로 준비
+    Map<String, Object> result = new HashMap<>();
+    result.put("userId", userToPromote.getId());
+    result.put("role", userRelation.getRole().name());
+
+    return result;  // 권한 변경 후 userId와 role 반환
+  }
+
+  // 6. 관리자가 보낸 초대 목록 조회
   @Transactional(readOnly = true)
-  public List<TeamInvitationDto> getUserPendingInvitations(Long userId) {
-    User user = findUserById(userId);
-    List<TeamInvitation> invitations = teamInvitationRepository.findAllByUserAndStatus(user, InvitationStatus.PENDING);
+  public List<TeamInvitationDto> getAdminPendingInvitations(Long teamId, Long adminId) {
+    Team team = findTeamById(teamId);
+    User adminUser = findUserById(adminId);
+
+    // 관리자 권한 확인
+    TeamUserRelation adminRelation = teamUserRelationRepository.findByTeamAndUser(team, adminUser)
+            .orElseThrow(() -> new BusinessException(ErrorCode.ACCESS_DENIED));
+
+    if (adminRelation.getRole() != UserTeamRole.ADMIN) {
+      throw new BusinessException(ErrorCode.ACCESS_DENIED);
+    }
+
+    List<TeamInvitation> invitations = teamInvitationRepository.findAllByTeamAndStatus(team, InvitationStatus.PENDING);
     return invitations.stream()
-            .map(invitation -> new TeamInvitationDto(invitation.getId(), invitation.getTeam().getId(), invitation.getTeam().getTeamName(), invitation.getStatus()))
+            .map(invitation -> new TeamInvitationDto(
+                    invitation.getId(),
+                    invitation.getTeam().getId(),
+                    invitation.getTeam().getTeamName(),
+                    invitation.getUser().getId(),
+                    invitation.getUser().getNickname(),
+                    invitation.getUser().getProfileImage(),
+                    invitation.getStatus()))
             .collect(Collectors.toList());
   }
 
+  // 7. 팀 초대 취소
   @Transactional
-  public void acceptTeamInvitation(Long invitationId, Long userId) {
+  public void cancelTeamInvitation(Long invitationId, Long adminId) {
     TeamInvitation invitation = teamInvitationRepository.findById(invitationId)
             .orElseThrow(() -> new BusinessException(ErrorCode.INVITATION_NOT_FOUND));
 
-    // 유저 본인인지 확인
-    if (!invitation.getUser().getId().equals(userId)) {
+    User adminUser = findUserById(adminId);
+    Team team = invitation.getTeam();
+
+    // 관리자인지 확인
+    TeamUserRelation adminRelation = teamUserRelationRepository.findByTeamAndUser(team, adminUser)
+            .orElseThrow(() -> new BusinessException(ErrorCode.ACCESS_DENIED));
+
+    if (adminRelation.getRole() != UserTeamRole.ADMIN) {
       throw new BusinessException(ErrorCode.ACCESS_DENIED);
     }
 
-    if (invitation.getStatus() != InvitationStatus.PENDING) {
-      throw new BusinessException(ErrorCode.INVITATION_ALREADY_PROCESSED);
-    }
-
-    // 초대 수락 처리
-    invitation.accept();
-    teamInvitationRepository.save(invitation);
-
-    // 팀 멤버 추가
-    TeamUserRelation teamUserRelation = new TeamUserRelation(invitation.getTeam(), invitation.getUser(), UserTeamRole.MEMBER);
-    teamUserRelationRepository.save(teamUserRelation);
+    // 초대 취소 처리 (삭제)
+    teamInvitationRepository.delete(invitation);
   }
 
-  @Transactional
-  public void rejectTeamInvitation(Long invitationId, Long userId) {
-    TeamInvitation invitation = teamInvitationRepository.findById(invitationId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.INVITATION_NOT_FOUND));
-
-    // 유저 본인인지 확인
-    if (!invitation.getUser().getId().equals(userId)) {
-      throw new BusinessException(ErrorCode.ACCESS_DENIED);
-    }
-
-    if (invitation.getStatus() != InvitationStatus.PENDING) {
-      throw new BusinessException(ErrorCode.INVITATION_ALREADY_PROCESSED);
-    }
-
-    // 초대 거절 처리
-    invitation.reject();
-    teamInvitationRepository.save(invitation);
-  }
-
+  // 8. 유저가 속한 팀의 모든 멤버 조회
   @Transactional(readOnly = true)
   public List<UserDto> getTeamMembers(Long teamId, Long userId) {
     Team team = findTeamById(teamId);
@@ -148,6 +238,24 @@ public class TeamService {
             .collect(Collectors.toList());
   }
 
+  @Transactional(readOnly = true)
+  public List<TeamInvitationDto> getUserPendingInvitations(Long userId) {
+    User user = findUserById(userId);
+    List<TeamInvitation> invitations = teamInvitationRepository.findAllByUserAndStatus(user, InvitationStatus.PENDING);
+
+    return invitations.stream()
+            .map(invitation -> new TeamInvitationDto(
+                    invitation.getId(),
+                    invitation.getTeam().getId(),
+                    invitation.getTeam().getTeamName(),
+                    invitation.getUser().getId(),
+                    invitation.getUser().getNickname(),
+                    invitation.getUser().getProfileImage(),
+                    invitation.getStatus()))
+            .collect(Collectors.toList());
+  }
+
+  // Helper 메서드들
   private User findUserById(Long userId) {
     return userRepository.findById(userId)
             .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
@@ -161,64 +269,5 @@ public class TeamService {
   private TeamUserRelation findTeamUserRelation(Team team, User user) {
     return teamUserRelationRepository.findByTeamAndUser(team, user)
             .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_MEMBER_NOT_FOUND));
-  }
-  @Transactional
-  public void promoteUserToAdmin(Long teamId, Long userId, Long adminId) {
-    Team team = findTeamById(teamId);
-    User adminUser = findUserById(adminId);
-    User userToPromote = findUserById(userId);
-
-    Optional<TeamUserRelation> adminRelation = teamUserRelationRepository.findByTeamAndUser(team, adminUser);
-    if (adminRelation.isEmpty() || adminRelation.get().getRole() != UserTeamRole.ADMIN) {
-      throw new BusinessException(ErrorCode.ACCESS_DENIED);
-    }
-
-    TeamUserRelation teamUserRelation = findTeamUserRelation(team, userToPromote);
-
-    teamUserRelation.promoteToAdmin();
-    teamUserRelationRepository.save(teamUserRelation);
-  }
-  @Transactional(readOnly = true)
-  public List<TeamInvitationDto> getAdminPendingInvitations(Long teamId, Long adminId) {
-    Team team = findTeamById(teamId);
-    User adminUser = findUserById(adminId);
-
-    // 관리자인지 확인
-    TeamUserRelation adminRelation = teamUserRelationRepository.findByTeamAndUser(team, adminUser)
-            .orElseThrow(() -> new BusinessException(ErrorCode.ACCESS_DENIED));
-
-    if (adminRelation.getRole() != UserTeamRole.ADMIN) {
-      throw new BusinessException(ErrorCode.ACCESS_DENIED);
-    }
-
-    // 팀에서 보낸 초대 중 PENDING 상태인 초대 목록 조회
-    List<TeamInvitation> invitations = teamInvitationRepository.findAllByTeamAndStatus(team, InvitationStatus.PENDING);
-
-    return invitations.stream()
-            .map(invitation -> new TeamInvitationDto(invitation.getId(), invitation.getTeam().getId(), invitation.getTeam().getTeamName(), invitation.getStatus()))
-            .collect(Collectors.toList());
-  }
-
-  @Transactional
-  public void cancelTeamInvitation(Long invitationId, Long adminId) {
-    TeamInvitation invitation = teamInvitationRepository.findById(invitationId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.INVITATION_NOT_FOUND));
-
-    User adminUser = findUserById(adminId);
-    Team team = invitation.getTeam();
-
-    // 관리자인지 확인 (확인 및 개선된 로직)
-    Optional<TeamUserRelation> adminRelation = teamUserRelationRepository.findByTeamAndUser(team, adminUser);
-
-    if (adminRelation.isEmpty()) {
-      throw new BusinessException(ErrorCode.TEAM_MEMBER_NOT_FOUND);  // 팀 멤버가 아닌 경우
-    }
-
-    if (adminRelation.get().getRole() != UserTeamRole.ADMIN) {
-      throw new BusinessException(ErrorCode.ACCESS_DENIED);  // 관리자가 아닌 경우
-    }
-
-    // 초대 취소 처리 (삭제)
-    teamInvitationRepository.delete(invitation);
   }
 }

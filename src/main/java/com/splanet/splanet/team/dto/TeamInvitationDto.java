@@ -10,5 +10,8 @@ public class TeamInvitationDto {
   private Long invitationId;
   private Long teamId;
   private String teamName;
+  private Long userId;
+  private String nickname;
+  private String profileImage;
   private InvitationStatus status;
 }
