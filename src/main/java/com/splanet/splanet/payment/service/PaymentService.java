@@ -25,7 +25,7 @@ public class PaymentService {
     @Transactional
     public PaymentResponse createPayment(Long userId, PaymentRequest request) {
         Subscription subscription = subscriptionRepository.findById(request.getSubscriptionId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.SUBSCRIPSTION_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.SUBSCRIPTION_NOT_FOUND));
 
         Payment payment = Payment.builder()
                 .subscription(subscription)
