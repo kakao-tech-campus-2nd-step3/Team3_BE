@@ -1,7 +1,9 @@
 package com.splanet.splanet.core.exception;
 
+import com.splanet.splanet.core.exception.ResponseConstants;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -22,23 +24,22 @@ public class GlobalExceptionHandler {
                 .stream()
                 .map(violation -> violation.getMessage())
                 .findFirst()
-                .orElse("유효성 검사에 실패하였습니다.");
+                .orElse(ResponseConstants.ErrorMessage.VALIDATION_ERROR);
 
-        ErrorResponse response = new ErrorResponse(errorMessage, 400);
-        return new ResponseEntity<>(response, org.springframework.http.HttpStatus.BAD_REQUEST);
+        ErrorResponse response = new ErrorResponse(errorMessage, ResponseConstants.StatusCode.BAD_REQUEST);
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     protected ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
         String errorMessage = ex.getMostSpecificCause().getMessage();
 
-        // 닉네임 중복에 대한 처리
         if (errorMessage.contains("nickname")) {
-            ErrorResponse response = new ErrorResponse("닉네임이 중복되었습니다.", 400);
-            return new ResponseEntity<>(response, org.springframework.http.HttpStatus.BAD_REQUEST);
+            ErrorResponse response = new ErrorResponse(ResponseConstants.ErrorMessage.DUPLICATE_NICKNAME, ResponseConstants.StatusCode.BAD_REQUEST);
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
-        ErrorResponse response = new ErrorResponse("입력값이 유효하지 않습니다.", 400);
-        return new ResponseEntity<>(response, org.springframework.http.HttpStatus.BAD_REQUEST);
+        ErrorResponse response = new ErrorResponse(ResponseConstants.ErrorMessage.INVALID_INPUT, ResponseConstants.StatusCode.BAD_REQUEST);
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 }
