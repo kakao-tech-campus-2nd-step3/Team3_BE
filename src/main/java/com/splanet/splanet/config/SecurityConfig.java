@@ -1,5 +1,6 @@
 package com.splanet.splanet.config;
 
+import com.splanet.splanet.core.properties.OAuth2Properties;
 import com.splanet.splanet.jwt.service.TokenService;
 import com.splanet.splanet.oauth.CustomOAuth2UserService;
 import com.splanet.splanet.jwt.JwtAuthenticationFilter;
@@ -18,12 +19,13 @@ public class SecurityConfig {
   private final UserRepository userRepository;
   private final JwtTokenProvider jwtTokenProvider;
   private final TokenService tokenService;
+  private final OAuth2Properties oAuth2Properties;
 
-
-  public SecurityConfig(UserRepository userRepository, JwtTokenProvider jwtTokenProvider, TokenService tokenService) {
+  public SecurityConfig(UserRepository userRepository, JwtTokenProvider jwtTokenProvider, TokenService tokenService, OAuth2Properties oAuth2Properties) {
     this.userRepository = userRepository;
     this.jwtTokenProvider = jwtTokenProvider;
     this.tokenService = tokenService;
+    this.oAuth2Properties = oAuth2Properties;
   }
 
   @Bean
@@ -49,6 +51,6 @@ public class SecurityConfig {
   }
 
   private OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler() {
-    return new OAuth2AuthenticationSuccessHandler(jwtTokenProvider, userRepository, tokenService);
+    return new OAuth2AuthenticationSuccessHandler(jwtTokenProvider, userRepository, tokenService, oAuth2Properties);
   }
 }

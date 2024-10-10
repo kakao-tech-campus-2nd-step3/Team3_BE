@@ -14,11 +14,10 @@ import org.springframework.data.redis.core.TimeToLive;
 public class RefreshToken {
 
     @Id
+    private String key;
+
     private String token;
 
-    private Long userId;
-
-
     @TimeToLive
-    Long expiration;
+    private Long expiration;
 }

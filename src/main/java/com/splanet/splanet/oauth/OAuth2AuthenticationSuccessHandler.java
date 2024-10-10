@@ -1,5 +1,6 @@
 package com.splanet.splanet.oauth;
 
+import com.splanet.splanet.core.properties.OAuth2Properties;
 import com.splanet.splanet.jwt.JwtTokenProvider;
 import com.splanet.splanet.jwt.service.TokenService;
 import com.splanet.splanet.user.entity.User;
@@ -15,20 +16,25 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
   private final JwtTokenProvider jwtTokenProvider;
+
   private final UserRepository userRepository;
   private final TokenService tokenService;
+  private final OAuth2Properties oAuth2Properties;
 
-
-  public OAuth2AuthenticationSuccessHandler(JwtTokenProvider jwtTokenProvider, UserRepository userRepository, TokenService tokenService) {
+  public OAuth2AuthenticationSuccessHandler(JwtTokenProvider jwtTokenProvider, UserRepository userRepository, TokenService tokenService, OAuth2Properties oAuth2Properties) {
     this.jwtTokenProvider = jwtTokenProvider;
     this.userRepository = userRepository;
     this.tokenService = tokenService;
+    this.oAuth2Properties = oAuth2Properties;
   }
+
+
 
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -53,23 +59,28 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
               return userRepository.save(newUser);
             });
 
+    String deviceId = UUID.randomUUID().toString();
+
     String accessToken = jwtTokenProvider.createAccessToken(user.getId());
-    String refreshToken = jwtTokenProvider.createRefreshToken();
+    String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
+
+    tokenService.storeRefreshToken(refreshToken, user.getId(), deviceId);
 
 
-    tokenService.storeRefreshToken(refreshToken, user.getId());
-
-    String redirectUrl = UriComponentsBuilder.fromUriString("http://localhost:5173/oauth2/redirect")
+    String redirectUrlWithParams = UriComponentsBuilder.fromUriString(oAuth2Properties.getRedirectUrl())
             .queryParam("access", accessToken)
             .queryParam("refresh", refreshToken)
+            .queryParam("deviceId", deviceId)
             .build().toUriString();
 
-    response.sendRedirect(redirectUrl);
+    response.sendRedirect(redirectUrlWithParams);
   }
 
   private String generateUniqueNickname(String nickname) {
+    String uniqueSuffix = UUID.randomUUID().toString().split("-")[0];
+
     return userRepository.findByNickname(nickname)
-            .map(existingUser -> nickname + "#" + System.currentTimeMillis() % 10000) // 중복되면 임의값 추가
+            .map(existingUser -> nickname + "#" + uniqueSuffix)
             .orElse(nickname);
   }
 }
