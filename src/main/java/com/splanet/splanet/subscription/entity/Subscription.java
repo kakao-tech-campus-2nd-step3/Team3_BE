@@ -56,5 +56,6 @@ public class Subscription extends BaseEntity {
     public void cancel() {
         this.status = Status.CANCELED;
         this.endDate = LocalDateTime.now();
+        this.setDeleted(true);
     }
 }
