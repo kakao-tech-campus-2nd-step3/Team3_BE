@@ -3,6 +3,7 @@ package com.splanet.splanet.team.controller;
 import com.splanet.splanet.team.api.TeamApi;
 import com.splanet.splanet.team.dto.TeamDto;
 import com.splanet.splanet.team.dto.TeamInvitationDto;
+import com.splanet.splanet.team.dto.TeamMemberDto;
 import com.splanet.splanet.team.service.TeamService;
 import com.splanet.splanet.user.dto.UserDto;
 import org.springframework.http.ResponseEntity;
@@ -46,8 +47,8 @@ public class TeamController implements TeamApi {
   }
 
   @Override
-  public ResponseEntity<List<UserDto>> getTeamMembers(Long teamId, Long userId) {
-    List<UserDto> members = teamService.getTeamMembers(teamId, userId);
+  public ResponseEntity<List<TeamMemberDto>> getTeamMembers(Long teamId, Long userId) {
+    List<TeamMemberDto> members = teamService.getTeamMembers(teamId);
     return ResponseEntity.ok(members);
   }
 

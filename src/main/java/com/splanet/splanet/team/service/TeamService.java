@@ -4,6 +4,7 @@ import com.splanet.splanet.core.exception.BusinessException;
 import com.splanet.splanet.core.exception.ErrorCode;
 import com.splanet.splanet.team.dto.TeamDto;
 import com.splanet.splanet.team.dto.TeamInvitationDto;
+import com.splanet.splanet.team.dto.TeamMemberDto;
 import com.splanet.splanet.team.entity.*;
 import com.splanet.splanet.team.repository.TeamInvitationRepository;
 import com.splanet.splanet.team.repository.TeamRepository;
@@ -226,15 +227,14 @@ public class TeamService {
 
   // 8. 유저가 속한 팀의 모든 멤버 조회
   @Transactional(readOnly = true)
-  public List<UserDto> getTeamMembers(Long teamId, Long userId) {
-    Team team = findTeamById(teamId);
-    User user = findUserById(userId);
+  public List<TeamMemberDto> getTeamMembers(Long teamId) {
+    List<TeamUserRelation> teamUserRelations = teamUserRelationRepository.findAllByTeamWithUser(teamId);
 
-    findTeamUserRelation(team, user);
-
-    List<TeamUserRelation> teamUserRelations = teamUserRelationRepository.findAllByTeam(team);
     return teamUserRelations.stream()
-            .map(relation -> new UserDto(relation.getUser().getId(), relation.getUser().getNickname()))
+            .map(relation -> new TeamMemberDto(
+                    relation.getUser().getId(),
+                    relation.getUser().getNickname(),
+                    relation.getUser().getProfileImage()))
             .collect(Collectors.toList());
   }
 
