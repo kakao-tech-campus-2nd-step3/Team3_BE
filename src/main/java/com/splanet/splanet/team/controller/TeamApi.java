@@ -2,6 +2,7 @@ package com.splanet.splanet.team.api;
 
 import com.splanet.splanet.team.dto.TeamDto;
 import com.splanet.splanet.team.dto.TeamInvitationDto;
+import com.splanet.splanet.team.dto.TeamMemberDto;
 import com.splanet.splanet.user.dto.UserDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -34,9 +35,9 @@ public interface TeamApi {
   @Operation(summary = "유저 초대", description = "팀 관리자가 닉네임으로 특정 유저를 팀에 초대합니다.")
   @ApiResponses(value = {
           @ApiResponse(responseCode = "200", description = "유저가 성공적으로 초대되었습니다."),
-          @ApiResponse(responseCode = "403", description = "권한이 없습니다."),
-          @ApiResponse(responseCode = "404", description = "팀 또는 유저를 찾을 수 없습니다."),
-          @ApiResponse(responseCode = "400", description = "해당 유저는 이미 팀에 속해 있습니다.")
+          @ApiResponse(responseCode = "403", description = "권한이 없습니다.", content = @Content),
+          @ApiResponse(responseCode = "404", description = "팀 또는 유저를 찾을 수 없습니다.", content = @Content),
+          @ApiResponse(responseCode = "400", description = "해당 유저는 이미 팀에 속해 있습니다.", content = @Content)
   })
   @PostMapping("/{teamId}/invite")
   ResponseEntity<TeamInvitationDto> inviteUserToTeam(
@@ -71,7 +72,7 @@ public interface TeamApi {
           @ApiResponse(responseCode = "404", description = "팀 또는 유저를 찾을 수 없습니다.", content = @Content)
   })
   @GetMapping("/{teamId}/members")
-  ResponseEntity<List<UserDto>> getTeamMembers(
+  ResponseEntity<List<TeamMemberDto>> getTeamMembers(
           @Parameter(description = "팀의 ID", example = "1") @PathVariable Long teamId,
           @Parameter(description = "조회하는 유저의 ID", example = "1") @AuthenticationPrincipal Long userId);
 
