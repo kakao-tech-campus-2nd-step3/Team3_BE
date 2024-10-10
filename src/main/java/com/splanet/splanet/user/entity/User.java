@@ -6,10 +6,7 @@ import com.splanet.splanet.subscription.entity.Subscription;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.util.List;
@@ -36,6 +33,7 @@ public class User extends BaseEntity {
   @Column(name = "kakao_id", unique = true)
   private Long kakaoId;
 
+  @Setter
   @Builder.Default
   @Column(name = "is_premium")
   private Boolean isPremium = false;

@@ -9,7 +9,6 @@ import com.splanet.splanet.user.entity.User;
 import com.splanet.splanet.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -86,24 +85,26 @@ class SubscriptionServiceTest {
     @Test
     void 구독취소성공() {
         // Given
+        Long userId = 1L;
         Subscription mockedSubscription = mock(Subscription.class);
+        User mockedUser = mock(User.class); // User 객체 모킹
+
         when(mockedSubscription.getStatus()).thenReturn(Subscription.Status.ACTIVE);
         when(subscriptionRepository.findTopByUserIdAndStatusOrderByStartDateDesc(any(Long.class), any(Subscription.Status.class)))
                 .thenReturn(Optional.of(mockedSubscription));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(mockedUser)); // 유저 조회 모킹
 
         // When
-        ResponseEntity<String> response = subscriptionService.cancelSubscription(1L);
+        ResponseEntity<String> response = subscriptionService.cancelSubscription(userId);
 
         // Then
         assertEquals(200, response.getStatusCodeValue());
         assertEquals("{\"message\": \"구독이 성공적으로 취소되었습니다.\"}", response.getBody());
 
         verify(mockedSubscription, times(1)).cancel(); // cancel 메소드가 호출되었는지 확인
-
-        verify(subscriptionRepository, times(1)).save(mockedSubscription);
-
-        when(mockedSubscription.getStatus()).thenReturn(Subscription.Status.CANCELED); // 상태를 CANCELED로 설정
-        assertEquals(Subscription.Status.CANCELED, mockedSubscription.getStatus());
+        verify(subscriptionRepository, times(1)).delete(mockedSubscription); // 구독 삭제 호출 확인
+        verify(userRepository, times(1)).save(mockedUser); // 유저 저장 호출 확인
+        verify(mockedUser, times(1)).setIsPremium(false); // 프리미엄 상태가 false로 설정되었는지 확인
     }
 
     @Test
@@ -122,23 +123,39 @@ class SubscriptionServiceTest {
 
     @Test
     void 구독성공() {
+        // Given
+        User user = User.builder()
+                .id(1L)
+                .nickname("testNickname")
+                .isPremium(false)
+                .build();
+
+        // 모킹 설정
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        Subscription subscription = Subscription.builder()
+                .id(1L) // id는 테스트를 위해 수동으로 설정
+                .user(user)
+                .type(Subscription.Type.MONTHLY)
+                .status(Subscription.Status.ACTIVE)
+                .startDate(LocalDateTime.now())
+                .endDate(LocalDateTime.now().plusMonths(1))
+                .build();
+
+        // save 메서드의 결과를 모킹
+        when(subscriptionRepository.save(any(Subscription.class))).thenReturn(subscription);
+
         SubscriptionRequest request = new SubscriptionRequest();
         request.setType(Subscription.Type.MONTHLY);
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(mockedUser));
-        when(subscriptionRepository.save(any(Subscription.class))).thenReturn(mockedSubscription);
-
+        // When
         ResponseEntity<SubscriptionResponse> response = subscriptionService.subscribe(1L, request);
 
-        assertEquals(200, response.getStatusCodeValue());
+        // Then
+        assertTrue(user.getIsPremium()); // isPremium이 true로 변경되었는지 확인
         assertNotNull(response.getBody());
-        assertEquals("구독이 성공적으로 구매되었습니다.", response.getBody().getMessage());
-
-        ArgumentCaptor<Subscription> captor = ArgumentCaptor.forClass(Subscription.class);
-        verify(subscriptionRepository).save(captor.capture());
-        Subscription savedSubscription = captor.getValue();
-        assertEquals(mockedUser, savedSubscription.getUser()); // Compare with the mocked user
-        assertEquals(Subscription.Status.ACTIVE, savedSubscription.getStatus());
+        assertNotNull(response.getBody().getSubscription());
+        assertEquals(subscription.getId(), response.getBody().getSubscription().getId()); // id 확인
     }
 
     @Test
