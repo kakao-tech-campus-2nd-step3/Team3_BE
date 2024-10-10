@@ -4,10 +4,13 @@ import com.splanet.splanet.subscription.dto.SubscriptionRequest;
 import com.splanet.splanet.subscription.dto.SubscriptionResponse;
 import com.splanet.splanet.subscription.entity.Subscription;
 import com.splanet.splanet.subscription.repository.SubscriptionRepository;
+import com.splanet.splanet.user.dto.UserUpdateRequestDto;
+import com.splanet.splanet.user.repository.UserRepository;
 import com.splanet.splanet.core.exception.BusinessException;
 import com.splanet.splanet.core.exception.ErrorCode;
 import com.splanet.splanet.user.entity.User;
-import com.splanet.splanet.user.repository.UserRepository;
+import com.splanet.splanet.user.service.UserService;
+import jakarta.transaction.Transactional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -17,12 +20,13 @@ import java.time.LocalDateTime;
 public class SubscriptionService {
 
     private final SubscriptionRepository subscriptionRepository;
-
     private final UserRepository userRepository;
+    private final UserService userService;
 
-    public SubscriptionService(SubscriptionRepository subscriptionRepository, UserRepository userRepository) {
+    public SubscriptionService(SubscriptionRepository subscriptionRepository, UserRepository userRepository , UserService userService) {
         this.subscriptionRepository = subscriptionRepository;
         this.userRepository = userRepository;
+        this.userService = userService;
     }
 
     // 구독 조회
@@ -53,10 +57,19 @@ public class SubscriptionService {
         }
 
         subscription.cancel();
-        subscriptionRepository.save(subscription);
+        subscriptionRepository.delete(subscription);
+
+        // isPremium 업데이트
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        user.setIsPremium(false);
+        userRepository.save(user);
+
         return ResponseEntity.ok("{\"message\": \"구독이 성공적으로 취소되었습니다.\"}");
     }
 
+    // 구독하기
+    @Transactional
     public ResponseEntity<SubscriptionResponse> subscribe(Long userId, SubscriptionRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
@@ -64,6 +77,13 @@ public class SubscriptionService {
         // 구독 객체 생성
         Subscription subscription = createSubscription(user, request.getType());
         Subscription savedSubscription = subscriptionRepository.save(subscription);
+
+        // isPremium 업데이트
+        if (!Boolean.TRUE.equals(user.getIsPremium())) {
+            user.setIsPremium(true);
+            userRepository.save(user);
+        }
+
         return createSubscriptionResponse(savedSubscription);
     }
 

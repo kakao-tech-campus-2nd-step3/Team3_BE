@@ -5,7 +5,6 @@ import com.splanet.splanet.subscription.dto.SubscriptionResponse;
 import com.splanet.splanet.subscription.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
