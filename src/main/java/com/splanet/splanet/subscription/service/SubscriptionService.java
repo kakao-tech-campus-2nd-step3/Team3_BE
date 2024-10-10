@@ -33,7 +33,7 @@ public class SubscriptionService {
 
         // 가장 최근 ACTIVE 구독
         Subscription subscription = subscriptionRepository.findTopByUserIdAndStatusOrderByStartDateDesc(userId, Subscription.Status.ACTIVE)
-                .orElseThrow(() -> new BusinessException(ErrorCode.SUBSCRIPSTION_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.SUBSCRIPTION_NOT_FOUND));
 
         SubscriptionResponse response = new SubscriptionResponse("구독 정보가 성공적으로 조회되었습니다.", subscription);
         return ResponseEntity.ok(response);
@@ -46,7 +46,7 @@ public class SubscriptionService {
         }
 
         Subscription subscription = subscriptionRepository.findTopByUserIdAndStatusOrderByStartDateDesc(userId, Subscription.Status.ACTIVE)
-                .orElseThrow(() -> new BusinessException(ErrorCode.SUBSCRIPSTION_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.SUBSCRIPTION_NOT_FOUND));
 
         if (subscription.getStatus() == Subscription.Status.CANCELED) {
             throw new BusinessException(ErrorCode.ALREADY_CANCELED);
