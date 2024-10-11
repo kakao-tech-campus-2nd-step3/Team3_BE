@@ -21,4 +21,7 @@ public interface TeamUserRelationRepository extends JpaRepository<TeamUserRelati
   @Query("SELECT t FROM TeamUserRelation t JOIN FETCH t.user WHERE t.team.id = :teamId")
   List<TeamUserRelation> findAllByTeamWithUser(@Param("teamId") Long teamId);
 
+  @Query("SELECT t FROM TeamUserRelation t WHERE t.team.id = :teamId AND t.user.id = :userId")
+  Optional<TeamUserRelation> findByTeamIdAndUserId(@Param("teamId") Long teamId, @Param("userId") Long userId);
+
 }
