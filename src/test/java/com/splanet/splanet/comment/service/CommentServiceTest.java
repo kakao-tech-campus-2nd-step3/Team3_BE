@@ -41,7 +41,12 @@ class CommentServiceTest {
     void 댓글조회성공() {
         // given
         User user = User.builder().id(1L).nickname("user1").build();
-        Comment comment = Comment.builder().id(1L).writer(user).content("test content").build();
+        Comment comment = Comment.builder()
+                .id(1L)
+                .writer(user)
+                .content("test content")
+                .user(user) // user 필드를 설정
+                .build();
         when(commentRepository.findByUserId(anyLong())).thenReturn(List.of(comment));
 
         // when
@@ -49,7 +54,7 @@ class CommentServiceTest {
 
         // then
         assertEquals(1, responses.size());
-        assertEquals("test content", responses.get(0).getContent());
+        assertEquals("test content", responses.get(0).content());
     }
 
     @Test
@@ -57,9 +62,7 @@ class CommentServiceTest {
         // given
         User user = User.builder().id(1L).build();
         User writer = User.builder().id(2L).build();
-        CommentRequest request = new CommentRequest();
-        request.setUserId(1L);
-        request.setContent("test content");
+        CommentRequest request = new CommentRequest(1L, "test content");
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(userRepository.findById(2L)).thenReturn(Optional.of(writer));
         when(commentRepository.save(any(Comment.class))).thenReturn(Comment.builder().id(1L).build());
@@ -76,8 +79,7 @@ class CommentServiceTest {
         // given
         User writer = User.builder().id(2L).build();
         Comment comment = Comment.builder().id(1L).writer(writer).content("old content").build();
-        CommentRequest request = new CommentRequest();
-        request.setContent("new content");
+        CommentRequest request = new CommentRequest(1L, "new content");
         when(commentRepository.findById(1L)).thenReturn(Optional.of(comment));
 
         // when
@@ -92,8 +94,7 @@ class CommentServiceTest {
         // given
         User writer = User.builder().id(2L).build();
         Comment comment = Comment.builder().id(1L).writer(writer).content("old content").build();
-        CommentRequest request = new CommentRequest();
-        request.setContent("new content");
+        CommentRequest request = new CommentRequest(1L, "new content");
         when(commentRepository.findById(1L)).thenReturn(Optional.of(comment));
 
         // when & then
