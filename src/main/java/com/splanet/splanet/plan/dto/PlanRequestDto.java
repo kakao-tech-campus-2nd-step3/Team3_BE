@@ -12,6 +12,9 @@ public class PlanRequestDto {
     private String description;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
-    private Boolean accessibility;
-    private Boolean isCompleted;
+
+    @Builder.Default
+    private Boolean accessibility = true;
+    @Builder.Default
+    private Boolean isCompleted = false;
 }

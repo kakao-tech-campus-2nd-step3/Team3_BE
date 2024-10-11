@@ -39,6 +39,7 @@ public class Plan extends BaseEntity {
     @Column(nullable = false)
     private LocalDateTime endDate;
 
+    @Builder.Default
     @Column(nullable = true)
     private Boolean accessibility = true;
 
