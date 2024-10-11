@@ -20,8 +20,10 @@ public interface TeamUserRelationRepository extends JpaRepository<TeamUserRelati
   @EntityGraph(attributePaths = "user")
   @Query("SELECT t FROM TeamUserRelation t JOIN FETCH t.user WHERE t.team.id = :teamId")
   List<TeamUserRelation> findAllByTeamWithUser(@Param("teamId") Long teamId);
-
+  @EntityGraph(attributePaths = {"team", "team.user"})
+  List<TeamUserRelation> findAllByUser(User user);
   @Query("SELECT t FROM TeamUserRelation t WHERE t.team.id = :teamId AND t.user.id = :userId")
   Optional<TeamUserRelation> findByTeamIdAndUserId(@Param("teamId") Long teamId, @Param("userId") Long userId);
+  int countByTeam(Team team);
 
 }

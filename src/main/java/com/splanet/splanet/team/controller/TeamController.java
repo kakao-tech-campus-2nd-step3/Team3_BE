@@ -23,6 +23,11 @@ public class TeamController implements TeamApi {
   }
 
   @Override
+  public ResponseEntity<Void> deleteTeam(Long teamId, Long adminId) {
+    teamService.deleteTeam(teamId, adminId);
+    return ResponseEntity.noContent().build();
+  }
+  @Override
   public ResponseEntity<TeamDto> createTeam(String teamName, Long userId) {
     TeamDto createdTeam = teamService.createTeam(teamName, userId);
     return ResponseEntity.ok(createdTeam);
@@ -75,4 +80,15 @@ public class TeamController implements TeamApi {
     teamService.kickUserFromTeam(teamId, userId, adminId);
     return ResponseEntity.noContent().build();
   }
+  @Override
+  public ResponseEntity<List<TeamDto>> getUserTeams(Long userId) {
+    List<TeamDto> teams = teamService.getUserTeams(userId);
+    return ResponseEntity.ok(teams);
+  }
+  @Override
+  public ResponseEntity<Void> leaveTeam(Long teamId, Long userId) {
+    teamService.leaveTeam(teamId, userId);
+    return ResponseEntity.noContent().build();
+  }
+
 }

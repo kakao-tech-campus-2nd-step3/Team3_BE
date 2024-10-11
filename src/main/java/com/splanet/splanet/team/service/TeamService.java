@@ -228,8 +228,10 @@ public class TeamService {
   // 8. 유저가 속한 팀의 모든 멤버 조회
   @Transactional(readOnly = true)
   public List<TeamMemberDto> getTeamMembers(Long teamId) {
+    // 팀에 속한 모든 사용자 관계 조회 (관리자 포함)
     List<TeamUserRelation> teamUserRelations = teamUserRelationRepository.findAllByTeamWithUser(teamId);
 
+    // TeamUserRelation에서 사용자 정보를 가져와 TeamMemberDto로 변환
     return teamUserRelations.stream()
             .map(relation -> new TeamMemberDto(
                     relation.getUser().getId(),
@@ -237,7 +239,6 @@ public class TeamService {
                     relation.getUser().getProfileImage()))
             .collect(Collectors.toList());
   }
-
   @Transactional(readOnly = true)
   public List<TeamInvitationDto> getUserPendingInvitations(Long userId) {
     User user = findUserById(userId);
@@ -252,6 +253,28 @@ public class TeamService {
                     invitation.getUser().getNickname(),
                     invitation.getUser().getProfileImage(),
                     invitation.getStatus()))
+            .collect(Collectors.toList());
+  }
+  @Transactional(readOnly = true)
+  public List<TeamDto> getUserTeams(Long userId) {
+    User user = findUserById(userId);
+
+    // 유저가 속한 팀 목록을 조회
+    List<TeamUserRelation> teamUserRelations = teamUserRelationRepository.findAllByUser(user);
+
+    // 각 팀에 속한 멤버 수를 조회하고 TeamDto에 포함
+    return teamUserRelations.stream()
+            .map(relation -> {
+              Team team = relation.getTeam();
+              int teamMemberCount = teamUserRelationRepository.countByTeam(team); // 팀 멤버 수 조회
+
+              return new TeamDto(
+                      team.getId(),
+                      team.getTeamName(),
+                      new UserDto(user.getId(), user.getNickname()),
+                      teamMemberCount
+              );
+            })
             .collect(Collectors.toList());
   }
 
@@ -270,4 +293,33 @@ public class TeamService {
     return teamUserRelationRepository.findByTeamAndUser(team, user)
             .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_MEMBER_NOT_FOUND));
   }
+  @Transactional
+  public void deleteTeam(Long teamId, Long adminId) {
+    Team team = findTeamById(teamId);
+    User adminUser = findUserById(adminId);
+
+    // 관리자 권한 확인
+    TeamUserRelation adminRelation = teamUserRelationRepository.findByTeamAndUser(team, adminUser)
+            .orElseThrow(() -> new BusinessException(ErrorCode.ACCESS_DENIED));
+
+    if (adminRelation.getRole() != UserTeamRole.ADMIN) {
+      throw new BusinessException(ErrorCode.ACCESS_DENIED);
+    }
+
+    // 팀 삭제 - 연관된 엔티티도 함께 삭제되도록 설정
+    teamRepository.delete(team);
+  }
+  @Transactional
+  public void leaveTeam(Long teamId, Long userId) {
+    Team team = findTeamById(teamId);
+    User user = findUserById(userId);
+
+    // 팀 내 사용자 관계 확인
+    TeamUserRelation teamUserRelation = teamUserRelationRepository.findByTeamAndUser(team, user)
+            .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_MEMBER_NOT_FOUND));
+
+    // 팀에서 사용자 관계 삭제
+    teamUserRelationRepository.delete(teamUserRelation);
+  }
+
 }
