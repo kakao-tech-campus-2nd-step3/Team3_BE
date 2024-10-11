@@ -1,6 +1,7 @@
 package com.splanet.splanet.friendRequest.entity;
 
 import com.splanet.splanet.core.BaseEntity;
+import com.splanet.splanet.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -13,11 +14,13 @@ import lombok.experimental.SuperBuilder;
 @Entity
 public class FriendRequest extends BaseEntity {
 
-    @Column(name = "requester_id", nullable = false)
-    private Long requesterId;
+    @ManyToOne
+    @JoinColumn(name = "requester_id", nullable = false)
+    private User requester;
 
-    @Column(name = "receiver_id", nullable = false)
-    private Long receiverId;
+    @ManyToOne
+    @JoinColumn(name = "receiver_id", nullable = false)
+    private User receiver;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
@@ -33,5 +36,13 @@ public class FriendRequest extends BaseEntity {
         PENDING,
         ACCEPTED,
         REJECTED
+    }
+
+    public Long getRequesterId() {
+        return requester != null ? requester.getId() : null;
+    }
+
+    public Long getReceiverId() {
+        return receiver != null ? receiver.getId() : null;
     }
 }
