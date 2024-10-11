@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter
-@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PUBLIC)
 @SuperBuilder(toBuilder = true)
@@ -37,9 +36,10 @@ public class TeamPlan extends BaseEntity {
   @Column(nullable = false)
   private LocalDateTime endDate;
 
+  @Builder.Default
   @Column(nullable = true)
   private Boolean accessibility = true;
-
+  @Builder.Default
   @Column(nullable = false)
   private Boolean isCompleted = false;
 

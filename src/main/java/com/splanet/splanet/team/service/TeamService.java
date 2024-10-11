@@ -239,6 +239,7 @@ public class TeamService {
                     relation.getUser().getProfileImage()))
             .collect(Collectors.toList());
   }
+
   @Transactional(readOnly = true)
   public List<TeamInvitationDto> getUserPendingInvitations(Long userId) {
     User user = findUserById(userId);
@@ -255,44 +256,26 @@ public class TeamService {
                     invitation.getStatus()))
             .collect(Collectors.toList());
   }
+
   @Transactional(readOnly = true)
   public List<TeamDto> getUserTeams(Long userId) {
     User user = findUserById(userId);
-
     // 유저가 속한 팀 목록을 조회
     List<TeamUserRelation> teamUserRelations = teamUserRelationRepository.findAllByUser(user);
 
-    // 각 팀에 속한 멤버 수를 조회하고 TeamDto에 포함
     return teamUserRelations.stream()
             .map(relation -> {
               Team team = relation.getTeam();
-              int teamMemberCount = teamUserRelationRepository.countByTeam(team); // 팀 멤버 수 조회
 
               return new TeamDto(
                       team.getId(),
                       team.getTeamName(),
-                      new UserDto(user.getId(), user.getNickname()),
-                      teamMemberCount
+                      new UserDto(user.getId(), user.getNickname())
               );
             })
             .collect(Collectors.toList());
   }
 
-  // Helper 메서드들
-  private User findUserById(Long userId) {
-    return userRepository.findById(userId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-  }
-
-  private Team findTeamById(Long teamId) {
-    return teamRepository.findById(teamId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_NOT_FOUND));
-  }
-
-  private TeamUserRelation findTeamUserRelation(Team team, User user) {
-    return teamUserRelationRepository.findByTeamAndUser(team, user)
-            .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_MEMBER_NOT_FOUND));
-  }
   @Transactional
   public void deleteTeam(Long teamId, Long adminId) {
     Team team = findTeamById(teamId);
@@ -309,6 +292,7 @@ public class TeamService {
     // 팀 삭제 - 연관된 엔티티도 함께 삭제되도록 설정
     teamRepository.delete(team);
   }
+
   @Transactional
   public void leaveTeam(Long teamId, Long userId) {
     Team team = findTeamById(teamId);
@@ -322,4 +306,18 @@ public class TeamService {
     teamUserRelationRepository.delete(teamUserRelation);
   }
 
+  private User findUserById(Long userId) {
+    return userRepository.findById(userId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+  }
+
+  private Team findTeamById(Long teamId) {
+    return teamRepository.findById(teamId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_NOT_FOUND));
+  }
+
+  private TeamUserRelation findTeamUserRelation(Team team, User user) {
+    return teamUserRelationRepository.findByTeamAndUser(team, user)
+            .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_MEMBER_NOT_FOUND));
+  }
 }
