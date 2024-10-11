@@ -1,13 +1,13 @@
 package com.splanet.splanet.friend.controller;
 
-import com.splanet.splanet.core.exception.BusinessException;
-import com.splanet.splanet.core.exception.ErrorCode;
 import com.splanet.splanet.friend.dto.FriendResponse;
 import com.splanet.splanet.friend.service.FriendService;
-import com.splanet.splanet.user.entity.User;
+import com.splanet.splanet.plan.dto.PlanResponseDto;
+import com.splanet.splanet.plan.repository.PlanRepository;
 import com.splanet.splanet.user.repository.UserRepository;
-import com.splanet.splanet.user.service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -17,10 +17,12 @@ public class FriendController implements FriendApi {
 
     private final FriendService friendService;
     private final UserRepository userRepository;
+    private final PlanRepository planRepository;
 
-    public FriendController(FriendService friendService, UserRepository userRepository) {
+    public FriendController(FriendService friendService, UserRepository userRepository, PlanRepository planRepository) {
         this.friendService = friendService;
         this.userRepository = userRepository;
+        this.planRepository = planRepository;
     }
 
     @Override
@@ -30,11 +32,9 @@ public class FriendController implements FriendApi {
     }
 
     @Override
-    public ResponseEntity<String> getFriendPlan(Long friendId, Long userId) {
-        // 친구의 닉네임을 반환하는 임시 구현
-        User friendUser = userRepository.findById(friendId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        return ResponseEntity.ok(friendUser.getNickname());
+    public ResponseEntity<List<PlanResponseDto>> getFriendPlan(
+            @PathVariable Long friendId,
+            @AuthenticationPrincipal Long userId) {
+        return friendService.getFriendPlan(friendId, userId);
     }
 }

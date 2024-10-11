@@ -27,7 +27,7 @@ public interface FriendRequestApi {
     ResponseEntity<FriendRequestResponse> sendFriendRequest(
             @Parameter(description = "친구 요청을 보낼 사용자 ID", required = true) @RequestBody FriendRequestRequest request);
 
-    @PostMapping("/{request_id}/accept")
+    @PostMapping("/{requestId}/accept")
     @Operation(summary = "친구 요청 수락", description = "친구 요청 수락")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "친구 요청 성공적으로 수락되었습니다."),
@@ -38,7 +38,7 @@ public interface FriendRequestApi {
     ResponseEntity<FriendRequestResponse> acceptFriendRequest(
             @Parameter(description = "친구 요청 ID", required = true) @PathVariable Long requestId);
 
-    @PostMapping("/{request_id}/reject")
+    @PostMapping("/{requestId}/reject")
     @Operation(summary = "친구 요청 거절", description = "친구 요청 거절")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "친구 요청이 성공적으로 거절되었습니다."),
