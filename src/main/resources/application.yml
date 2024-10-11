@@ -20,6 +20,7 @@ spring:
     import: env.properties
   security:
     oauth2:
+      redirect-url: ${REDIRECT_URL}
       client:
         provider:
           kakao:
@@ -38,10 +39,11 @@ spring:
             scope: profile_nickname, profile_image, account_email
             client-name: Kakao
 
-
 logging:
   level:
     org.springframework.security: TRACE
+
 springdoc:
   swagger-ui:
     path: /swagger
+

@@ -1,11 +1,5 @@
 package com.splanet.splanet.comment.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+public record CommentRequest(Long userId, String content) {
 
-@Getter
-@Setter
-public class CommentRequest {
-    private Long userId;
-    private String content;
 }
