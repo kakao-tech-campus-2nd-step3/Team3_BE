@@ -1,6 +1,7 @@
 package com.splanet.splanet.team.entity;
 
 import com.splanet.splanet.core.BaseEntity;
+import com.splanet.splanet.teamplan.entity.TeamPlan;
 import com.splanet.splanet.user.entity.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -28,6 +29,13 @@ public class Team extends BaseEntity {
 
   @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<TeamUserRelation> teamUserRelations;
+
+  @OneToMany(mappedBy = "team", cascade = CascadeType.REMOVE)
+  private List<TeamUserRelation> userRelations;
+
+  @OneToMany(mappedBy = "team", cascade = CascadeType.REMOVE)
+  private List<TeamPlan> teamPlans;
+
 
   public Team(String teamName, User user) {
     this.teamName = teamName;

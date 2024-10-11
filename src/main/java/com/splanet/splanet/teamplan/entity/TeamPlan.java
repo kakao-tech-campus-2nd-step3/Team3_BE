@@ -1,4 +1,4 @@
-package com.splanet.splanet.plan.entity;
+package com.splanet.splanet.teamplan.entity;
 
 import com.splanet.splanet.core.BaseEntity;
 import com.splanet.splanet.team.entity.Team;
@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PUBLIC)
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 public class TeamPlan extends BaseEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -43,13 +43,15 @@ public class TeamPlan extends BaseEntity {
   @Column(nullable = false)
   private Boolean isCompleted = false;
 
-  public void updatePlan(String title, String description, LocalDateTime startDate, LocalDateTime endDate, Boolean accessibility, Boolean isCompleted) {
-    this.title = title;
-    this.description = description;
-    this.startDate = startDate;
-    this.endDate = endDate;
-    this.accessibility = accessibility;
-    this.isCompleted = isCompleted;
-
+  public TeamPlan updatePlan(String title, String description, LocalDateTime startDate, LocalDateTime endDate, Boolean accessibility, Boolean isCompleted) {
+    return this.toBuilder()
+            .title(title)
+            .description(description)
+            .startDate(startDate)
+            .endDate(endDate)
+            .accessibility(accessibility)
+            .isCompleted(isCompleted)
+            .build();
   }
+
 }
