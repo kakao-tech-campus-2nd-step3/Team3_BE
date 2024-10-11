@@ -79,7 +79,7 @@ public class SubscriptionService {
         Subscription savedSubscription = subscriptionRepository.save(subscription);
 
         // isPremium 업데이트
-        if (!Boolean.TRUE.equals(user.getIsPremium())) {
+        if (user.getIsPremium()) {
             user.setIsPremium(true);
             userRepository.save(user);
         }
