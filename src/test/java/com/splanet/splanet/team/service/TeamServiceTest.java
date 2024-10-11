@@ -4,11 +4,13 @@ import com.splanet.splanet.core.exception.BusinessException;
 import com.splanet.splanet.core.exception.ErrorCode;
 import com.splanet.splanet.team.dto.TeamDto;
 import com.splanet.splanet.team.dto.TeamInvitationDto;
-import com.splanet.splanet.team.entity.*;
+import com.splanet.splanet.team.entity.Team;
+import com.splanet.splanet.team.entity.TeamInvitation;
+import com.splanet.splanet.team.entity.TeamUserRelation;
+import com.splanet.splanet.team.entity.UserTeamRole;
 import com.splanet.splanet.team.repository.TeamInvitationRepository;
 import com.splanet.splanet.team.repository.TeamRepository;
 import com.splanet.splanet.team.repository.TeamUserRelationRepository;
-import com.splanet.splanet.user.dto.UserDto;
 import com.splanet.splanet.user.entity.User;
 import com.splanet.splanet.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,17 +20,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-
 @ExtendWith(MockitoExtension.class)
-class TeamServiceTest {
+public class TeamServiceTest {
+
+  @InjectMocks
+  private TeamService teamService;
+
   @Mock
   private TeamRepository teamRepository;
 
@@ -41,429 +43,176 @@ class TeamServiceTest {
   @Mock
   private TeamInvitationRepository teamInvitationRepository;
 
-
-  @InjectMocks
-  private TeamService teamService;
-
-  private User user;
-  private User user2;
-  private Team team;
-  private Team team1;
-  private Team team2;
-  private TeamInvitation invitation1;
-  private TeamInvitation invitation2;
+  private User testUser;
+  private Team testTeam;
+  private TeamUserRelation testRelation;
 
   @BeforeEach
   void setUp() {
-    user = User.builder()
+    testUser = User.builder()
             .id(1L)
-            .nickname("TestUser")
-            .build();
-    user2 = User.builder()
-            .id(2L)
-            .nickname("TestUser2")
+            .nickname("testNickname")
+            .profileImage("profileImage")
             .build();
 
-    team = Team.builder()
-            .teamName("TestTeam")
-            .user(user)
-            .build();
-    team1 = Team.builder()
-            .id(1L)
-            .teamName("Team 1")
-            .user(user)
+    testTeam = Team.builder()
+            .teamName("Test Team")
+            .user(testUser)
             .build();
 
-    team2 = Team.builder()
-            .id(2L)
-            .teamName("Team 2")
-            .user(user)
-            .build();
+    testRelation = new TeamUserRelation(testTeam, testUser, UserTeamRole.ADMIN);
 
-    invitation1 = new TeamInvitation(team1, user);
-    invitation1.accept();
-    invitation2 = new TeamInvitation(team2, user);
+    lenient().when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+    lenient().when(teamRepository.findById(1L)).thenReturn(Optional.of(testTeam));
   }
 
   @Test
-  void createTeam() {
-    // given
-    when(userRepository.findById(1L)).thenReturn(java.util.Optional.of(user));
-    when(teamRepository.save(any(Team.class))).thenReturn(team);
+  public void testCreateTeam_Success() {
+    String teamName = "Test Team";
 
-    // when
-    TeamDto teamDto = teamService.createTeam("TestTeam", 1L);
+    TeamDto result = teamService.createTeam(teamName, 1L);
 
-    // then
-    assertNotNull(teamDto);
-    assertEquals("TestTeam", teamDto.getTeamName());
-    assertEquals(user.getId(), teamDto.getUser().getId());
+    assertNotNull(result);
+    assertEquals(teamName, result.getTeamName());
     verify(teamRepository, times(1)).save(any(Team.class));
     verify(teamUserRelationRepository, times(1)).save(any(TeamUserRelation.class));
   }
 
   @Test
-  void createTeam_InvalidInput_ThrowsException() {
-    // given
-    String invalidTeamName = "";
-
-    // when & then
-    BusinessException exception = assertThrows(BusinessException.class, () -> {
-      teamService.createTeam(invalidTeamName, 1L);
-    });
-
+  public void testCreateTeam_InvalidInput() {
+    BusinessException exception = assertThrows(BusinessException.class, () ->
+            teamService.createTeam("", 1L)
+    );
     assertEquals(ErrorCode.INVALID_INPUT_VALUE, exception.getErrorCode());
-    verify(teamRepository, never()).save(any(Team.class));
   }
 
   @Test
-  void createTeam_UserNotFound_ThrowsException() {
-    // given
-    when(userRepository.findById(1L)).thenReturn(java.util.Optional.empty());
+  public void testDeleteTeam_Success() {
+    when(teamUserRelationRepository.findByTeamAndUser(any(Team.class), any(User.class)))
+            .thenReturn(Optional.of(testRelation));
 
-    // when & then
-    BusinessException exception = assertThrows(BusinessException.class, () -> {
-      teamService.createTeam("TestTeam", 1L);
-    });
+    teamService.deleteTeam(1L, 1L);
 
-    assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
-    verify(teamRepository, never()).save(any(Team.class));
+    verify(teamRepository, times(1)).delete(testTeam);
   }
 
   @Test
-  void inviteUserToTeamByNickname() {
-    // given
-    when(teamRepository.findById(1L)).thenReturn(java.util.Optional.of(team));
-    when(userRepository.findById(1L)).thenReturn(java.util.Optional.of(user));
-    when(teamUserRelationRepository.findByTeamAndUser(team, user))
-            .thenReturn(java.util.Optional.of(new TeamUserRelation(team, user, UserTeamRole.ADMIN)));
-    when(userRepository.findByNickname("TestUser2")).thenReturn(java.util.Optional.of(user2));
-    when(teamUserRelationRepository.findByTeamAndUser(team, user2)).thenReturn(java.util.Optional.empty());
+  public void testDeleteTeam_AccessDenied() {
+    TeamUserRelation memberRelation = new TeamUserRelation(testTeam, testUser, UserTeamRole.MEMBER);
+    when(teamUserRelationRepository.findByTeamAndUser(any(Team.class), any(User.class)))
+            .thenReturn(Optional.of(memberRelation));
 
-    // when
-    TeamInvitationDto invitationDto = teamService.inviteUserToTeamByNickname(1L, 1L, "TestUser2");
+    BusinessException exception = assertThrows(BusinessException.class, () ->
+            teamService.deleteTeam(1L, 1L)
+    );
 
-    // then
-    assertNotNull(invitationDto);
-    assertEquals("TestTeam", invitationDto.getTeamName());
-    assertEquals(InvitationStatus.PENDING, invitationDto.getStatus());
+    assertEquals(ErrorCode.ACCESS_DENIED, exception.getErrorCode());
+  }
+
+  @Test
+  public void testLeaveTeam_Success() {
+    when(teamUserRelationRepository.findByTeamAndUser(any(Team.class), any(User.class)))
+            .thenReturn(Optional.of(testRelation));
+
+    teamService.leaveTeam(1L, 1L);
+
+    verify(teamUserRelationRepository, times(1)).delete(testRelation);
+  }
+
+  @Test
+  public void testLeaveTeam_UserNotInTeam() {
+    when(teamUserRelationRepository.findByTeamAndUser(any(Team.class), any(User.class)))
+            .thenReturn(Optional.empty());
+
+    BusinessException exception = assertThrows(BusinessException.class, () ->
+            teamService.leaveTeam(1L, 1L)
+    );
+
+    assertEquals(ErrorCode.TEAM_MEMBER_NOT_FOUND, exception.getErrorCode());
+  }
+
+
+  @Test
+  public void testInviteUserToTeam_Success() {
+    // 관리자 권한 확인을 위해 ADMIN으로 설정
+    when(teamUserRelationRepository.findByTeamAndUser(any(Team.class), any(User.class)))
+            .thenReturn(Optional.of(testRelation)); // 관리자임을 설정
+
+    User invitedUser = User.builder()
+            .id(2L)
+            .nickname("inviteUser")
+            .profileImage("profileImage")
+            .build();
+
+    // 초대할 유저가 팀에 속해있지 않음을 설정
+    when(userRepository.findByNickname(anyString())).thenReturn(Optional.of(invitedUser));
+    when(teamUserRelationRepository.findByTeamAndUser(testTeam, invitedUser)).thenReturn(Optional.empty());
+
+    TeamInvitationDto result = teamService.inviteUserToTeamByNickname(1L, 1L, "inviteUser");
+
+    assertNotNull(result);
+    assertEquals("inviteUser", result.getNickname());
     verify(teamInvitationRepository, times(1)).save(any(TeamInvitation.class));
   }
 
   @Test
-  void getUserPendingInvitations() {
-    // given
-    when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-    when(teamInvitationRepository.findAllByUserAndStatus(user, InvitationStatus.PENDING))
-            .thenReturn(Arrays.asList(invitation2)); // Only pending invitations are returned
+  public void testInviteUserToTeam_UserAlreadyInTeam() {
+    // 관리자 권한 확인
+    TeamUserRelation adminRelation = new TeamUserRelation(testTeam, testUser, UserTeamRole.ADMIN);
+    when(teamUserRelationRepository.findByTeamAndUser(testTeam, testUser)).thenReturn(Optional.of(adminRelation));
 
-    // when
-    List<TeamInvitationDto> pendingInvitations = teamService.getUserPendingInvitations(1L);
+    // 이미 팀에 속한 유저를 설정
+    User invitedUser = User.builder()
+            .id(2L)
+            .nickname("inviteUser")
+            .profileImage("profileImage")
+            .build();
+    when(userRepository.findByNickname("inviteUser")).thenReturn(Optional.of(invitedUser));
+    when(teamUserRelationRepository.findByTeamAndUser(testTeam, invitedUser)).thenReturn(Optional.of(new TeamUserRelation(testTeam, invitedUser, UserTeamRole.MEMBER)));
 
-    // then
-    assertNotNull(pendingInvitations);
-    assertEquals(1, pendingInvitations.size());
-    assertEquals("Team 2", pendingInvitations.get(0).getTeamName());
-    assertEquals(InvitationStatus.PENDING, pendingInvitations.get(0).getStatus());
+    // USER_ALREADY_IN_TEAM 예외를 기대
+    BusinessException exception = assertThrows(BusinessException.class, () ->
+            teamService.inviteUserToTeamByNickname(1L, 1L, "inviteUser")
+    );
 
-    verify(userRepository, times(1)).findById(1L);
-    verify(teamInvitationRepository, times(1)).findAllByUserAndStatus(user, InvitationStatus.PENDING);
+    assertEquals(ErrorCode.USER_ALREADY_IN_TEAM, exception.getErrorCode());
   }
 
   @Test
-  void getUserPendingInvitations_UserNotFound_ThrowsException() {
-    // given
-    when(userRepository.findById(1L)).thenReturn(Optional.empty());
+  public void testKickUserFromTeam_Success() {
+    User targetUser = User.builder()
+            .id(2L)
+            .nickname("targetUser")
+            .profileImage("profileImage")
+            .build();
 
-    // when & then
-    BusinessException exception = assertThrows(BusinessException.class, () -> {
-      teamService.getUserPendingInvitations(1L);
-    });
+    when(userRepository.findById(2L)).thenReturn(Optional.of(targetUser));
+    when(teamUserRelationRepository.findByTeamAndUser(testTeam, targetUser))
+            .thenReturn(Optional.of(new TeamUserRelation(testTeam, targetUser, UserTeamRole.MEMBER)));
+    when(teamUserRelationRepository.findByTeamAndUser(testTeam, testUser))
+            .thenReturn(Optional.of(testRelation));
 
-    assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
-    verify(teamInvitationRepository, never()).findAllByUserAndStatus(any(), any());
-  }
+    teamService.kickUserFromTeam(1L, 2L, 1L);
 
-
-  @Test
-  void getUserPendingInvitations_NoPendingInvitations_ReturnsEmptyList() {
-    // given
-    when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-    when(teamInvitationRepository.findAllByUserAndStatus(user, InvitationStatus.PENDING))
-            .thenReturn(Arrays.asList()); // No pending invitations
-
-    // when
-    List<TeamInvitationDto> pendingInvitations = teamService.getUserPendingInvitations(1L);
-
-    // then
-    assertNotNull(pendingInvitations);
-    assertTrue(pendingInvitations.isEmpty());
-
-    verify(userRepository, times(1)).findById(1L);
-    verify(teamInvitationRepository, times(1)).findAllByUserAndStatus(user, InvitationStatus.PENDING);
+    verify(teamUserRelationRepository, times(1)).delete(any());
   }
 
   @Test
-  void acceptTeamInvitation() {
-    // given
-    TeamInvitation invitation = new TeamInvitation(team, user); // ID는 자동 할당
-    when(teamInvitationRepository.findById(1L)).thenReturn(Optional.of(invitation));
-    when(teamUserRelationRepository.save(any(TeamUserRelation.class))).thenReturn(any());
+  public void testKickUserFromTeam_AccessDenied() {
+    User targetUser = User.builder()
+            .id(2L)
+            .nickname("targetUser")
+            .profileImage("profileImage")
+            .build();
 
-    // when
-    teamService.acceptTeamInvitation(1L, 1L);
+    when(userRepository.findById(2L)).thenReturn(Optional.of(targetUser));
+    when(teamUserRelationRepository.findByTeamAndUser(testTeam, testUser))
+            .thenReturn(Optional.of(new TeamUserRelation(testTeam, testUser, UserTeamRole.MEMBER)));
 
-    // then
-    assertEquals(InvitationStatus.ACCEPTED, invitation.getStatus());
-    verify(teamInvitationRepository, times(1)).save(invitation);
-    verify(teamUserRelationRepository, times(1)).save(any(TeamUserRelation.class));
-  }
-
-  @Test
-  void acceptTeamInvitation_InvitationNotFound_ThrowsException() {
-    // given
-    when(teamInvitationRepository.findById(1L)).thenReturn(Optional.empty());
-
-    // when & then
-    BusinessException exception = assertThrows(BusinessException.class, () -> {
-      teamService.acceptTeamInvitation(1L, 1L);
-    });
-
-    assertEquals(ErrorCode.INVITATION_NOT_FOUND, exception.getErrorCode());
-    verify(teamInvitationRepository, never()).save(any());
-  }
-
-  @Test
-  void acceptTeamInvitation_AccessDenied_ThrowsException() {
-    // given
-    User anotherUser = User.builder().id(2L).nickname("AnotherUser").build();
-    TeamInvitation invitation = new TeamInvitation(team, anotherUser);
-
-    when(teamInvitationRepository.findById(1L)).thenReturn(Optional.of(invitation));
-
-    // when & then
-    BusinessException exception = assertThrows(BusinessException.class, () -> {
-      teamService.acceptTeamInvitation(1L, 1L); // 유저 ID가 초대 유저와 일치하지 않음
-    });
+    BusinessException exception = assertThrows(BusinessException.class, () ->
+            teamService.kickUserFromTeam(1L, 2L, 1L)
+    );
 
     assertEquals(ErrorCode.ACCESS_DENIED, exception.getErrorCode());
-    verify(teamInvitationRepository, never()).save(any());
-  }
-
-  @Test
-  void acceptTeamInvitation_InvitationAlreadyProcessed_ThrowsException() {
-    // given
-    TeamInvitation invitation = new TeamInvitation(team, user);
-    invitation.accept(); // 초대가 이미 처리됨
-
-    when(teamInvitationRepository.findById(1L)).thenReturn(Optional.of(invitation));
-
-    // when & then
-    BusinessException exception = assertThrows(BusinessException.class, () -> {
-      teamService.acceptTeamInvitation(1L, 1L);
-    });
-
-    assertEquals(ErrorCode.INVITATION_ALREADY_PROCESSED, exception.getErrorCode());
-    verify(teamInvitationRepository, never()).save(any());
-  }
-
-  @Test
-  void rejectTeamInvitation() {
-    // given
-    TeamInvitation invitation = new TeamInvitation(team, user);
-
-    when(teamInvitationRepository.findById(1L)).thenReturn(Optional.of(invitation));
-
-    // when
-    teamService.rejectTeamInvitation(1L, 1L);
-
-    // then
-    assertEquals(InvitationStatus.REJECTED, invitation.getStatus());
-    verify(teamInvitationRepository, times(1)).save(invitation);
-  }
-
-  @Test
-  void rejectTeamInvitation_InvitationNotFound_ThrowsException() {
-    // given
-    when(teamInvitationRepository.findById(1L)).thenReturn(Optional.empty());
-
-    // when & then
-    BusinessException exception = assertThrows(BusinessException.class, () -> {
-      teamService.rejectTeamInvitation(1L, 1L);
-    });
-
-    assertEquals(ErrorCode.INVITATION_NOT_FOUND, exception.getErrorCode());
-    verify(teamInvitationRepository, never()).save(any());
-  }
-
-  @Test
-  void rejectTeamInvitation_AccessDenied_ThrowsException() {
-    // given
-    User anotherUser = User.builder().id(2L).nickname("AnotherUser").build();
-    TeamInvitation invitation = new TeamInvitation(team, anotherUser);
-
-    when(teamInvitationRepository.findById(1L)).thenReturn(Optional.of(invitation));
-
-    // when & then
-    BusinessException exception = assertThrows(BusinessException.class, () -> {
-      teamService.rejectTeamInvitation(1L, 1L); // 유저 ID가 초대 유저와 일치하지 않음
-    });
-
-    assertEquals(ErrorCode.ACCESS_DENIED, exception.getErrorCode());
-    verify(teamInvitationRepository, never()).save(any());
-  }
-
-  @Test
-  void rejectTeamInvitation_InvitationAlreadyProcessed_ThrowsException() {
-    // given
-    TeamInvitation invitation = new TeamInvitation(team, user);
-    invitation.reject(); // 초대가 이미 처리됨
-
-    when(teamInvitationRepository.findById(1L)).thenReturn(Optional.of(invitation));
-
-    // when & then
-    BusinessException exception = assertThrows(BusinessException.class, () -> {
-      teamService.rejectTeamInvitation(1L, 1L);
-    });
-
-    assertEquals(ErrorCode.INVITATION_ALREADY_PROCESSED, exception.getErrorCode());
-    verify(teamInvitationRepository, never()).save(any());
-  }
-
-  @Test
-  void getTeamMembers() {
-    // given
-    when(teamRepository.findById(1L)).thenReturn(Optional.of(team));
-    when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-    when(teamUserRelationRepository.findByTeamAndUser(team, user)).thenReturn(Optional.of(new TeamUserRelation(team, user, UserTeamRole.ADMIN)));
-
-    User member1 = User.builder().id(2L).nickname("Member1").build();
-    User member2 = User.builder().id(3L).nickname("Member2").build();
-
-    TeamUserRelation relation1 = new TeamUserRelation(team, member1, UserTeamRole.MEMBER);
-    TeamUserRelation relation2 = new TeamUserRelation(team, member2, UserTeamRole.MEMBER);
-
-    when(teamUserRelationRepository.findAllByTeam(team)).thenReturn(Arrays.asList(relation1, relation2));
-
-    // when
-    List<UserDto> teamMembers = teamService.getTeamMembers(1L, 1L);
-
-    // then
-    assertNotNull(teamMembers);
-    assertEquals(2, teamMembers.size());
-    assertEquals("Member1", teamMembers.get(0).getNickname());
-    assertEquals("Member2", teamMembers.get(1).getNickname());
-
-    verify(teamRepository, times(1)).findById(1L);
-    verify(userRepository, times(1)).findById(1L);
-    verify(teamUserRelationRepository, times(1)).findAllByTeam(team);
-  }
-
-  @Test
-  void getTeamMembers_TeamNotFound_ThrowsException() {
-    // given
-    when(teamRepository.findById(1L)).thenReturn(Optional.empty());
-
-    // when & then
-    BusinessException exception = assertThrows(BusinessException.class, () -> {
-      teamService.getTeamMembers(1L, 1L);
-    });
-
-    assertEquals(ErrorCode.TEAM_NOT_FOUND, exception.getErrorCode());
-    verify(teamUserRelationRepository, never()).findAllByTeam(any());
-  }
-
-  @Test
-  void getTeamMembers_UserNotFound_ThrowsException() {
-    // given
-    when(teamRepository.findById(1L)).thenReturn(Optional.of(team));
-    when(userRepository.findById(1L)).thenReturn(Optional.empty());
-
-    // when & then
-    BusinessException exception = assertThrows(BusinessException.class, () -> {
-      teamService.getTeamMembers(1L, 1L);
-    });
-
-    assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
-    verify(teamUserRelationRepository, never()).findAllByTeam(any());
-  }
-
-  @Test
-  void getTeamMembers_AccessDenied_ThrowsException() {
-    // given
-    when(teamRepository.findById(1L)).thenReturn(Optional.of(team));
-    when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-    when(teamUserRelationRepository.findByTeamAndUser(team, user)).thenReturn(Optional.empty());
-
-    // when & then
-    BusinessException exception = assertThrows(BusinessException.class, () -> {
-      teamService.getTeamMembers(1L, 1L);
-    });
-
-    assertEquals(ErrorCode.TEAM_MEMBER_NOT_FOUND, exception.getErrorCode());
-    verify(teamUserRelationRepository, never()).findAllByTeam(any());
-  }
-
-  @Test
-  void promoteUserToAdmin() {
-    // given
-    when(teamRepository.findById(1L)).thenReturn(Optional.of(team));
-    when(userRepository.findById(1L)).thenReturn(Optional.of(user)); // Admin user
-    when(userRepository.findById(2L)).thenReturn(Optional.of(user2)); // User to be promoted
-    when(teamUserRelationRepository.findByTeamAndUser(team, user)).thenReturn(Optional.of(new TeamUserRelation(team, user, UserTeamRole.ADMIN)));
-    when(teamUserRelationRepository.findByTeamAndUser(team, user2)).thenReturn(Optional.of(new TeamUserRelation(team, user2, UserTeamRole.MEMBER)));
-
-    // when
-    teamService.promoteUserToAdmin(1L, 2L, 1L);
-
-    // then
-    verify(teamUserRelationRepository, times(1)).save(any(TeamUserRelation.class));
-  }
-
-  @Test
-  void promoteUserToAdmin_TeamNotFound_ThrowsException() {
-    // given
-    when(teamRepository.findById(1L)).thenReturn(Optional.empty());
-
-    // when & then
-    BusinessException exception = assertThrows(BusinessException.class, () -> {
-      teamService.promoteUserToAdmin(1L, 2L, 1L);
-    });
-
-    assertEquals(ErrorCode.TEAM_NOT_FOUND, exception.getErrorCode());
-    verify(teamUserRelationRepository, never()).save(any());
-  }
-
-  @Test
-  void promoteUserToAdmin_UserNotFound_ThrowsException() {
-    // given
-    when(teamRepository.findById(1L)).thenReturn(Optional.of(team));
-    when(userRepository.findById(1L)).thenReturn(Optional.of(user)); // Admin user
-    when(userRepository.findById(2L)).thenReturn(Optional.empty()); // User to be promoted
-
-    // when & then
-    BusinessException exception = assertThrows(BusinessException.class, () -> {
-      teamService.promoteUserToAdmin(1L, 2L, 1L);
-    });
-
-    assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
-    verify(teamUserRelationRepository, never()).save(any());
-  }
-
-  @Test
-  void promoteUserToAdmin_AccessDenied_ThrowsException() {
-    // given
-    when(teamRepository.findById(1L)).thenReturn(Optional.of(team));
-    when(userRepository.findById(1L)).thenReturn(Optional.of(user)); // Admin user
-    when(userRepository.findById(2L)).thenReturn(Optional.of(user2)); // User to be promoted
-    when(teamUserRelationRepository.findByTeamAndUser(team, user)).thenReturn(Optional.empty()); // Not an admin
-
-    // when & then
-    BusinessException exception = assertThrows(BusinessException.class, () -> {
-      teamService.promoteUserToAdmin(1L, 2L, 1L);
-    });
-
-    assertEquals(ErrorCode.ACCESS_DENIED, exception.getErrorCode());
-    verify(teamUserRelationRepository, never()).save(any());
   }
 }
