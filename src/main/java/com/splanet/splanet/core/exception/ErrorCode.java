@@ -34,7 +34,12 @@ public enum ErrorCode {
     TEAM_MEMBER_NOT_FOUND("해당 유저는 팀에 속해 있지 않습니다.", HttpStatus.NOT_FOUND),
     INVITATION_NOT_FOUND("초대를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     INVITATION_ALREADY_PROCESSED("초대가 이미 처리되었습니다.", HttpStatus.BAD_REQUEST),
-    USER_ALREADY_IN_TEAM("해당 유저는 이미 팀에 속해 있습니다.", HttpStatus.BAD_REQUEST);
+    USER_ALREADY_IN_TEAM("해당 유저는 이미 팀에 속해 있습니다.", HttpStatus.BAD_REQUEST),
+
+
+    // friend
+    FRIEND_REQUEST_NOT_FOUND("받은 친구 요청이 없습니다.", HttpStatus.NOT_FOUND);
+
 
     private final String message;
     private final HttpStatus status;
