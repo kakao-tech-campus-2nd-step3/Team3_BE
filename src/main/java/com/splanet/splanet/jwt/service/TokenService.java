@@ -20,21 +20,28 @@ public class TokenService {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
 
-    public void storeRefreshToken(String refreshToken, Long userId) {
-        RefreshToken tokenEntity = new RefreshToken(refreshToken, userId, REFRESH_TOKEN_VALIDITY_IN_MILLISECONDS); // 7일
+    public void storeRefreshToken(String refreshToken, Long userId, String deviceId) {
+        String key = userId + ":" + deviceId;
+        RefreshToken tokenEntity = new RefreshToken(key, refreshToken, REFRESH_TOKEN_VALIDITY_IN_MILLISECONDS); // 7일
         refreshTokenRepository.save(tokenEntity);
     }
 
-    public String regenerateAccessToken(String refreshToken) {
-        RefreshToken tokenEntity = refreshTokenRepository.findByToken(refreshToken)
+    public String regenerateAccessToken(String refreshToken, String deviceId) {
+        Long userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
+        String key = userId + ":" + deviceId;
+        RefreshToken tokenEntity = refreshTokenRepository.findById(key)
                 .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
 
-        Long userId = tokenEntity.getUserId();
+        if (!tokenEntity.getToken().equals(refreshToken)) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+
         return jwtTokenProvider.createAccessToken(userId);
     }
 
-    public void deleteRefreshToken(String refreshToken) {
-        refreshTokenRepository.deleteById(refreshToken);
+    public void deleteRefreshToken(Long userId, String deviceId) {
+        String key = userId + ":" + deviceId;
+        refreshTokenRepository.deleteById(key);
     }
 
 }
