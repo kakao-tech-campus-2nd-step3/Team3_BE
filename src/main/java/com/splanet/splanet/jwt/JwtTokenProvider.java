@@ -18,7 +18,7 @@ public class JwtTokenProvider {
 
   private Key secretKey;
 
-  @Value("${jwt.secret}")
+  @Value("${JWT_SECRET}")
   private String secret;
 
   private static final long TOKEN_VALIDITY_IN_MILLISECONDS = 3600000; // 1시간
