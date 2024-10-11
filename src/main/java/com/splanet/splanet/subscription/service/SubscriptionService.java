@@ -44,10 +44,10 @@ public class SubscriptionService {
     }
 
     // 구독 취소
+    @Transactional
     public ResponseEntity<String> cancelSubscription(Long userId) {
-        if (userId == null) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
-        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         Subscription subscription = subscriptionRepository.findTopByUserIdAndStatusOrderByStartDateDesc(userId, Subscription.Status.ACTIVE)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SUBSCRIPTION_NOT_FOUND));
@@ -57,32 +57,36 @@ public class SubscriptionService {
         }
 
         subscription.cancel();
-        subscriptionRepository.delete(subscription);
 
-        // isPremium 업데이트
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        user.setIsPremium(false);
-        userRepository.save(user);
+        subscriptionRepository.save(subscription);
+
+        // isPremium 값을 false로 업데이트
+        User updatedUser = user.toBuilder()
+                .isPremium(false)
+                .build();
+
+        userRepository.save(updatedUser);
 
         return ResponseEntity.ok("{\"message\": \"구독이 성공적으로 취소되었습니다.\"}");
     }
 
     // 구독하기
     @Transactional
-    public ResponseEntity<SubscriptionResponse> subscribe(Long userId, SubscriptionRequest request) {
+    public ResponseEntity<SubscriptionResponse> subscribe(Long userId, Subscription.Type type) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        // 구독 객체 생성
-        Subscription subscription = createSubscription(user, request.getType());
-        Subscription savedSubscription = subscriptionRepository.save(subscription);
+        // isPremium 값을 true로 업데이트
+        if (!user.getIsPremium()) {
+            User updatedUser = user.toBuilder()
+                    .isPremium(true)
+                    .build();
 
-        // isPremium 업데이트
-        if (user.getIsPremium()) {
-            user.setIsPremium(true);
-            userRepository.save(user);
+            userRepository.save(updatedUser);
         }
+
+        Subscription subscription = createSubscription(user, type);
+        Subscription savedSubscription = subscriptionRepository.save(subscription);
 
         return createSubscriptionResponse(savedSubscription);
     }
