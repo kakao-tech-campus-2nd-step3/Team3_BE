@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+      - 'weekly/**'
+  pull_request:
+    branches:
+      - master
+      - develop
+      - 'weekly/**'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-22.04
+
+    env:
+      MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
+      MYSQL_USER: ${{ secrets.MYSQL_USER }}
+      MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+      MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+      CLIENT_ID: ${{ secrets.CLIENT_ID }}
+      CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
+          MYSQL_USER: ${{ secrets.MYSQL_USER }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost" 
+          --health-interval=10s 
+          --health-timeout=5s 
+          --health-retries=5
+
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Create env.properties
+        run: |
+          echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> env.properties
+          echo "MYSQL_USER=${{ secrets.MYSQL_USER }}" >> env.properties
+          echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> env.properties
+          echo "MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}" >> env.properties
+          echo "CLIENT_ID=${{ secrets.CLIENT_ID }}" >> env.properties
+          echo "CLIENT_SECRET=${{ secrets.CLIENT_SECRET }}" >> env.properties
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> env.properties
+          echo "REDIRECT_URL=${{ secrets.REDIRECT_URL }}" >> env.properties
+          cp env.properties ./src/main/resources
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v2
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Wait for MySQL to be ready
+        run: |
+          for i in {30..0}; do
+            if docker exec $(docker ps -q --filter name=mysql) mysqladmin ping -h localhost; then
+              echo "MySQL is ready"
+              break
+            fi
+            echo "Waiting for MySQL..."
+            sleep 1
+          done
+          if [ $i -eq 0 ]; then
+            echo "MySQL did not become ready in time"
+            docker logs $(docker ps -q --filter name=mysql)
+            exit 1
+          fi
+        env:
+          MYSQL_USER: ${{ secrets.MYSQL_USER }}
+          MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
+
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Run Tests
+        run: ./gradlew test
+        env:
+          MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
+          MYSQL_USER: ${{ secrets.MYSQL_USER }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
