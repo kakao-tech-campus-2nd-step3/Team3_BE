@@ -40,6 +40,12 @@ public class FriendRequestService {
             throw new BusinessException(ErrorCode.FRIEND_ALREADY_EXISTS);
         }
 
+        // 이미 보낸 요청이 있는지 확인
+        List<FriendRequest> existingRequests = friendRequestRepository.findPendingRequestsByReceiverId(userId, receiverId, FriendRequest.Status.PENDING);
+        if (!existingRequests.isEmpty()) {
+            throw new BusinessException(ErrorCode.FRIEND_REQUEST_ALREADY_SENT);
+        }
+
         User receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         User requester = userRepository.findById(userId)
