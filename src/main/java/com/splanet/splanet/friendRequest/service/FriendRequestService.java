@@ -41,7 +41,7 @@ public class FriendRequestService {
         }
 
         // 이미 보낸 요청이 있는지 확인
-        List<FriendRequest> existingRequests = friendRequestRepository.findPendingRequestsByReceiverId(userId, receiverId, FriendRequest.Status.PENDING);
+        List<FriendRequest> existingRequests = friendRequestRepository.findPendingRequestsByReceiverId(receiverId, userId, FriendRequest.Status.PENDING);
         if (!existingRequests.isEmpty()) {
             throw new BusinessException(ErrorCode.FRIEND_REQUEST_ALREADY_SENT);
         }
