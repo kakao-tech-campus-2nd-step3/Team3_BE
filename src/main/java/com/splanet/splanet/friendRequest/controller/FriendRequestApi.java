@@ -1,7 +1,9 @@
 package com.splanet.splanet.friendRequest.controller;
 
-import com.splanet.splanet.friendRequest.dto.FriendRequestRequest;
-import com.splanet.splanet.friendRequest.dto.FriendRequestResponse;
+import com.splanet.splanet.friendRequest.dto.FriendRequestCreateRequest;
+import com.splanet.splanet.friendRequest.dto.ReceivedFriendRequestResponse;
+import com.splanet.splanet.friendRequest.dto.SentFriendRequestResponse;
+import com.splanet.splanet.friendRequest.dto.SuccessResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -24,8 +26,9 @@ public interface FriendRequestApi {
             @ApiResponse(responseCode = "400", description = "잘못된 요청입니다 (유효하지 않은 유저 ID)."),
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자입니다.")
     })
-    ResponseEntity<FriendRequestResponse> sendFriendRequest(
-            @Parameter(description = "친구 요청을 보낼 사용자 ID", required = true) @RequestBody FriendRequestRequest request);
+    ResponseEntity<SuccessResponse> sendFriendRequest(
+            @Parameter(description = "친구 요청을 보낼 사용자 ID", required = true) @AuthenticationPrincipal Long userId,
+            @RequestBody FriendRequestCreateRequest request);
 
     @PostMapping("/{requestId}/accept")
     @Operation(summary = "친구 요청 수락", description = "친구 요청 수락")
@@ -35,7 +38,7 @@ public interface FriendRequestApi {
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자입니다."),
             @ApiResponse(responseCode = "404", description = "친구 요청을 찾을 수 없습니다.")
     })
-    ResponseEntity<FriendRequestResponse> acceptFriendRequest(
+    ResponseEntity<ReceivedFriendRequestResponse> acceptFriendRequest(
             @Parameter(description = "친구 요청 ID", required = true) @PathVariable Long requestId);
 
     @PostMapping("/{requestId}/reject")
@@ -46,7 +49,7 @@ public interface FriendRequestApi {
             @ApiResponse(responseCode = "404", description = "친구 요청을 찾을 수 없습니다."),
             @ApiResponse(responseCode = "404", description = "친구 요청을 찾을 수 없습니다.")
     })
-    ResponseEntity<FriendRequestResponse> rejectFriendRequest(
+    ResponseEntity<ReceivedFriendRequestResponse> rejectFriendRequest(
             @Parameter(description = "친구 요청 ID", required = true) @PathVariable Long requestId);
 
     @GetMapping("/received")
@@ -55,7 +58,7 @@ public interface FriendRequestApi {
             @ApiResponse(responseCode = "200", description = "받은 친구 요청 목록이 성공적으로 조회되었습니다."),
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자입니다.")
     })
-    ResponseEntity<List<FriendRequestResponse>> getReceivedRequests(
+    ResponseEntity<List<ReceivedFriendRequestResponse>> getReceivedRequests(
             @Parameter(description = "JWT 인증으로 전달된 사용자 ID", required = true) @AuthenticationPrincipal Long userId);
 
     @GetMapping("/sent")
@@ -64,6 +67,6 @@ public interface FriendRequestApi {
             @ApiResponse(responseCode = "200", description = "보낸 친구 요청 목록이 성공적으로 조회되었습니다."),
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자입니다.")
     })
-    ResponseEntity<List<FriendRequestResponse>> getSentRequests(
+    ResponseEntity<List<SentFriendRequestResponse>> getSentRequests(
             @Parameter(description = "JWT 인증으로 전달된 사용자 ID", required = true) @AuthenticationPrincipal Long userId);
 }

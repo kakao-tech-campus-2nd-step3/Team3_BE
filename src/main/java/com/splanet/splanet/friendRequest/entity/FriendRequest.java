@@ -37,12 +37,4 @@ public class FriendRequest extends BaseEntity {
         ACCEPTED,
         REJECTED
     }
-
-    public Long getRequesterId() {
-        return requester != null ? requester.getId() : null;
-    }
-
-    public Long getReceiverId() {
-        return receiver != null ? receiver.getId() : null;
-    }
 }
