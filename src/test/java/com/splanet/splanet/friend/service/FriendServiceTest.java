@@ -112,6 +112,28 @@ class FriendServiceTest {
     }
 
     @Test
+    void 친구플랜조회_성공_여러플랜() {
+        // Arrange
+        Plan mockPlan1 = mock(Plan.class);
+        Plan mockPlan2 = mock(Plan.class);
+
+        when(friendRepository.existsByUserIdAndFriendId(1L, 1L)).thenReturn(true);
+        when(mockPlan1.getTitle()).thenReturn("Plan 1");
+        when(mockPlan2.getTitle()).thenReturn("Plan 2");
+        when(planRepository.findAllByUserIdAndAccessibility(1L, true)).thenReturn(List.of(mockPlan1, mockPlan2));
+
+        // Act
+        ResponseEntity<List<PlanResponseDto>> response = friendService.getFriendPlan(1L, 1L);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(2, response.getBody().size());
+        assertEquals("Plan 1", response.getBody().get(0).getTitle());
+        assertEquals("Plan 2", response.getBody().get(1).getTitle());
+    }
+
+    @Test
     void 친구플랜조회_실패_친구아님() {
         // Arrange
         when(friendRepository.existsByUserIdAndFriendId(1L, 2L)).thenReturn(false); // 친구가 아닌 경우
@@ -119,6 +141,31 @@ class FriendServiceTest {
         // Act & Assert
         BusinessException exception = assertThrows(BusinessException.class, () -> {
             friendService.getFriendPlan(2L, 1L); // 다른 userId로 조회
+        });
+        assertEquals(ErrorCode.FRIEND_NOT_FOUND, exception.getErrorCode());
+    }
+
+    @Test
+    void 친구목록조회_실패_사용자없음() {
+        // Arrange
+        when(friendRepository.findByUserId(99L)).thenReturn(Collections.emptyList()); // 존재하지 않는 사용자
+
+        // Act
+        List<FriendResponse> friends = friendService.getFriends(99L);
+
+        // Assert
+        assertNotNull(friends);
+        assertTrue(friends.isEmpty()); // 빈 목록이 반환되어야 함
+    }
+
+    @Test
+    void 친구플랜조회_실패_친구관계없음() {
+        // Arrange
+        when(friendRepository.existsByUserIdAndFriendId(1L, 2L)).thenReturn(false); // 친구 관계가 없음
+
+        // Act & Assert
+        BusinessException exception = assertThrows(BusinessException.class, () -> {
+            friendService.getFriendPlan(1L, 2L);
         });
         assertEquals(ErrorCode.FRIEND_NOT_FOUND, exception.getErrorCode());
     }
