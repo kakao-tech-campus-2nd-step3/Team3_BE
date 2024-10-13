@@ -12,6 +12,7 @@ import com.splanet.splanet.user.entity.User;
 import com.splanet.splanet.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -61,7 +62,7 @@ public class FriendRequestService {
     }
 
     // 친구 요청 수락
-    public ReceivedFriendRequestResponse acceptFriendRequest(Long requestId) {
+    public ReceivedFriendRequestResponse acceptFriendRequest(Long requestId, Long userId) {
         FriendRequest friendRequest = friendRequestRepository.findById(requestId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.FRIEND_REQUEST_NOT_FOUND));
 
@@ -69,14 +70,33 @@ public class FriendRequestService {
             throw new BusinessException(ErrorCode.FRIEND_REQUEST_ALREADY_ACCEPTED_OR_REJECTED);
         }
 
-        friendRequest.setStatus(FriendRequest.Status.ACCEPTED);
-        friendRequestRepository.save(friendRequest);
+        if (!friendRequest.getReceiver().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.FRIEND_REQUEST_NOT_RECEIVER);
+        }
+
+        FriendRequest updatedFriendRequest = FriendRequest.builder()
+                .id(friendRequest.getId())
+                .requester(friendRequest.getRequester())
+                .receiver(friendRequest.getReceiver())
+                .status(FriendRequest.Status.ACCEPTED)
+                .createdAt(friendRequest.getCreatedAt())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        friendRequestRepository.save(updatedFriendRequest);
 
         User requester = friendRequest.getRequester();
         User receiver = friendRequest.getReceiver();
 
-        Friend friend1 = new Friend(requester, receiver);  // 요청한 사람 -> 수락한 사람
-        Friend friend2 = new Friend(receiver, requester);  // 수락한 사람 -> 요청한 사람
+        Friend friend1 = Friend.builder()
+                .user(requester)
+                .friend(receiver)
+                .build();
+
+        Friend friend2 = Friend.builder()
+                .user(receiver)
+                .friend(requester)
+                .build();
 
         friendRepository.save(friend1);
         friendRepository.save(friend2);
@@ -91,7 +111,7 @@ public class FriendRequestService {
     }
 
     // 친구 요청 거절
-    public ReceivedFriendRequestResponse rejectFriendRequest(Long requestId) {
+    public ReceivedFriendRequestResponse rejectFriendRequest(Long requestId, Long userId) {
         FriendRequest friendRequest = friendRequestRepository.findById(requestId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.FRIEND_REQUEST_NOT_FOUND));
 
@@ -99,8 +119,20 @@ public class FriendRequestService {
             throw new BusinessException(ErrorCode.FRIEND_REQUEST_ALREADY_ACCEPTED_OR_REJECTED);
         }
 
-        friendRequest.setStatus(FriendRequest.Status.REJECTED);
-        friendRequestRepository.save(friendRequest);
+        if (friendRequest.getRequester().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.FRIEND_REQUEST_NOT_RECEIVER);
+        }
+
+        FriendRequest updatedFriendRequest = FriendRequest.builder()
+                .id(friendRequest.getId())
+                .requester(friendRequest.getRequester())
+                .receiver(friendRequest.getReceiver())
+                .status(FriendRequest.Status.REJECTED)
+                .createdAt(friendRequest.getCreatedAt())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        friendRequestRepository.save(updatedFriendRequest);
 
         User requester = friendRequest.getRequester();
 
@@ -108,7 +140,7 @@ public class FriendRequestService {
                 friendRequest.getId(),
                 requester.getId(),
                 requester.getNickname(),
-                friendRequest.getStatus().name(),
+                updatedFriendRequest.getStatus().name(),
                 requester.getProfileImage()
         );
     }

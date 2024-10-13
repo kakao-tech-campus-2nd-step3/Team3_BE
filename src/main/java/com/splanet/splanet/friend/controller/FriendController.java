@@ -11,18 +11,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 public class FriendController implements FriendApi {
 
     private final FriendService friendService;
-    private final UserRepository userRepository;
-    private final PlanRepository planRepository;
 
-    public FriendController(FriendService friendService, UserRepository userRepository, PlanRepository planRepository) {
-        this.friendService = friendService;
-        this.userRepository = userRepository;
-        this.planRepository = planRepository;
+    public FriendController(FriendService friendService) {
+        this.friendService = friendService;;
     }
 
     @Override
@@ -36,5 +33,13 @@ public class FriendController implements FriendApi {
             @PathVariable Long friendId,
             @AuthenticationPrincipal Long userId) {
         return friendService.getFriendPlan(friendId, userId);
+    }
+
+    @Override
+    public ResponseEntity<Map<String, String>> unfriend(
+            @PathVariable Long friendId,
+            @AuthenticationPrincipal Long userId) {
+        ResponseEntity<Map<String, String>> responseEntity = friendService.unfriend(friendId, userId);
+        return responseEntity;
     }
 }

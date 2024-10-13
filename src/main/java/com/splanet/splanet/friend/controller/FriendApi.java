@@ -9,11 +9,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.List;
+import java.util.Map;
 
 @RequestMapping("/api/friends")
 @Tag(name = "Friend", description = "친구 관련 API")
@@ -37,6 +39,12 @@ public interface FriendApi {
             @ApiResponse(responseCode = "404", description = "친구를 찾을 수 없습니다.")
     })
     ResponseEntity<List<PlanResponseDto>> getFriendPlan(
-            @Parameter(description = "JWT 인증으로 전달된 친구 ID", required = true) @PathVariable("friend_id") Long friendId,
+            @Parameter(description = "조회할 친구 ID", required = true) @PathVariable("friendId") Long friendId,
+            @Parameter(description = "JWT 인증으로 전달된 사용자 ID", required = true) @AuthenticationPrincipal Long userId);
+
+    @DeleteMapping("/{friendId}")
+    @Operation(summary = "친구 삭제하기", description = "친구 목록에서 삭제합니다.")
+    ResponseEntity<Map<String, String>> unfriend(
+            @Parameter(description = "삭제할 친구 ID", required = true) @PathVariable("friendId") Long friendId,
             @Parameter(description = "JWT 인증으로 전달된 사용자 ID", required = true) @AuthenticationPrincipal Long userId);
 }

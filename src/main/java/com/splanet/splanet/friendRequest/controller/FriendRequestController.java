@@ -36,14 +36,16 @@ public class FriendRequestController implements FriendRequestApi{
 
     // 친구 요청 수락
     @Override
-    public ResponseEntity<ReceivedFriendRequestResponse> acceptFriendRequest(@PathVariable Long requestId) {
-        return ResponseEntity.ok(friendRequestService.acceptFriendRequest(requestId));
+    public ResponseEntity<ReceivedFriendRequestResponse> acceptFriendRequest(@AuthenticationPrincipal Long userId,
+                                                                             @PathVariable Long requestId) {
+        ReceivedFriendRequestResponse response = friendRequestService.acceptFriendRequest(requestId, userId);
+        return ResponseEntity.ok(response);
     }
 
     // 친구 요청 거절
     @Override
-    public ResponseEntity<ReceivedFriendRequestResponse> rejectFriendRequest(@PathVariable Long requestId) {
-        return ResponseEntity.ok(friendRequestService.rejectFriendRequest(requestId));
+    public ResponseEntity<ReceivedFriendRequestResponse> rejectFriendRequest(@PathVariable Long requestId, @AuthenticationPrincipal Long userId) {
+        return ResponseEntity.ok(friendRequestService.rejectFriendRequest(requestId, userId));
     }
 
     // 친구 요청 목록 조회(받은 요청)
