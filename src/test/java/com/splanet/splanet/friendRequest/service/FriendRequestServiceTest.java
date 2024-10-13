@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -140,6 +141,30 @@ class FriendRequestServiceTest {
     }
 
     @Test
+    void 친구요청수락_요청자와수락자가동일() {
+        Long requestId = friendRequest.getId();
+        when(friendRequestRepository.findById(requestId)).thenReturn(Optional.of(friendRequest));
+
+        BusinessException exception = assertThrows(BusinessException.class, () ->
+                friendRequestService.acceptFriendRequest(requestId, requester.getId())
+        );
+
+        assertEquals(ErrorCode.FRIEND_REQUEST_NOT_RECEIVER, exception.getErrorCode());
+    }
+
+    @Test
+    void 친구요청거절_요청자와수락자가동일() {
+        Long requestId = friendRequest.getId();
+        when(friendRequestRepository.findById(requestId)).thenReturn(Optional.of(friendRequest));
+
+        BusinessException exception = assertThrows(BusinessException.class, () ->
+                friendRequestService.rejectFriendRequest(requestId, requester.getId())
+        );
+
+        assertEquals(ErrorCode.FRIEND_REQUEST_NOT_RECEIVER, exception.getErrorCode());
+    }
+
+    @Test
     void 친구요청목록조회_받은요청() {
         Long userId = receiver.getId();
 
@@ -164,6 +189,28 @@ class FriendRequestServiceTest {
     }
 
     @Test
+    void 친구요청목록조회_받은요청없음() {
+        Long userId = receiver.getId();
+
+        when(friendRequestRepository.findByReceiverId(userId)).thenReturn(Collections.emptyList());
+
+        List<ReceivedFriendRequestResponse> responses = friendRequestService.getReceivedFriendRequests(userId);
+
+        assertEquals(0, responses.size()); // 빈 목록인지 확인
+    }
+
+    @Test
+    void 친구요청목록조회_보낸요청없음() {
+        Long userId = requester.getId();
+
+        when(friendRequestRepository.findByRequesterId(userId)).thenReturn(Collections.emptyList());
+
+        List<SentFriendRequestResponse> responses = friendRequestService.getSentFriendRequests(userId);
+
+        assertEquals(0, responses.size()); // 빈 목록인지 확인
+    }
+
+    @Test
     void 친구요청전송_수신자존재하지않음() {
         Long userId = requester.getId();
         Long receiverId = 999L;
@@ -175,6 +222,22 @@ class FriendRequestServiceTest {
         );
 
         assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
+    }
+
+    @Test
+    void 친구요청전송_이미친구인경우() {
+        Long userId = requester.getId();
+        Long receiverId = receiver.getId();
+
+        when(userRepository.findById(receiverId)).thenReturn(Optional.of(receiver));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(requester));
+        when(friendRepository.existsByUserIdAndFriendId(userId, receiverId)).thenReturn(true); // 이미 친구인 경우
+
+        BusinessException exception = assertThrows(BusinessException.class, () ->
+                friendRequestService.sendFriendRequest(userId, receiverId)
+        );
+
+        assertEquals(ErrorCode.FRIEND_ALREADY_EXISTS, exception.getErrorCode());
     }
 
     @Test
