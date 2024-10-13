@@ -49,7 +49,7 @@ class FriendServiceTest {
     }
 
     @Test
-    void getFriends_성공() {
+    void 친구목록조회_성공() {
         // Arrange
         when(mockFriend.getFriend()).thenReturn(mockUser);
         when(mockUser.getNickname()).thenReturn("testUser");
@@ -67,16 +67,19 @@ class FriendServiceTest {
     }
 
     @Test
-    void getFriendPlan_성공() {
+    void 친구플랜조회_성공() {
         // Arrange
         LocalDateTime startDate = LocalDateTime.of(2024, 1, 1, 0, 0);
         LocalDateTime endDate = LocalDateTime.of(2024, 12, 31, 0, 0);
 
+        // 친구 확인 모킹
+        when(friendRepository.existsByUserIdAndFriendId(1L, 1L)).thenReturn(true);
+
         when(mockPlan.getId()).thenReturn(1L);
         when(mockPlan.getTitle()).thenReturn("Test Plan");
         when(mockPlan.getDescription()).thenReturn("This is a test plan.");
-        when(mockPlan.getStartDate()).thenReturn(startDate); // LocalDateTime 반환
-        when(mockPlan.getEndDate()).thenReturn(endDate);     // LocalDateTime 반환
+        when(mockPlan.getStartDate()).thenReturn(startDate);
+        when(mockPlan.getEndDate()).thenReturn(endDate);
         when(mockPlan.getAccessibility()).thenReturn(true);
         when(mockPlan.getIsCompleted()).thenReturn(false);
         when(mockPlan.getCreatedAt()).thenReturn(null);
@@ -94,14 +97,29 @@ class FriendServiceTest {
     }
 
     @Test
-    void getFriendPlan_플랜없음_예외발생() {
+    void 친구플랜조회_성공_플랜없음() {
         // Arrange
-        when(planRepository.findAllByUserIdAndAccessibility(1L, true)).thenReturn(Collections.emptyList());
+        when(friendRepository.existsByUserIdAndFriendId(1L, 1L)).thenReturn(true); // 친구 확인 성공
+        when(planRepository.findAllByUserIdAndAccessibility(1L, true)).thenReturn(Collections.emptyList()); // 플랜 없음
+
+        // Act
+        ResponseEntity<List<PlanResponseDto>> response = friendService.getFriendPlan(1L, 1L);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(200, response.getStatusCodeValue()); // 성공적으로 빈 목록을 반환해야 함
+        assertTrue(response.getBody().isEmpty()); // 빈 목록인지 확인
+    }
+
+    @Test
+    void 친구플랜조회_실패_친구아님() {
+        // Arrange
+        when(friendRepository.existsByUserIdAndFriendId(1L, 2L)).thenReturn(false); // 친구가 아닌 경우
 
         // Act & Assert
         BusinessException exception = assertThrows(BusinessException.class, () -> {
-            friendService.getFriendPlan(1L, 1L);
+            friendService.getFriendPlan(2L, 1L); // 다른 userId로 조회
         });
-        assertEquals(ErrorCode.PLAN_NOT_FOUND, exception.getErrorCode());
+        assertEquals(ErrorCode.FRIEND_NOT_FOUND, exception.getErrorCode());
     }
 }
