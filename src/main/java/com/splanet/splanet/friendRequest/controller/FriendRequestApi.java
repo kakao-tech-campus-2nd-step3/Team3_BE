@@ -38,7 +38,7 @@ public interface FriendRequestApi {
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자입니다."),
             @ApiResponse(responseCode = "404", description = "친구 요청을 찾을 수 없습니다.")
     })
-    ResponseEntity<ReceivedFriendRequestResponse> acceptFriendRequest(
+    ResponseEntity<ReceivedFriendRequestResponse> acceptFriendRequest(@AuthenticationPrincipal Long userId,
             @Parameter(description = "친구 요청 ID", required = true) @PathVariable Long requestId);
 
     @PostMapping("/{requestId}/reject")
@@ -50,7 +50,7 @@ public interface FriendRequestApi {
             @ApiResponse(responseCode = "404", description = "친구 요청을 찾을 수 없습니다.")
     })
     ResponseEntity<ReceivedFriendRequestResponse> rejectFriendRequest(
-            @Parameter(description = "친구 요청 ID", required = true) @PathVariable Long requestId);
+            @Parameter(description = "친구 요청 ID", required = true) @PathVariable Long requestId, @AuthenticationPrincipal Long userId);
 
     @GetMapping("/received")
     @Operation(summary = "친구 요청 목록 조회 (받은 요청)", description = "사용자가 받은 친구 요청 목록을 조회합니다.")
