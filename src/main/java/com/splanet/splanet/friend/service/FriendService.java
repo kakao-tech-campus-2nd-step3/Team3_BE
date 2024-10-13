@@ -83,7 +83,7 @@ public class FriendService {
         return ResponseEntity.ok(planResponseDtos);
     }
 
-    // 친구 삭제(취소)하기
+    // 친구 삭제(취소)하기 -> 500 떠서 고치고 다시 푸시할게요!
     public ResponseEntity<Map<String, String>> unfriend(Long friendId, Long userId) {
         if (!friendRepository.existsByUserIdAndFriendId(userId, friendId)) {
             throw new BusinessException(ErrorCode.FRIEND_NOT_FOUND);
