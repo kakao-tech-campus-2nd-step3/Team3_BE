@@ -25,6 +25,6 @@ public class PlanGroup {
     private String groupId;
     private Set<String> planCardIds;
 
-    @TimeToLive(unit = TimeUnit.HOURS)
-    private Long expiration = 1L;
+    @TimeToLive
+    private Long expiration;
 }
