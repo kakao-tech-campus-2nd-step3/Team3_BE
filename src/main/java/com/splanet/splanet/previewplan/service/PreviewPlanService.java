@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PreviewPlanService {
 
+    private static final long EXPIRATION_TIME = 3600L;
     private static final String PLAN_GROUP_PREFIX = "planGroup:";
     private static final String PLAN_CARD_PREFIX = "planCard:";
     private static final int PLAN_CARD_PREFIX_LENGTH = PLAN_CARD_PREFIX.length();
@@ -94,6 +95,7 @@ public class PreviewPlanService {
                 .description(planCardRequestDto.description())
                 .startDate(planCardRequestDto.startDate())
                 .endDate(planCardRequestDto.endDate())
+                .expiration(EXPIRATION_TIME)
                 .build();
     }
 
@@ -101,9 +103,11 @@ public class PreviewPlanService {
         String groupKey = generateGroupKey(deviceId, groupId);
         PlanGroup planGroup = planGroupRepository.findById(groupKey)
                 .orElse(PlanGroup.builder()
+                        .customKey(groupKey)
                         .deviceId(deviceId)
                         .groupId(groupId)
                         .planCardIds(new HashSet<>())
+                        .expiration(EXPIRATION_TIME)
                         .build());
 
         if (add) {
