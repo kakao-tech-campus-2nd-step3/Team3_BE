@@ -70,23 +70,24 @@ public class FriendRequestService {
             throw new BusinessException(ErrorCode.FRIEND_REQUEST_ALREADY_ACCEPTED_OR_REJECTED);
         }
 
-        if (!friendRequest.getReceiver().getId().equals(userId)) {
+        // 요청자 본인이 수락을 시도할 경우, 내가 보낸 요청 처리 할 수 없음
+        if (friendRequest.getRequester().getId().equals(userId)) {
             throw new BusinessException(ErrorCode.FRIEND_REQUEST_NOT_RECEIVER);
         }
 
+        // 내가 받은 요청이 아닐 경우, 예외처리
+        if (!friendRequest.getReceiver().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.FRIEND_REQUEST_NOT_FOUND_IN_RECEIVED_LIST);
+        }
+
         List<ReceivedFriendRequestResponse> receivedRequests = getReceivedFriendRequests(userId);
+
         boolean isRequestPresent = receivedRequests.stream()
                 .anyMatch(request -> request.requesterId().equals(friendRequest.getRequester().getId()));
 
-        /** 내 요청목록에 없는 요청id를 조회하면 FRIEND_REQUEST_NOT_FOUND_IN_RECEIVED_LIST가 안뜨고
-            FRIEND_REQUEST_NOT_RECEIVER가 뜸.. */
+        // 받은 요청 목록에 없어도 예외처리
         if (!isRequestPresent) {
-            // 요청자가 보낸 요청인 경우에만
-            if (friendRequest.getRequester().getId().equals(userId)) {
-                throw new BusinessException(ErrorCode.FRIEND_REQUEST_NOT_FOUND_IN_RECEIVED_LIST);
-            }
-            // 요청이 보낸 요청이 아닌 경우에 대해
-            throw new BusinessException(ErrorCode.FRIEND_REQUEST_NOT_RECEIVER);
+            throw new BusinessException(ErrorCode.FRIEND_REQUEST_NOT_FOUND_IN_RECEIVED_LIST);
         }
 
         FriendRequest updatedFriendRequest = FriendRequest.builder()
@@ -134,14 +135,22 @@ public class FriendRequestService {
             throw new BusinessException(ErrorCode.FRIEND_REQUEST_ALREADY_ACCEPTED_OR_REJECTED);
         }
 
-        if (!friendRequest.getReceiver().getId().equals(userId)) {
+        // 요청자 본인이 거절을 시도할 경우, 내가 보낸 요청 처리 할 수 없음
+        if (friendRequest.getRequester().getId().equals(userId)) {
             throw new BusinessException(ErrorCode.FRIEND_REQUEST_NOT_RECEIVER);
         }
 
+        // 내가 받은 요청이 아닐 경우, 예외처리
+        if (!friendRequest.getReceiver().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.FRIEND_REQUEST_NOT_FOUND_IN_RECEIVED_LIST);
+        }
+
         List<ReceivedFriendRequestResponse> receivedRequests = getReceivedFriendRequests(userId);
+
         boolean isRequestPresent = receivedRequests.stream()
                 .anyMatch(request -> request.requesterId().equals(friendRequest.getRequester().getId()));
 
+        // 받은 요청 목록에 없어도 예외처리
         if (!isRequestPresent) {
             throw new BusinessException(ErrorCode.FRIEND_REQUEST_NOT_FOUND_IN_RECEIVED_LIST);
         }

@@ -17,13 +17,12 @@ public interface FriendRequestRepository extends JpaRepository<FriendRequest, Lo
     @Query("SELECT fr FROM FriendRequest fr JOIN FETCH fr.receiver WHERE fr.requester.id = :userId")
     List<FriendRequest> findByRequesterIdWithReceiver(@Param("userId") Long userId);
 
+    @Query("SELECT fr FROM FriendRequest fr WHERE fr.receiver.id = :receiverId AND fr.requester.id = :requesterId AND fr.status = :status")
+    List<FriendRequest> findPendingRequestsByReceiverId(@Param("receiverId") Long receiverId, @Param("requesterId") Long requesterId, @Param("status") FriendRequest.Status status);
+
     @Query("SELECT fr FROM FriendRequest fr WHERE fr.receiver.id = :userId")
     List<FriendRequest> findByReceiverId(@Param("userId") Long userId);
 
     @Query("SELECT fr FROM FriendRequest fr WHERE fr.requester.id = :userId")
     List<FriendRequest> findByRequesterId(@Param("userId") Long userId);
-
-    @Query("SELECT fr FROM FriendRequest fr WHERE fr.receiver.id = :receiverId AND fr.requester.id = :requesterId AND fr.status = :status")
-    List<FriendRequest> findPendingRequestsByReceiverId(@Param("receiverId") Long receiverId, @Param("requesterId") Long requesterId, @Param("status") FriendRequest.Status status);
-
 }

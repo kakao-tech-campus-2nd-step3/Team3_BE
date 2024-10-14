@@ -39,7 +39,7 @@ public enum ErrorCode {
 
     // friend
     FRIEND_NOT_FOUND("친구가 아닙니다.",HttpStatus.NOT_FOUND),
-    FRIEND_REQUEST_NOT_FOUND("받은 친구 요청이 아무것도 없습니다.", HttpStatus.NOT_FOUND),
+    FRIEND_REQUEST_NOT_FOUND("해당 친구 요청을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     FRIEND_ALREADY_EXISTS("이미 친구 목록에 있습니다.", HttpStatus.BAD_REQUEST),
     FRIEND_REQUEST_ALREADY_SENT("이미 요청을 보냈습니다.",HttpStatus.BAD_REQUEST),
     FRIEND_REQUEST_NOT_FOUND_IN_RECEIVED_LIST("내가 받은 요청이 아닙니다.", HttpStatus.NOT_FOUND),
