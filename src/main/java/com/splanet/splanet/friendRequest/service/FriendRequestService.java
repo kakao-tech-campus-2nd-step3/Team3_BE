@@ -74,6 +74,21 @@ public class FriendRequestService {
             throw new BusinessException(ErrorCode.FRIEND_REQUEST_NOT_RECEIVER);
         }
 
+        List<ReceivedFriendRequestResponse> receivedRequests = getReceivedFriendRequests(userId);
+        boolean isRequestPresent = receivedRequests.stream()
+                .anyMatch(request -> request.requesterId().equals(friendRequest.getRequester().getId()));
+
+        /** 내 요청목록에 없는 요청id를 조회하면 FRIEND_REQUEST_NOT_FOUND_IN_RECEIVED_LIST가 안뜨고
+            FRIEND_REQUEST_NOT_RECEIVER가 뜸.. */
+        if (!isRequestPresent) {
+            // 요청자가 보낸 요청인 경우에만
+            if (friendRequest.getRequester().getId().equals(userId)) {
+                throw new BusinessException(ErrorCode.FRIEND_REQUEST_NOT_FOUND_IN_RECEIVED_LIST);
+            }
+            // 요청이 보낸 요청이 아닌 경우에 대해
+            throw new BusinessException(ErrorCode.FRIEND_REQUEST_NOT_RECEIVER);
+        }
+
         FriendRequest updatedFriendRequest = FriendRequest.builder()
                 .id(friendRequest.getId())
                 .requester(friendRequest.getRequester())
@@ -119,8 +134,16 @@ public class FriendRequestService {
             throw new BusinessException(ErrorCode.FRIEND_REQUEST_ALREADY_ACCEPTED_OR_REJECTED);
         }
 
-        if (friendRequest.getRequester().getId().equals(userId)) {
+        if (!friendRequest.getReceiver().getId().equals(userId)) {
             throw new BusinessException(ErrorCode.FRIEND_REQUEST_NOT_RECEIVER);
+        }
+
+        List<ReceivedFriendRequestResponse> receivedRequests = getReceivedFriendRequests(userId);
+        boolean isRequestPresent = receivedRequests.stream()
+                .anyMatch(request -> request.requesterId().equals(friendRequest.getRequester().getId()));
+
+        if (!isRequestPresent) {
+            throw new BusinessException(ErrorCode.FRIEND_REQUEST_NOT_FOUND_IN_RECEIVED_LIST);
         }
 
         FriendRequest updatedFriendRequest = FriendRequest.builder()
@@ -147,7 +170,7 @@ public class FriendRequestService {
 
     // 친구 요청 목록 조회(받은 요청)
     public List<ReceivedFriendRequestResponse> getReceivedFriendRequests(Long userId) {
-        List<FriendRequest> requests = friendRequestRepository.findByReceiverId(userId);
+        List<FriendRequest> requests = friendRequestRepository.findByReceiverIdWithRequester(userId);
 
         // PENDING인 요청만
         return requests.stream()
@@ -164,7 +187,7 @@ public class FriendRequestService {
 
     // 친구 요청 목록 조회(보낸 요청)
     public List<SentFriendRequestResponse> getSentFriendRequests(Long userId) {
-        List<FriendRequest> requests = friendRequestRepository.findByRequesterId(userId);
+        List<FriendRequest> requests = friendRequestRepository.findByRequesterIdWithReceiver(userId);
 
         // PENDING인 요청만
         return requests.stream()
