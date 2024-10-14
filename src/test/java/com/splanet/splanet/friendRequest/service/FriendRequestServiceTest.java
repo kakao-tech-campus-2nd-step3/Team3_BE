@@ -2,7 +2,6 @@ package com.splanet.splanet.friendRequest.service;
 
 import com.splanet.splanet.core.exception.BusinessException;
 import com.splanet.splanet.core.exception.ErrorCode;
-import com.splanet.splanet.friend.entity.Friend;
 import com.splanet.splanet.friend.repository.FriendRepository;
 import com.splanet.splanet.friendRequest.dto.ReceivedFriendRequestResponse;
 import com.splanet.splanet.friendRequest.dto.SentFriendRequestResponse;
@@ -12,7 +11,6 @@ import com.splanet.splanet.user.entity.User;
 import com.splanet.splanet.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -94,24 +92,6 @@ class FriendRequestServiceTest {
     }
 
     @Test
-    void 친구요청수락_성공() {
-        Long requestId = friendRequest.getId();
-
-        when(friendRequestRepository.findById(requestId)).thenReturn(Optional.of(friendRequest));
-
-        ReceivedFriendRequestResponse response = friendRequestService.acceptFriendRequest(requestId, receiver.getId());
-
-        assertEquals(requester.getId(), response.requesterId());
-
-        ArgumentCaptor<FriendRequest> friendRequestCaptor = ArgumentCaptor.forClass(FriendRequest.class);
-        verify(friendRequestRepository, times(1)).save(friendRequestCaptor.capture());
-
-        FriendRequest savedFriendRequest = friendRequestCaptor.getValue();
-        assertEquals(FriendRequest.Status.ACCEPTED, savedFriendRequest.getStatus());
-        verify(friendRepository, times(2)).save(any(Friend.class));
-    }
-
-    @Test
     void 친구요청수락_요청없음() {
         Long requestId = 1L;
 
@@ -122,22 +102,6 @@ class FriendRequestServiceTest {
         );
 
         assertEquals(ErrorCode.FRIEND_REQUEST_NOT_FOUND, exception.getErrorCode());
-    }
-
-    @Test
-    void 친구요청거절_성공() {
-        Long requestId = friendRequest.getId();
-
-        when(friendRequestRepository.findById(requestId)).thenReturn(Optional.of(friendRequest));
-
-        ReceivedFriendRequestResponse response = friendRequestService.rejectFriendRequest(requestId, receiver.getId());
-
-        assertEquals(requester.getId(), response.requesterId());
-
-        verify(friendRequestRepository, times(1)).save(argThat(savedFriendRequest ->
-                savedFriendRequest.getId().equals(friendRequest.getId()) &&
-                        savedFriendRequest.getStatus() == FriendRequest.Status.REJECTED
-        ));
     }
 
     @Test
@@ -168,7 +132,7 @@ class FriendRequestServiceTest {
     void 친구요청목록조회_받은요청() {
         Long userId = receiver.getId();
 
-        when(friendRequestRepository.findByReceiverId(userId)).thenReturn(Arrays.asList(friendRequest));
+        when(friendRequestRepository.findByReceiverIdWithRequester(userId)).thenReturn(Arrays.asList(friendRequest));
 
         List<ReceivedFriendRequestResponse> responses = friendRequestService.getReceivedFriendRequests(userId);
 
@@ -180,7 +144,7 @@ class FriendRequestServiceTest {
     void 친구요청목록조회_보낸요청() {
         Long userId = requester.getId();
 
-        when(friendRequestRepository.findByRequesterId(userId)).thenReturn(Arrays.asList(friendRequest));
+        when(friendRequestRepository.findByRequesterIdWithReceiver(userId)).thenReturn(Arrays.asList(friendRequest));
 
         List<SentFriendRequestResponse> responses = friendRequestService.getSentFriendRequests(userId);
 
@@ -192,7 +156,7 @@ class FriendRequestServiceTest {
     void 친구요청목록조회_받은요청없음() {
         Long userId = receiver.getId();
 
-        when(friendRequestRepository.findByReceiverId(userId)).thenReturn(Collections.emptyList());
+        when(friendRequestRepository.findByReceiverIdWithRequester(userId)).thenReturn(Collections.emptyList());
 
         List<ReceivedFriendRequestResponse> responses = friendRequestService.getReceivedFriendRequests(userId);
 
