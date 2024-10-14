@@ -29,8 +29,8 @@ public class PlanCard {
     private String startDate;
     private String endDate;
 
-    @TimeToLive(unit = TimeUnit.HOURS)
-    private Long expiration = 1L;
+    @TimeToLive
+    private Long expiration;
 
     public static String generateId() {
         return UUID.randomUUID().toString().split("-")[0];
