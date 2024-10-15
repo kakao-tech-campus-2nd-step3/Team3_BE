@@ -32,7 +32,7 @@ public class CommentService {
     // 댓글 작성
     @Transactional
     public void createComment(Long userId, CommentRequest request) {
-        User user = userRepository.findById(request.getUserId())
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         User writer = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
@@ -40,7 +40,7 @@ public class CommentService {
         Comment comment = Comment.builder()
                 .user(user)
                 .writer(writer)
-                .content(request.getContent())
+                .content(request.content())
                 .build();
         commentRepository.save(comment);
     }
@@ -55,7 +55,7 @@ public class CommentService {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
 
-        comment.updateContent(request.getContent());
+        comment.updateContent(request.content());
     }
 
     // 댓글 삭제
