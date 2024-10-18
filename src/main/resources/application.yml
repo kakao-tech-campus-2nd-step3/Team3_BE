@@ -48,7 +48,6 @@ springdoc:
     path: /swagger
 
 clova:
-  client-id: ${CLOVA_CLIENT_ID}
-  client-secret: ${CLOVA_CLIENT_SECRET}
-  url: ${CLOVA_SPEECH_URL}
-  language: Kor
+  speech:
+    client-secret: ${CLOVA_CLIENT_SECRET}
+    language: ko

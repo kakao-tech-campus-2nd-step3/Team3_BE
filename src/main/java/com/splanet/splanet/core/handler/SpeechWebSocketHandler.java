@@ -1,78 +1,100 @@
 package com.splanet.splanet.core.handler;
 
-import com.splanet.splanet.stt.service.ClovaSpeechService;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.protobuf.ByteString;
+import com.nbp.cdncp.nest.grpc.proto.v1.NestResponse;
+import com.splanet.splanet.stt.service.ClovaSpeechGrpcService;
+import io.grpc.stub.StreamObserver;
+import org.springframework.stereotype.Component;
 import org.springframework.web.socket.BinaryMessage;
+import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.BinaryWebSocketHandler;
-import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 
 @Component
 public class SpeechWebSocketHandler extends BinaryWebSocketHandler {
 
-    private final ClovaSpeechService clovaSpeechService;
-    private List<byte[]> audioDataBuffer = new ArrayList<>();
-    private static final int MINIMUM_AUDIO_SIZE = 64000;  // 최소 데이터 크기를 96KB로 설정 (약 3초 분량)
+    private final ClovaSpeechGrpcService clovaSpeechGrpcService;
+    private final Map<String, StreamObserver<ByteString>> clientObservers = new ConcurrentHashMap<>();
 
-    public SpeechWebSocketHandler(ClovaSpeechService clovaSpeechService) {
-        this.clovaSpeechService = clovaSpeechService;
+    public SpeechWebSocketHandler(ClovaSpeechGrpcService clovaSpeechGrpcService) {
+        this.clovaSpeechGrpcService = clovaSpeechGrpcService;
     }
 
     @Override
-    protected synchronized void handleBinaryMessage(WebSocketSession session, BinaryMessage message) throws Exception {
-        session.setBinaryMessageSizeLimit(256 * 1024);  // 메시지 크기 제한을 256KB로 설정
-        byte[] audioData = message.getPayload().array();
+    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+        // 세션이 열릴 때마다 새로운 gRPC 스트림을 생성
+        StreamObserver<NestResponse> responseObserver = new StreamObserver<NestResponse>() {
+            @Override
+            public void onNext(NestResponse value) {
+                // 서버로부터 받은 응답 처리
+                try {
+                    String contents = value.getContents(); // JSON 문자열
 
-        // 오디오 데이터를 버퍼에 추가
-        audioDataBuffer.add(audioData);
+                    // JSON 파싱
+                    JsonParser parser = new JsonParser();
+                    JsonObject jsonObject = parser.parse(contents).getAsJsonObject();
 
-        // 누적된 오디오 데이터 크기 계산
-        int totalSize = audioDataBuffer.stream().mapToInt(arr -> arr.length).sum();
-
-        // 현재 누적된 데이터 크기를 로그로 출력
-        System.out.println("현재 누적된 데이터 크기: " + totalSize + " bytes");
-
-        // 오디오 데이터가 충분히 쌓였을 때만 CLOVA API로 전송
-        if (totalSize >= MINIMUM_AUDIO_SIZE) {
-            byte[] fullAudioData = mergeAudioData();
-            try {
-                // CLOVA API로 전송
-                String transcript = clovaSpeechService.recognize(fullAudioData);
-                session.sendMessage(new TextMessage(transcript));
-                // 인식에 성공했으므로 버퍼를 초기화
-                audioDataBuffer.clear();
-                System.out.println("인식 성공: 버퍼를 초기화합니다.");
-            } catch (Exception e) {
-                e.printStackTrace();
-                // STT007 오류 발생 시 버퍼를 유지하고 데이터 수집 계속
-                if (e.getMessage().contains("STT007")) {
-                    System.err.println("오류 발생: STT007 - 데이터가 너무 작습니다. 더 많은 데이터를 수집 중...");
-                    // 버퍼를 유지하여 다음 데이터를 기다립니다.
-                } else {
-                    // 다른 오류 발생 시 버퍼를 초기화하고 오류 메시지 전송
-                    audioDataBuffer.clear();
-                    session.sendMessage(new TextMessage("오류 발생: " + e.getMessage()));
-                    System.err.println("오류 발생: " + e.getMessage() + " - 버퍼를 초기화합니다.");
+                    if (jsonObject.has("transcription")) {
+                        JsonObject transcription = jsonObject.getAsJsonObject("transcription");
+                        String text = transcription.get("text").getAsString();
+                        // 클라이언트로 text 필드만 전송
+                        session.sendMessage(new TextMessage(text));
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
-        } else {
-            // 아직 데이터가 충분하지 않으면 아무 작업도 하지 않음
-            System.out.println("데이터가 아직 충분하지 않음");
+
+            @Override
+            public void onError(Throwable t) {
+                t.printStackTrace();
+                try {
+                    session.sendMessage(new TextMessage("오류 발생: " + t.getMessage()));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onCompleted() {
+                // 스트림 완료 처리
+                try {
+                    session.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        // 오디오 데이터를 전송할 StreamObserver 생성
+        StreamObserver<ByteString> requestObserver = clovaSpeechGrpcService.recognize(responseObserver);
+        clientObservers.put(session.getId(), requestObserver);
+    }
+
+    @Override
+    protected void handleBinaryMessage(WebSocketSession session, BinaryMessage message) throws Exception {
+        // 클라이언트로부터 받은 오디오 데이터를 gRPC 서비스로 전달
+        StreamObserver<ByteString> requestObserver = clientObservers.get(session.getId());
+        if (requestObserver != null) {
+            byte[] audioData = message.getPayload().array();
+            ByteString audioChunk = ByteString.copyFrom(audioData);
+            requestObserver.onNext(audioChunk);
         }
     }
 
-    // 누적된 오디오 데이터를 병합하는 메서드
-    private byte[] mergeAudioData() {
-        int totalLength = audioDataBuffer.stream().mapToInt(arr -> arr.length).sum();
-        byte[] mergedData = new byte[totalLength];
-        int currentIndex = 0;
-        for (byte[] data : audioDataBuffer) {
-            System.arraycopy(data, 0, mergedData, currentIndex, data.length);
-            currentIndex += data.length;
+    @Override
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+        // 세션이 종료되면 gRPC 스트림도 종료
+        StreamObserver<ByteString> requestObserver = clientObservers.remove(session.getId());
+        if (requestObserver != null) {
+            requestObserver.onCompleted();
         }
-        return mergedData;
     }
 }
