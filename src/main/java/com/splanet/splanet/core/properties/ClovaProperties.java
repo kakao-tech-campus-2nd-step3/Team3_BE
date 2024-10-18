@@ -8,10 +8,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @Configuration
-@ConfigurationProperties(prefix = "clova")
+@ConfigurationProperties(prefix = "clova.speech")
 public class ClovaProperties {
-    private String clientId;
     private String clientSecret;
-    private String url;
     private String language;
 }

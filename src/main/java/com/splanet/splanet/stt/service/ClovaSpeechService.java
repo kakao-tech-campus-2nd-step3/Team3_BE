@@ -1,7 +1,9 @@
 package com.splanet.splanet.stt.service;
 
-import org.springframework.web.multipart.MultipartFile;
+import com.google.protobuf.ByteString;
+import com.nbp.cdncp.nest.grpc.proto.v1.NestResponse;
+import io.grpc.stub.StreamObserver;
 
 public interface ClovaSpeechService {
-    String recognize(byte[] audioBytes);
+    StreamObserver<ByteString> recognize(StreamObserver<NestResponse> responseObserver);
 }
