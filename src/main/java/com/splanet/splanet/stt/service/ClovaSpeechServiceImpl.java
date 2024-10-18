@@ -24,11 +24,9 @@ public class ClovaSpeechServiceImpl implements ClovaSpeechService {
     }
 
     @Override
-    public String recognize(MultipartFile file) {
-        String apiURL = clovaProperties.getUrl() + "?lang=" + clovaProperties.getLanguage();  // 언어 설정 반영
+    public String recognize(byte[] audioBytes) {
+        String apiURL = clovaProperties.getUrl() + "?lang=" + clovaProperties.getLanguage();
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            byte[] audioBytes = file.getBytes();
-
             HttpPost httpPost = new HttpPost(apiURL);
             httpPost.addHeader("Content-Type", "application/octet-stream");
             httpPost.addHeader("X-NCP-APIGW-API-KEY-ID", clovaProperties.getClientId());
@@ -46,11 +44,11 @@ public class ClovaSpeechServiceImpl implements ClovaSpeechService {
                     JsonNode rootNode = objectMapper.readTree(responseBody);
                     return rootNode.path("text").asText();
                 } else {
-                    throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "CLOVA Speech API 호출 실패: " + responseBody);
+                    throw new RuntimeException("CLOVA Speech API 호출 실패: " + responseBody);
                 }
             });
         } catch (Exception e) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "오디오 파일 처리 중 오류 발생: " + e.getMessage());
+            throw new RuntimeException("오디오 파일 처리 중 오류 발생: " + e.getMessage());
         }
     }
 }
