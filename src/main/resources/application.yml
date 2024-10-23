@@ -7,10 +7,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
-  data:
-    redis:
-      host: localhost
-      port: 6379
+
   security:
     jwt:
       secret: ${JWT_SECRET}
