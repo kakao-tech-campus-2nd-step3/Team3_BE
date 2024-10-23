@@ -1,49 +1,49 @@
 version: '3'
 
 services:
-  mysql:
-    container_name: mysql
-    image: mysql:8.0
-    restart: always
-    environment:
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-    volumes:
-      - ./splanet-db/mysql:/var/lib/mysql
-    ports:
-      - 3306:3306
-    networks:
-      - splanet
-
-  redis:
-    container_name: redis
-    image: redis
-    ports:
-      - 6379:6379
-    networks:
-      - splanet
+#  mysql:
+#    container_name: mysql
+#    image: mysql:8.0
+#    restart: always
+#    environment:
+#      MYSQL_USER: ${MYSQL_USER}
+#      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+#      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+#      MYSQL_DATABASE: ${MYSQL_DATABASE}
+#    volumes:
+#      - ./splanet-db/mysql:/var/lib/mysql
+#    ports:
+#      - 3306:3306
+#    networks:
+#      - splanet
+#
+#  redis:
+#    container_name: redis
+#    image: redis
+#    ports:
+#      - 6379:6379
+#    networks:
+#      - splanet
 
 
 # 개발할때는 주석처리하여 로컬로 개발합니다.
-#  springboot:
-#    container_name: springboot_splanet
-#    build:
-#      context: .
-#      dockerfile: Dockerfile
-#    restart: always
-#    depends_on:
-#      - mysql
-#    ports:
-#      - 8080:8080
-#    environment:
-#      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
-#      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
-#      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-#      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
-#    networks:
-#      - splanet
+  springboot:
+    container_name: springboot_splanet
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - mysql
+    ports:
+      - 8080:8080
+    environment:
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+    networks:
+      - splanet
 
 networks:
   splanet:
