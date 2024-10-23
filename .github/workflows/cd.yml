@@ -5,6 +5,10 @@ on:
     branches:
       - develop  # develop 브랜치에 merge될 때 트리거
       - 'weekly/**'
+  pull_request:
+    branches:
+      - develop
+      - 'weekly/**'
 
 jobs:
   deploy:
