@@ -38,10 +38,9 @@ springdoc:
     path: /swagger
 management:
   endpoints:
-    health:
-      show-details: always
     web:
       exposure:
         include: health
-  security:
-    enabled: false
+  endpoint:
+    health:
+      show-details: always
