@@ -47,7 +47,17 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            sudo docker pull kimsongmok/splanet:${{ env.IMAGE_TAG }}  # 새 이미지 풀링
-            sudo docker stop splanet || true  # 기존 컨테이너 중지
-            sudo docker rm splanet || true  # 기존 컨테이너 제거
-            sudo docker run -d --name splanet -p 80:8080 kimsongmok/splanet:${{ env.IMAGE_TAG }}  # 새 컨테이너 실행
+            sudo docker pull kimsongmok/splanet:${{ env.IMAGE_TAG }}
+            sudo docker stop splanet || true
+            sudo docker rm splanet || true
+            sudo docker run -d --name splanet \
+              -e MYSQL_PROD_URL=${{ secrets.MYSQL_PROD_URL }} \
+              -e MYSQL_PROD_USER=${{ secrets.MYSQL_PROD_USER }} \
+              -e MYSQL_PROD_PASSWORD=${{ secrets.MYSQL_PROD_PASSWORD }} \
+              -e MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }} \
+              -e CLIENT_ID=${{ secrets.CLIENT_ID }} \
+              -e CLIENT_SECRET=${{ secrets.CLIENT_SECRET }} \
+              -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+              -e REDIRECT_URL=${{ secrets.REDIRECT_URL }} \
+              -p 80:8080 --restart unless-stopped kimsongmok/splanet:${{ env.IMAGE_TAG }}\
+              -v ./src/main/resources/env.properties
