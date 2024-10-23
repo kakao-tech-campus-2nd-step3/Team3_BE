@@ -91,6 +91,9 @@ jobs:
         run: ./gradlew build
         env:
           SPRING_PROFILES_ACTIVE: local
+          MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
+          MYSQL_USER: ${{ secrets.MYSQL_USER }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
 
       - name: Run Tests
         run: ./gradlew test
