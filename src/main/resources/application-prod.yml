@@ -8,4 +8,4 @@ spring:
     oauth2:
       redirect-url: https://splanet.co.kr/login/oauth2/code/kakao
   config:
-    import: env.properties
+    import: optional:env.properties
