@@ -1,6 +1,5 @@
 package com.splanet.splanet.gpt;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -11,25 +10,24 @@ import java.util.List;
 public class OpenAiChatClient {
 
     private final WebClient webClient;
+    private final OpenAiProperties openAiProperties;
 
-    @Value("${spring.ai.gpt.api-key}")
-    private String apiKey;
-
-    public OpenAiChatClient(WebClient.Builder webClientBuilder) {
+    public OpenAiChatClient(WebClient.Builder webClientBuilder, OpenAiProperties openAiProperties) {
         this.webClient = webClientBuilder.baseUrl("https://api.openai.com/v1").build();
+        this.openAiProperties = openAiProperties;
     }
 
     public String call(String message) {
-        Message userMessage = new Message(message); // 메시지 객체 생성
-        Prompt prompt = new Prompt(List.of(userMessage)); // Message 객체를 리스트로 감싸서 Prompt 생성
+        Message userMessage = new Message(message);
+        Prompt prompt = new Prompt(List.of(userMessage));
 
         ChatResponse response = webClient.post()
                 .uri("/chat/completions")
-                .header("Authorization", "Bearer " + apiKey) // 프로퍼티에서 가져온 API 키 사용
+                .header("Authorization", "Bearer " + openAiProperties.getApiKey())
                 .bodyValue(prompt)
                 .retrieve()
                 .bodyToMono(ChatResponse.class)
-                .block(); // 블록하여 응답을 기다림
+                .block();
 
         return response != null && response.getChoices() != null && !response.getChoices().isEmpty()
                 ? response.getChoices().get(0).getMessage().getContent()
@@ -39,9 +37,9 @@ public class OpenAiChatClient {
     public Flux<ChatResponse> stream(Prompt prompt) {
         return webClient.post()
                 .uri("/chat/completions")
-                .header("Authorization", "Bearer " + apiKey) // 프로퍼티에서 가져온 API 키 사용
+                .header("Authorization", "Bearer " + openAiProperties.getApiKey())
                 .bodyValue(prompt)
                 .retrieve()
-                .bodyToFlux(ChatResponse.class); // Stream the response
+                .bodyToFlux(ChatResponse.class);
     }
 }
