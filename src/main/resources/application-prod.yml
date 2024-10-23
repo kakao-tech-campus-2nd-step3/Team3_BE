@@ -1,4 +1,8 @@
 spring:
+  data:
+    redis:
+      host: redis
+      port: 6379
   datasource:
     url: jdbc:mysql://${MYSQL_PROD_URL}:3306/${MYSQL_DATABASE}
     username: ${MYSQL_PROD_USER}

@@ -51,6 +51,7 @@ jobs:
             sudo docker stop splanet || true
             sudo docker rm splanet || true
             sudo docker run -d --name splanet \
+             --network splanet \
               -e MYSQL_PROD_URL=${{ secrets.MYSQL_PROD_URL }} \
               -e MYSQL_PROD_USER=${{ secrets.MYSQL_PROD_USER }} \
               -e MYSQL_PROD_PASSWORD=${{ secrets.MYSQL_PROD_PASSWORD }} \
