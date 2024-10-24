@@ -7,24 +7,26 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
-
+  config:
+    import: optional:env.properties
   security:
-    jwt:
-      secret: ${JWT_SECRET}
     oauth2:
       client:
-        registration:
-          kakao:
-            client-id: ${CLIENT_ID}
-            client-secret: ${CLIENT_SECRET}
-            scope: profile
-            redirect-uri: ${REDIRECT_URL}
-            authorization-grant-type: authorization_code
         provider:
           kakao:
             authorization-uri: https://kauth.kakao.com/oauth/authorize
             token-uri: https://kauth.kakao.com/oauth/token
             user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+        registration:
+          kakao:
+            client-id: ${CLIENT_ID}
+            client-secret: ${CLIENT_SECRET}
+            redirect-uri: http://localhost:8080/login/oauth2/code/kakao
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            scope: profile_nickname, profile_image, account_email
+            client-name: Kakao
 
 logging:
   level:
@@ -33,11 +35,11 @@ logging:
 springdoc:
   swagger-ui:
     path: /swagger
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health
-  endpoint:
-    health:
-      show-details: always
+
+jwt:
+  secret: ${JWT_SECRET}
+
+clova:
+  speech:
+    client-secret: ${CLOVA_CLIENT_SECRET}
+    language: ko
