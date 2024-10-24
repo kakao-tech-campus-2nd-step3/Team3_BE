@@ -24,6 +24,9 @@ jobs:
       CLIENT_ID: ${{ secrets.CLIENT_ID }}
       CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      GPT_API_KEY: ${{ secrets.GPT_API_KEY}}
+      GPT_MODEL: ${{ secrets.GPT_MODEL}}
+      GPT_API_URL: ${{ secrets.GPT_API_URL}}
 
     services:
       mysql:
@@ -60,6 +63,9 @@ jobs:
           echo "CLIENT_SECRET=${{ secrets.CLIENT_SECRET }}" >> env.properties
           echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> env.properties
           echo "REDIRECT_URL=${{ secrets.REDIRECT_URL }}" >> env.properties
+          echo "GPT_API_KEY=${{ secrets.GPT_API_KEY }}" >> env.properties
+          echo "GPT_MODEL: ${{ secrets.GPT_MODEL }}" >> env.properties
+          echo "GPT_API_URL: ${{ secrets.GPT_API_URL}}" >> env.properties
           cp env.properties ./src/main/resources
 
       - name: Set up JDK 21
