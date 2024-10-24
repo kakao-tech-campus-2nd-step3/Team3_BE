@@ -1,9 +1,4 @@
 spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/${MYSQL_DATABASE}
-    username: ${MYSQL_USER}
-    password: ${MYSQL_PASSWORD}
-    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
       ddl-auto: update
@@ -12,15 +7,10 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
-  data:
-    redis:
-      host: localhost # 로컬에서 실행하기 때문
-      port: 6379
   config:
-    import: env.properties
+    import: optional:env.properties
   security:
     oauth2:
-      redirect-url: ${REDIRECT_URL}
       client:
         provider:
           kakao:
@@ -28,7 +18,6 @@ spring:
             token-uri: https://kauth.kakao.com/oauth/token
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
-
         registration:
           kakao:
             client-id: ${CLIENT_ID}
@@ -47,3 +36,10 @@ springdoc:
   swagger-ui:
     path: /swagger
 
+jwt:
+  secret: ${JWT_SECRET}
+
+clova:
+  speech:
+    client-secret: ${CLOVA_CLIENT_SECRET}
+    language: ko
