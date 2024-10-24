@@ -1,11 +1,9 @@
-name: CD Pipeline
+name: CD (자동배포)
 
 on:
-  pull_request:
+  push:
     branches:
       - develop
-      - 'weekly/**'
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
