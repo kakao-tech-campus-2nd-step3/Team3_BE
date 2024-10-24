@@ -1,15 +1,17 @@
 spring:
-  data:
-    redis:
-      host: redis
-      port: 6379
   datasource:
     url: jdbc:mysql://${MYSQL_PROD_URL}:3306/${MYSQL_DATABASE}
     username: ${MYSQL_PROD_USER}
     password: ${MYSQL_PROD_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: redis
+      port: 6379
   security:
     oauth2:
-      redirect-url: https://splanet.co.kr/login/oauth2/code/kakao
-  config:
-    import: optional:env.properties
+      redirect-url: https://splanet.co.kr/oauth2/redirect
+      client:
+        registration:
+          kakao:
+            redirect-uri: https://splanet.co.kr/login/oauth2/code/kakao
