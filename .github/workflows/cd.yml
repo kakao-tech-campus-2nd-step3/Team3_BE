@@ -20,9 +20,6 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Build with Gradle  # Spring Boot를 사용하는 경우
-        run: ./gradlew build
-
       - name: Set up Docker
         uses: docker/setup-buildx-action@v2
 
@@ -31,7 +28,7 @@ jobs:
 
       - name: Set Image Tag
         id: image_tag
-        run: echo "IMAGE_TAG=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
+        run: echo "IMAGE_TAG=$(date +'%Y-%m-%d_%H-%M-%S')-$(echo ${{ github.sha }} | cut -c1-8)" >> $GITHUB_ENV
 
       - name: Build and Push Docker image
         run: docker buildx build --push --platform linux/amd64 -t kimsongmok/splanet:${{ env.IMAGE_TAG }} .
