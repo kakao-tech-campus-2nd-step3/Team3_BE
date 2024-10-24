@@ -1,0 +1,64 @@
+name: CD Pipeline
+
+on:
+  push:
+    branches:
+      - develop  # develop 브랜치에 merge될 때 트리거
+      - 'weekly/**'
+  pull_request:
+    branches:
+      - develop
+      - 'weekly/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Build with Gradle  # Spring Boot를 사용하는 경우
+        run: ./gradlew build
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+
+      - name: Set Image Tag
+        id: image_tag
+        run: echo "IMAGE_TAG=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
+
+      - name: Build and Push Docker image
+        run: docker buildx build --push --platform linux/amd64 -t kimsongmok/splanet:${{ env.IMAGE_TAG }} .
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            sudo docker pull kimsongmok/splanet:${{ env.IMAGE_TAG }}
+            sudo docker stop splanet || true
+            sudo docker rm splanet || true
+            sudo docker run -d --name splanet \
+             --network splanet \
+              -e MYSQL_PROD_URL=${{ secrets.MYSQL_PROD_URL }} \
+              -e MYSQL_PROD_USER=${{ secrets.MYSQL_PROD_USER }} \
+              -e MYSQL_PROD_PASSWORD=${{ secrets.MYSQL_PROD_PASSWORD }} \
+              -e MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }} \
+              -e CLIENT_ID=${{ secrets.CLIENT_ID }} \
+              -e CLIENT_SECRET=${{ secrets.CLIENT_SECRET }} \
+              -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+              -e REDIRECT_URL=${{ secrets.REDIRECT_URL }} \
+              -p 80:8080 --restart unless-stopped kimsongmok/splanet:${{ env.IMAGE_TAG }}\
+              -v ./src/main/resources/env.properties
