@@ -1,5 +1,7 @@
 package com.splanet.splanet.gpt;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -11,35 +13,45 @@ public class OpenAiChatClient {
 
     private final WebClient webClient;
     private final OpenAiProperties openAiProperties;
+    private final SchedulePromptGenerator promptGenerator;
 
-    public OpenAiChatClient(WebClient.Builder webClientBuilder, OpenAiProperties openAiProperties) {
+    public OpenAiChatClient(WebClient.Builder webClientBuilder, OpenAiProperties openAiProperties, SchedulePromptGenerator promptGenerator) {
         this.webClient = webClientBuilder.baseUrl("https://api.openai.com/v1").build();
         this.openAiProperties = openAiProperties;
+        this.promptGenerator = new SchedulePromptGenerator();
     }
 
-    public String call(String message) {
-        Message userMessage = new Message(message);
-        Prompt prompt = new Prompt(List.of(userMessage));
+    // 스케줄 생성 요청 처리 메소드
+    public ScheduleResponse createSchedule(ScheduleRequest scheduleRequest) throws JsonProcessingException {
+        String jsonResponse = call(scheduleRequest);
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.readValue(jsonResponse, ScheduleResponse.class);
+    }
 
-        ChatResponse response = webClient.post()
+    private String call(ScheduleRequest scheduleRequest) throws JsonProcessingException {
+        String jsonRequest = new ObjectMapper().writeValueAsString(new RequestBody("gpt-4o-mini", List.of(
+                new Message("user", promptGenerator.generateSchedulePrompt(scheduleRequest))
+        )));
+
+        // OpenAI API 호출
+        String responseJson = webClient.post()
                 .uri("/chat/completions")
                 .header("Authorization", "Bearer " + openAiProperties.getApiKey())
-                .bodyValue(prompt)
+                .bodyValue(jsonRequest)
                 .retrieve()
-                .bodyToMono(ChatResponse.class)
+                .bodyToMono(String.class)
                 .block();
 
-        return response != null && response.getChoices() != null && !response.getChoices().isEmpty()
-                ? response.getChoices().get(0).getMessage().getContent()
-                : "No response";
+        return responseJson;
     }
 
-    public Flux<ChatResponse> stream(Prompt prompt) {
+    // 스트리밍 메소드
+    public Flux<ScheduleResponse> stream(Prompt prompt) {
         return webClient.post()
                 .uri("/chat/completions")
                 .header("Authorization", "Bearer " + openAiProperties.getApiKey())
                 .bodyValue(prompt)
                 .retrieve()
-                .bodyToFlux(ChatResponse.class);
+                .bodyToFlux(ScheduleResponse.class);
     }
 }
