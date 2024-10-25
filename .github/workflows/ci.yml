@@ -1,0 +1,85 @@
+name: CI (빌드 및 테스트)
+
+on:
+  pull_request:
+    branches:
+      - master
+      - develop
+      - 'weekly/**'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-22.04
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
+          MYSQL_USER: ${{ secrets.MYSQL_USER }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost" 
+          --health-interval=10s 
+          --health-timeout=5s 
+          --health-retries=5
+
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Decode env.properties from GitHub Secrets
+        run: |
+          echo "${{ secrets.ENV_FILE }}" | base64 --decode > ./src/main/resources/env.properties
+
+      - name: Set environment variables from env.properties
+        run: |
+          set -o allexport
+          source ./src/main/resources/env.properties
+          set +o allexport
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v2
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Wait for MySQL to be ready
+        run: |
+          for i in {30..0}; do
+            if docker exec $(docker ps -q --filter name=mysql) mysqladmin ping -h localhost; then
+              echo "MySQL is ready"
+              break
+            fi
+            echo "Waiting for MySQL..."
+            sleep 1
+          done
+          if [ $i -eq 0 ]; then
+            echo "MySQL did not become ready in time"
+            docker logs $(docker ps -q --filter name=mysql)
+            exit 1
+          fi
+
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Run Tests
+        run: ./gradlew test

@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface PlanRepository extends JpaRepository<Plan, Long> {
     List<Plan> findAllByUserId(Long userId);
+    List<Plan> findAllByUserIdAndAccessibility(Long userId, Boolean accessibility);
 }
