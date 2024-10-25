@@ -1,6 +1,7 @@
 package com.splanet.splanet.friend.entity;
 
 import com.splanet.splanet.core.BaseEntity;
+import com.splanet.splanet.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -13,9 +14,11 @@ import lombok.experimental.SuperBuilder;
 @Entity
 public class Friend extends BaseEntity {
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    @Column(name = "friend_id", nullable = false)
-    private Long friendId;
+    @ManyToOne
+    @JoinColumn(name = "friend_id", nullable = false)
+    private User friend;
 }
