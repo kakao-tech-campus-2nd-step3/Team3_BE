@@ -45,8 +45,10 @@ public enum ErrorCode {
     FRIEND_REQUEST_NOT_FOUND_IN_RECEIVED_LIST("내가 받은 요청이 아닙니다.", HttpStatus.NOT_FOUND),
     FRIEND_REQUEST_NOT_RECEIVER("본인이 보낸 요청은 수락하거나 거절할 수 없습니다.", HttpStatus.BAD_REQUEST),
     FRIEND_REQUEST_ALREADY_ACCEPTED_OR_REJECTED("이미 수락하거나 거절한 사용자 입니다.", HttpStatus.BAD_REQUEST),
-    SELF_FRIEND_REQUEST_NOT_ALLOWED("본인에게 친구요청을 보낼 수 없습니다.", HttpStatus.BAD_REQUEST);
+    SELF_FRIEND_REQUEST_NOT_ALLOWED("본인에게 친구요청을 보낼 수 없습니다.", HttpStatus.BAD_REQUEST),
 
+    // redis
+    REDIS_SCAN_FAILED("Redis 키 스캔 중 오류가 발생했습니다.", HttpStatus.SERVICE_UNAVAILABLE);
 
     private final String message;
     private final HttpStatus status;

@@ -123,4 +123,34 @@ public interface TeamApi {
           @Parameter(description = "팀의 ID", example = "1") @PathVariable Long teamId,
           @Parameter(description = "내보낼 유저의 ID", example = "2") @PathVariable Long userId,
           @AuthenticationPrincipal Long adminId);
+  @Operation(summary = "사용자가 속한 팀 목록 조회", description = "사용자가 속한 팀 목록을 조회합니다.")
+
+  @ApiResponses(value = {
+          @ApiResponse(responseCode = "200", description = "팀 목록 조회 성공"),
+          @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없습니다.", content = @Content)
+  })
+  @GetMapping("/my-teams")
+  ResponseEntity<List<TeamDto>> getUserTeams(@AuthenticationPrincipal Long userId);
+
+  @Operation(summary = "팀 삭제", description = "팀 관리자가 팀을 삭제합니다.")
+  @ApiResponses(value = {
+          @ApiResponse(responseCode = "204", description = "팀이 성공적으로 삭제되었습니다."),
+          @ApiResponse(responseCode = "403", description = "권한이 없습니다.", content = @Content),
+          @ApiResponse(responseCode = "404", description = "팀을 찾을 수 없습니다.", content = @Content)
+  })
+  @DeleteMapping("/{teamId}")
+  ResponseEntity<Void> deleteTeam(
+          @Parameter(description = "팀의 ID", example = "1") @PathVariable Long teamId,
+          @AuthenticationPrincipal Long adminId);
+
+  // 일반 사용자가 팀을 나가는 기능 추가
+  @Operation(summary = "팀 나가기", description = "일반 사용자가 팀에서 나가는 기능입니다.")
+  @ApiResponses(value = {
+          @ApiResponse(responseCode = "204", description = "팀에서 성공적으로 나갔습니다."),
+          @ApiResponse(responseCode = "404", description = "팀 또는 유저를 찾을 수 없습니다.", content = @Content)
+  })
+  @DeleteMapping("/{teamId}/leave")
+  ResponseEntity<Void> leaveTeam(
+          @Parameter(description = "팀의 ID", example = "1") @PathVariable Long teamId,
+          @AuthenticationPrincipal Long userId);
 }

@@ -2,10 +2,10 @@ package com.splanet.splanet.subscription.controller;
 
 import com.splanet.splanet.subscription.dto.SubscriptionRequest;
 import com.splanet.splanet.subscription.dto.SubscriptionResponse;
+import com.splanet.splanet.subscription.entity.Subscription;
 import com.splanet.splanet.subscription.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -26,6 +26,7 @@ public class SubscriptionController implements SubscriptionApi {
 
     @Override
     public ResponseEntity<SubscriptionResponse> subscribe(Long userId, SubscriptionRequest request) {
-        return subscriptionService.subscribe(userId, request);
+        Subscription.Type type = request.getType();
+        return subscriptionService.subscribe(userId, type);
     }
 }
