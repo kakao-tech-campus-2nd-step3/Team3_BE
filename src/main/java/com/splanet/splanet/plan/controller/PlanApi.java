@@ -70,4 +70,17 @@ public interface PlanApi {
     })
     ResponseEntity<Void> deletePlan(
             @Parameter(description = "삭제할 플랜의 ID", required = true, example = "1") @PathVariable Long planId);
+
+    @PostMapping("/save-preview/{deviceId}/{groupId}")
+    @Operation(summary = "프리뷰 플랜 저장", description = "해당 디바이스 ID와 그룹 ID의 모든 플랜 카드를 사용자의 플랜으로 저장합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "프리뷰 플랜이 성공적으로 저장되었습니다.",
+                    content = @Content(schema = @Schema(implementation = PlanResponseDto.class))),
+            @ApiResponse(responseCode = "404", description = "해당 프리뷰 플랜을 찾을 수 없습니다.", content = @Content)
+    })
+    ResponseEntity<List<PlanResponseDto>> savePreviewToPlans(
+            @Parameter(description = "JWT 인증을 통해 추출된 사용자 ID", required = true) @AuthenticationPrincipal Long userId,
+            @Parameter(description = "디바이스 ID", required = true) @PathVariable String deviceId,
+            @Parameter(description = "그룹 ID", required = true) @PathVariable String groupId);
+
 }

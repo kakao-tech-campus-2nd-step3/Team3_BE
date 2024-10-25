@@ -13,4 +13,10 @@ public class TeamDto {
   private String teamName;
   private UserDto user;
   private List<UserDto> teamMembers;
+
+  public TeamDto(Long id, String teamName, UserDto user) {
+    this.id = id;
+    this.teamName = teamName;
+    this.user = user;
+  }
 }

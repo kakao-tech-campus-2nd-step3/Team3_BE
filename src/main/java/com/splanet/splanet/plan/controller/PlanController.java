@@ -45,4 +45,10 @@ public class PlanController implements PlanApi {
         planService.deletePlan(planId);
         return ResponseEntity.ok().build();
     }
+
+    @Override
+    public ResponseEntity<List<PlanResponseDto>> savePreviewToPlans(Long userId, String deviceId, String groupId) {
+        List<PlanResponseDto> savedPlans = planService.saveGroupCardsToUser(userId, deviceId, groupId);
+        return ResponseEntity.ok(savedPlans);
+    }
 }
