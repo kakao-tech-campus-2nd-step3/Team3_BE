@@ -1,11 +1,6 @@
 name: CI (빌드 및 테스트)
 
 on:
-  push:
-    branches:
-      - master
-      - develop
-      - 'weekly/**'
   pull_request:
     branches:
       - master
