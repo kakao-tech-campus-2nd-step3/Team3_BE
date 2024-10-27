@@ -1,23 +1,20 @@
 package com.splanet.splanet.chat;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/gpt")
-public class GptController {
+@RequiredArgsConstructor
+public class GptController implements GptApi {
 
     private final GptService gptService;
 
-    @Autowired
-    public GptController(GptService gptService) {
-        this.gptService = gptService;
-    }
-
-    @PostMapping
-    public GptResponse callGpt(@RequestBody GptRequest gptRequest) {
+    @Override
+    public ResponseEntity<GptResponse> callGpt(@RequestBody GptRequest gptRequest) {
         // messages 리스트에서 첫 번째 메시지의 content를 가져옵니다.
         List<GptRequest.Message> messages = gptRequest.getMessages();
         String prompt = messages.isEmpty() ? "" : messages.get(0).getContent();
@@ -28,6 +25,8 @@ public class GptController {
         // 응답 설정
         GptResponse gptResponse = new GptResponse();
         gptResponse.setResponse(response);
-        return gptResponse;
+
+        // ResponseEntity로 응답 반환
+        return ResponseEntity.ok(gptResponse);
     }
 }
