@@ -16,9 +16,9 @@ public class GptService {
     private final RestTemplate restTemplate;
     private final String apiKey;
 
-    public GptService(RestTemplate restTemplate,  @Value("${GPT_API_KEY}") String apiKey) {
+    public GptService(RestTemplate restTemplate, GptProperties gptProperties) {
         this.restTemplate = restTemplate;
-        this.apiKey = apiKey;
+        this.apiKey =  gptProperties.getApiKey();
     }
 
     public String callGpt(String prompt) {
