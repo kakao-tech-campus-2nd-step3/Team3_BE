@@ -23,7 +23,7 @@ public class NotificationScheduler {
     private final NotificationLogRepository notificationLogRepository;
     private final NotificationService notificationService;
 
-    @Scheduled(fixedRate = 10000)  
+    @Scheduled(fixedRate = 60000)
     public void sendScheduledNotifications() {
 
         LocalDateTime now = LocalDateTime.now();

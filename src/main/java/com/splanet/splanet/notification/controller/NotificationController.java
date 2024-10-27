@@ -5,9 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @RestController
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
@@ -15,13 +12,9 @@ public class NotificationController {
 
     private final NotificationService notificationService;
 
-
-
     @PostMapping("/send/{userId}")
-    public ResponseEntity<Map<String, String>> sendTestNotification(@PathVariable Long userId) {
+    public ResponseEntity<String> sendTestNotification(@PathVariable Long userId) {
         notificationService.sendTestNotification(userId);
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Notification sent to user with ID: " + userId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok("Notification sent to user with ID: " + userId);
     }
 }
