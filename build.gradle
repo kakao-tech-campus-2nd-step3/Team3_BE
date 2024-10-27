@@ -74,6 +74,8 @@ dependencies {
 	implementation platform("org.springframework.ai:spring-ai-bom:0.8.0")
 	implementation 'org.springframework.ai:spring-ai-openai'
 
+	// FCM
+	implementation 'com.google.firebase:firebase-admin:6.8.1'
 
 }
 
