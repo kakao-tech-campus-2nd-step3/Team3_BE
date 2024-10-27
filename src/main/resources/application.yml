@@ -51,3 +51,7 @@ clova:
   speech:
     client-secret: ${CLOVA_CLIENT_SECRET}
     language: ko
+
+openai:
+  gpt:
+    apiKey: ${GPT_API_KEY}

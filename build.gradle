@@ -23,12 +23,6 @@ configurations {
 
 repositories {
 	mavenCentral()
-	maven {
-		url 'https://repo.spring.io/milestone'
-	}
-	maven {
-		url 'https://repo.spring.io/snapshot'
-	}
 }
 
 dependencies {
@@ -66,13 +60,8 @@ dependencies {
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-	//gpt
-	// implementation 'org.springframework.boot:spring-boot-starter-web'
-	// implementation 'com.fasterxml.jackson.core:jackson-databind'
-	// implementation 'org.springframework.boot:spring-boot-starter'
-	implementation platform("org.springframework.ai:spring-ai-bom:0.8.0")
-	implementation 'org.springframework.ai:spring-ai-openai'
-
+	// gpt
+	implementation 'org.springframework.boot:spring-boot-starter-web'
 
 }
 
