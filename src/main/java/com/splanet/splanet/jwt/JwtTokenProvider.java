@@ -2,6 +2,7 @@ package com.splanet.splanet.jwt;
 
 import com.splanet.splanet.core.exception.BusinessException;
 import com.splanet.splanet.core.exception.ErrorCode;
+import com.splanet.splanet.core.properties.JwtProperties;
 import io.jsonwebtoken.*;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,16 +19,17 @@ public class JwtTokenProvider {
 
   private Key secretKey;
 
-  @Value("${jwt.secret}")
-  private String secret;
-
   private static final long TOKEN_VALIDITY_IN_MILLISECONDS = 3600000; // 1시간
   private static final long REFRESH_TOKEN_VALIDITY_IN_MILLISECONDS = 604800000; // 7일
+  private final JwtProperties jwtProperties;
 
+  public JwtTokenProvider(JwtProperties jwtProperties) {
+    this.jwtProperties = jwtProperties;
+  }
 
   @PostConstruct
   protected void init() {
-    this.secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), SignatureAlgorithm.HS256.getJcaName());
+    this.secretKey = new SecretKeySpec(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8), SignatureAlgorithm.HS256.getJcaName());
   }
 
   public String createAccessToken(Long userId) {
