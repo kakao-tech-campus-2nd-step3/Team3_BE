@@ -10,6 +10,11 @@ import java.time.LocalDateTime;
 
 @Getter
 @Entity
+@Table(
+        indexes = {
+                @Index(name = "idx_notification_log_fcm_token_id", columnList = "fcm_token_id")
+        }
+)
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder(toBuilder = true)

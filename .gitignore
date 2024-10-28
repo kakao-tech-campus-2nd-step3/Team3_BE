@@ -55,3 +55,4 @@ splanet-db
 ### env ###
 .env
 /src/main/resources/env.properties
+splanet-cef14-firebase-adminsdk-qe1dd-fcbc5d4a67.json
