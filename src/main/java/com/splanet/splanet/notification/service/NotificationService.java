@@ -30,7 +30,7 @@ public class NotificationService {
 
     public void sendNotification(FcmToken fcmToken, Plan plan) {
         String title = "곧 시작하는 플랜: " + plan.getTitle();
-        String body = "곧 시작하는 플랜이 있어요! 준비하세요.";
+        String body = "곧 시작하는 플랜이 있어요! " + plan.getDescription();
 
         Notification notification = new Notification(title, body);
 
@@ -38,11 +38,12 @@ public class NotificationService {
                 .setToken(fcmToken.getToken())
                 .setNotification(notification)
                 .putData("title", plan.getTitle())
+                .putData("title", plan.getDescription())
                 .putData("startDate", plan.getStartDate().toString())
                 .build();
         try {
             String response = firebaseMessaging.send(message);
-            log.info("Successfully sent message: {}", response);
+            log.info("알림을 정상적으로 전송하였습니다. : {}", response);
 
             // 알림 전송 기록 저장
             NotificationLog logEntry = NotificationLog.builder()
@@ -53,10 +54,11 @@ public class NotificationService {
             notificationLogRepository.save(logEntry);
 
         } catch (Exception e) {
-            log.error("Failed to send FCM notification", e);
+            log.error("FCM 알림 전송 실패 ", e);
         }
     }
 
+    // 알림 테스트를 위한 메소드 (추후 삭제)
     public void sendTestNotification(Long userId) {
         List<FcmToken> fcmTokens = fcmTokenRepository.findByUserId(userId);
 
