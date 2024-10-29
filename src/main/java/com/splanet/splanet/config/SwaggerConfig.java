@@ -1,5 +1,7 @@
 package com.splanet.splanet.config;
 
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.servers.Server;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -10,6 +12,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 
 
+@OpenAPIDefinition(
+        servers = {
+                @Server(url = "https://api.splanet.co.kr", description = "splanet https 서버입니다."),
+                @Server(url = "http://localhost:8080", description = "splanet local 서버입니다.")
+        }
+)
 @Configuration
 public class SwaggerConfig {
 
@@ -39,7 +47,7 @@ public class SwaggerConfig {
     private Info apiInfo() {
         return new Info()
                 .title("Splanet")
-                .description("[ Base URL: http://localhost:8080/api]\n\nSplanet의 API 문서")
+                .description("Splanet의 API 문서")
                 .version("1.0.0");
     }
 }
