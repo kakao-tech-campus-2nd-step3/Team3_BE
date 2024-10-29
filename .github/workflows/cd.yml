@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - develop
-
+      - bug/85-bug-cors
 jobs:
   deploy:
     runs-on: ubuntu-latest
