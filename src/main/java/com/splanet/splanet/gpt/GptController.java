@@ -15,7 +15,7 @@ public class GptController implements GptApi {
         try {
             // GptRequest에서 사용자 입력을 가져옴
             String userInput = gptRequest.getText();
-            String jsonResponse = gptService.callGptApi(userInput);
+            String jsonResponse = gptService.generateResponse(userInput);
             return ResponseEntity.ok(jsonResponse);
         } catch (Exception e) {
             // 오류 발생 시 적절한 응답을 반환

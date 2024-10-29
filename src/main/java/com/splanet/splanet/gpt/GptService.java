@@ -10,33 +10,33 @@ public class GptService {
 
     private final OpenAiApi openAiApi;
 
-    // GPT 모델 및 파라미터 기본값 설정
-    private static final String MODEL = OpenAiApi.ChatModel.GPT_4_O_MINI.getValue();
-    private static final double TEMPERATURE = 0.5;
+    // GPT 모델과 기본 파라미터 설정
+    private static final String GPT_MODEL = OpenAiApi.ChatModel.GPT_4_O_MINI.getValue();
+    private static final double RESPONSE_TEMPERATURE = 0.5;
 
     public GptService(OpenAiApi openAiApi) {
         this.openAiApi = openAiApi;
     }
 
-    public String callGptApi(String userInput) {
-        // 사용자가 입력하면 메시지 생성하기
+    public String generateResponse(String inputMessage) {
+        // 사용자의 입력을 기반으로 메시지 객체 생성
         OpenAiApi.ChatCompletionMessage userMessage = new OpenAiApi.ChatCompletionMessage(
-                userInput, OpenAiApi.ChatCompletionMessage.Role.USER);
+                inputMessage, OpenAiApi.ChatCompletionMessage.Role.USER);
 
-        // 사용자 메시지를 포함해서 ChatCompletionRequest 생성
-        OpenAiApi.ChatCompletionRequest request = new OpenAiApi.ChatCompletionRequest(
+        // 사용자 메시지를 포함하여 ChatCompletionRequest 객체 생성
+        OpenAiApi.ChatCompletionRequest chatRequest = new OpenAiApi.ChatCompletionRequest(
                 List.of(userMessage),
-                OpenAiApi.ChatModel.GPT_4_O_MINI.getValue(),
-                0.5
+                GPT_MODEL,
+                RESPONSE_TEMPERATURE
         );
 
-        ResponseEntity<OpenAiApi.ChatCompletion> responseEntity = openAiApi.chatCompletionEntity(request);
-        OpenAiApi.ChatCompletion completion = responseEntity.getBody();
+        ResponseEntity<OpenAiApi.ChatCompletion> responseEntity = openAiApi.chatCompletionEntity(chatRequest);
+        OpenAiApi.ChatCompletion chatCompletion = responseEntity.getBody();
 
-        if (completion != null && !completion.choices().isEmpty()) {
-            return completion.choices().get(0).message().content();
+        if (chatCompletion != null && !chatCompletion.choices().isEmpty()) {
+            return chatCompletion.choices().get(0).message().content();
         } else {
-            return "유효한 응답이 없습니다.";
+            return "응답이 유효하지 않습니다.";
         }
     }
 }
