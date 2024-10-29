@@ -12,7 +12,7 @@ public class GptService {
 
     // GPT 모델과 기본 파라미터 설정
     private static final String GPT_MODEL = OpenAiApi.ChatModel.GPT_4_O_MINI.getValue();
-    private static final double RESPONSE_TEMPERATURE = 0.5;
+    private static final double RESPONSE_TEMPERATURE = 0.8;
 
     public GptService(OpenAiApi openAiApi) {
         this.openAiApi = openAiApi;
