@@ -58,7 +58,7 @@ jobs:
             sudo docker run -d --name splanet \
               --network splanet \
               --env-file /home/ubuntu/env.properties \
-              -p 80:8080 --restart unless-stopped kimsongmok/splanet:${{ env.IMAGE_TAG }}
+              -p 8080:8080 --restart unless-stopped kimsongmok/splanet:${{ env.IMAGE_TAG }}
 
       - name: Check Docker container status
         uses: appleboy/ssh-action@v0.1.6
