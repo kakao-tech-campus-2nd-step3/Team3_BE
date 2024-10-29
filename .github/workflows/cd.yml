@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - develop
+      - refactor/82-refactor-subdomain
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
