@@ -6,6 +6,5 @@ import lombok.Data;
 public class GptRequest {
     private String text;
 
-    // 기본 생성자
     public GptRequest() {}
 }
