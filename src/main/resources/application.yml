@@ -43,3 +43,8 @@ clova:
   speech:
     client-secret: ${CLOVA_CLIENT_SECRET}
     language: ko
+
+openai:
+  gpt:
+    api-key: ${GPT_API_KEY}
+    api-url: https://api.openai.com/v1/chat/completions
