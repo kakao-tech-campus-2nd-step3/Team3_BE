@@ -14,4 +14,4 @@ spring:
       client:
         registration:
           kakao:
-            redirect-uri: https://splanet.co.kr/login/oauth2/code/kakao
+            redirect-uri: https://api.splanet.co.kr/login/oauth2/code/kakao
