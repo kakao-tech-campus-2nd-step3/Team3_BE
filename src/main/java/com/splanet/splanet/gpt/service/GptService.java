@@ -1,4 +1,4 @@
-package com.splanet.splanet.gpt;
+package com.splanet.splanet.gpt.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,9 +24,9 @@ public class GptService {
 
     private static final double RESPONSE_TEMPERATURE = 0.8;
     private static final String PROMPT_TEMPLATE_MEMBER =
-            "사용자 입력: \"%s\" 기존 일정이 있다면 해당 시간과는 겹치지 않게 해 줘 기존일정:%s 현재 시간 이후로 가능한 다른 시간에 일정을 세워줘 (%s 기준). 모든 일정은 한국 시간(UTC+9)을 기준으로 설정해줘.";
+            "사용자 입력: \"%s\" (deviceId: %s) 기존 일정이 있다면 해당 시간과는 겹치지 않게 해 줘 기존일정:%s 현재 시간 이후로 가능한 다른 시간에 일정을 세워줘 (%s 기준). 모든 일정은 한국 시간(UTC+9)을 기준으로 설정해줘.";
     private static final String PROMPT_TEMPLATE_TRIAL =
-            "사용자 입력: \"%s\" 현재 시간 이후로 가능한 다른 시간에 일정을 세워줘 (%s 기준). 모든 일정은 한국 시간(UTC+9)을 기준으로 설정해줘.";
+            "사용자 입력: \"%s\" (deviceId: %s) 현재 시간 이후로 가능한 다른 시간에 일정을 세워줘 (%s 기준). 모든 일정은 한국 시간(UTC+9)을 기준으로 설정해줘.";
 
     public GptService(OpenAiApi openAiApi, GptProperties gptProperties, PlanService planService, ObjectMapper objectMapper) {
         this.openAiApi = openAiApi;
@@ -35,22 +35,22 @@ public class GptService {
         this.objectMapper = objectMapper;
     }
 
-    public String generateResponse(String userInput, Long userId) {
-        String fullPrompt = createPrompt(userInput, userId);
+    public String generateResponse(String userInput, Long userId, String deviceId) {
+        String fullPrompt = createPrompt(userInput, userId, deviceId);
         OpenAiApi.ChatCompletionMessage userMessage = createUserMessage(fullPrompt);
         OpenAiApi.ChatCompletionRequest chatRequest = createChatRequest(userMessage);
 
         return getGptResponse(chatRequest);
     }
 
-    private String createPrompt(String userInput, Long userId) {
+    private String createPrompt(String userInput, Long userId, String deviceId) {
         String currentTime = getCurrentTime();
         if (userId != null) {
             List<PlanResponseDto> futurePlans = planService.getAllFuturePlansByUserId(userId);
             String planJson = convertPlansToJson(futurePlans);
-            return String.format(PROMPT_TEMPLATE_MEMBER, userInput, planJson, currentTime);
+            return String.format(PROMPT_TEMPLATE_MEMBER, userInput, deviceId, planJson, currentTime);
         } else {
-            return String.format(PROMPT_TEMPLATE_TRIAL, userInput, currentTime);
+            return String.format(PROMPT_TEMPLATE_TRIAL, userInput, deviceId, currentTime);
         }
     }
 
