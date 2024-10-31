@@ -1,5 +1,6 @@
 package com.splanet.splanet.plan.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -13,8 +14,13 @@ public class PlanResponseDto {
     private String description;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
+
+    @JsonIgnore
     private Boolean accessibility;
+    @JsonIgnore
     private Boolean isCompleted;
+    @JsonIgnore
     private LocalDateTime createdAt;
+    @JsonIgnore
     private LocalDateTime updatedAt;
 }
