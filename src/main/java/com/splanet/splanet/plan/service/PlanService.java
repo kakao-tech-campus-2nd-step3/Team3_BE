@@ -113,4 +113,13 @@ public class PlanService {
 
         return planMapper.toEntity(planRequestDto, user);
     }
+
+    @Transactional(readOnly = true)
+    public List<PlanResponseDto> getAllFuturePlansByUserId(Long userId) {
+        LocalDateTime now = LocalDateTime.now();
+        List<Plan> futurePlans = planRepository.findAllByUserIdAndStartDateAfter(userId, now);
+        return futurePlans.stream()
+                .map(planMapper::toResponseDto)
+                .collect(Collectors.toList());
+    }
 }
