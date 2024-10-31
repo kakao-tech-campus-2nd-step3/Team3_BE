@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - develop
+      - feat/70-gpt-continue
 jobs:
   deploy:
     runs-on: ubuntu-latest
