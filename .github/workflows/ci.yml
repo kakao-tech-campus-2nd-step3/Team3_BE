@@ -51,6 +51,10 @@ jobs:
         run: |
           echo "${{ secrets.ENV_FILE }}" | base64 --decode > ./src/main/resources/env.properties
 
+      - name: Decode Firebase config from GitHub Secrets
+        run: |
+          echo "${{ secrets.FIREBASE_CONFIG }}" | base64 --decode > ./src/main/resources/splanet-firebase.json
+
       - name: Set environment variables from env.properties
         run: |
           set -o allexport

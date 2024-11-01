@@ -76,7 +76,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   }
 
   private boolean isExemptedPath(String requestURI) {
-    return requestURI.equals("/api/users/create") || requestURI.startsWith("/api/token") || requestURI.startsWith("/api/stt") || requestURI.equals("/api/gpt/trial") || requestURI.equals("/api/gpt/generate-device-id") || requestURI.equals("/api/gpt/plan/save");
+    return requestURI.equals("/api/users/create") || requestURI.startsWith("/api/token") || requestURI.startsWith("/api/stt") || requestURI.equals("/api/gpt/trial") || requestURI.equals("/api/gpt/generate-device-id") || requestURI.equals("/api/gpt/plan/save") || requestURI.startsWith("/api/notification");
   }
 
   private void sendErrorResponse(HttpServletResponse response, int status, String message) throws IOException {
