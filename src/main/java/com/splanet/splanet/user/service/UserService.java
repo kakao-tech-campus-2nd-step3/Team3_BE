@@ -11,6 +11,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import static com.splanet.splanet.core.exception.ErrorCode.USER_NOT_FOUND;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -19,14 +21,14 @@ public class UserService {
 
     public UserResponseDto getUserById(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(USER_NOT_FOUND));
         return toUserResponseDto(user);
     }
 
     @Transactional
     public UserResponseDto updateUserInfo(Long userId, UserUpdateRequestDto requestDto) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(USER_NOT_FOUND));
 
         User updatedUser = user.toBuilder()
                 .nickname(requestDto.getNickname())
@@ -42,7 +44,7 @@ public class UserService {
     @Transactional
     public void deleteUser(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(USER_NOT_FOUND));
 
         userRepository.delete(user);
     }
@@ -76,5 +78,11 @@ public class UserService {
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
+    }
+
+    public UserResponseDto getUserByNickname(String nickname) {
+        User user = userRepository.findByNickname(nickname)
+                .orElseThrow(() -> new BusinessException(USER_NOT_FOUND));
+        return toUserResponseDto(user);
     }
 }
