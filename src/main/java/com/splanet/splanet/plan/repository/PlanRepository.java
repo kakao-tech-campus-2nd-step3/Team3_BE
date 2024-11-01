@@ -13,9 +13,9 @@ import java.util.List;
 public interface PlanRepository extends JpaRepository<Plan, Long> {
     List<Plan> findAllByUserId(Long userId);
     List<Plan> findAllByUserIdAndAccessibility(Long userId, Boolean accessibility);
+    List<Plan> findAllByUserIdAndStartDateAfter(Long userId, LocalDateTime currentDateTime);
 
     @Query("SELECT p FROM Plan p JOIN FETCH p.user WHERE p.startDate > :now AND p.isCompleted = false")
     List<Plan> findUpcomingPlans(@Param("now") LocalDateTime now);
-
 
 }
