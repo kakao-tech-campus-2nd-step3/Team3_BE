@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - develop
+      - feat/96-feature-bluegreen
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -68,20 +69,10 @@ jobs:
             sudo docker stop splanet || true
             sudo docker rm splanet || true
             sudo docker network inspect splanet >/dev/null 2>&1 || sudo docker network create splanet
-            sudo docker run -d --name splanet \
+            sudo docker run -d --name splanet_blue \
               --network splanet \
               --env-file /home/ubuntu/env.properties \
               -p 8080:8080 --restart unless-stopped kimsongmok/splanet:${{ env.IMAGE_TAG }}
-
-      - name: Check Docker container status
-        uses: appleboy/ssh-action@v0.1.6
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            sudo docker ps -a
-            sudo docker logs splanet
             
       - name: Clean up old Docker images
         uses: appleboy/ssh-action@v0.1.6
