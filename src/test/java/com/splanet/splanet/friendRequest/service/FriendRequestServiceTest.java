@@ -231,4 +231,30 @@ class FriendRequestServiceTest {
 
         assertEquals(ErrorCode.FRIEND_REQUEST_ALREADY_ACCEPTED_OR_REJECTED, exception.getErrorCode());
     }
+
+    @Test
+    void 친구요청취소_성공() {
+        Long requestId = friendRequest.getId();
+        Long userId = requester.getId();
+
+        when(friendRequestRepository.findById(requestId)).thenReturn(Optional.of(friendRequest));
+
+        friendRequestService.cancelFriendRequest(requestId, userId);
+
+        verify(friendRequestRepository, times(1)).delete(friendRequest);
+    }
+
+    @Test
+    void 친구요청취소_권한없음() {
+        Long requestId = friendRequest.getId();
+        Long userId = 999L; // 요청자가 아닌 다른 사용자의 ID
+
+        when(friendRequestRepository.findById(requestId)).thenReturn(Optional.of(friendRequest));
+
+        BusinessException exception = assertThrows(BusinessException.class, () ->
+                friendRequestService.cancelFriendRequest(requestId, userId)
+        );
+
+        assertEquals(ErrorCode.ACCESS_DENIED, exception.getErrorCode());
+    }
 }
