@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "FCM", description = "FCM 토큰 관리 API")
 public interface FcmTokenApi {
 
-    @PostMapping("/register-token")
+    @PostMapping("/register")
     @Operation(summary = "FCM 토큰 등록", description = "유저가 FCM 토큰을 등록합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "FCM 토큰이 성공적으로 등록되었습니다."),
@@ -26,7 +26,7 @@ public interface FcmTokenApi {
             @RequestBody FcmTokenRequest fcmTokenRequest
     );
 
-    @PutMapping("/update-token-settings")
+    @PutMapping("/update")
     @Operation(summary = "FCM 토큰 설정 수정", description = "알림 설정 및 알림 오프셋을 수정합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "FCM 토큰 설정이 성공적으로 수정되었습니다."),
@@ -37,7 +37,7 @@ public interface FcmTokenApi {
             @RequestBody FcmTokenUpdateRequest fcmTokenUpdateRequest
     );
 
-    @DeleteMapping("/delete-token")
+    @DeleteMapping("/delete")
     @Operation(summary = "FCM 토큰 삭제", description = "유저의 FCM 토큰을 삭제합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "FCM 토큰이 성공적으로 삭제되었습니다."),
