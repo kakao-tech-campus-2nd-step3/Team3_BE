@@ -69,4 +69,17 @@ public interface FriendRequestApi {
     })
     ResponseEntity<List<SentFriendRequestResponse>> getSentRequests(
             @Parameter(description = "JWT 인증으로 전달된 사용자 ID", required = true) @AuthenticationPrincipal Long userId);
+
+    @DeleteMapping("/{requestId}/cancel")
+    @Operation(summary = "친구 요청 취소", description = "특정 친구 요청을 취소합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "친구 요청이 성공적으로 취소되었습니다."),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자입니다."),
+            @ApiResponse(responseCode = "404", description = "해당 친구 요청을 찾을 수 없습니다."),
+            @ApiResponse(responseCode = "403", description = "친구요청 권한이 없습니다. 내가 보낸 요청이 아닙니다.")
+    })
+    ResponseEntity<SuccessResponse> cancelFriendRequest(
+            @Parameter(description = "친구 요청 ID", required = true) @PathVariable Long requestId,
+            @AuthenticationPrincipal Long userId);
+
 }

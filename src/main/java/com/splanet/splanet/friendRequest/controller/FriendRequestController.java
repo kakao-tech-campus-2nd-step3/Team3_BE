@@ -58,4 +58,13 @@ public class FriendRequestController implements FriendRequestApi{
     public ResponseEntity<List<SentFriendRequestResponse>> getSentRequests(@AuthenticationPrincipal Long userId) {
         return ResponseEntity.ok(friendRequestService.getSentFriendRequests(userId));
     }
+
+    // 친구 요청 취소
+    @Override
+    public ResponseEntity<SuccessResponse> cancelFriendRequest(@PathVariable Long requestId,
+                                                               @AuthenticationPrincipal Long userId) {
+        friendRequestService.cancelFriendRequest(requestId, userId);
+        SuccessResponse response = new SuccessResponse("친구 요청이 성공적으로 취소되었습니다.");
+        return ResponseEntity.ok(response);
+    }
 }
