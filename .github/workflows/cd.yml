@@ -1,4 +1,4 @@
-name: CD (자동배포)
+name: CD (무중단배포)
 
 on:
   push:
@@ -100,23 +100,32 @@ jobs:
           echo "New Version: $NEW_VERSION"
           echo "New Port: $NEW_PORT"
 
+      - name: Debug Environment Variables
+        run: |
+          echo "IMAGE_TAG=${{ env.IMAGE_TAG }}"
+          echo "CURRENT_VERSION=${{ env.CURRENT_VERSION }}"
+          echo "NEW_VERSION=${{ env.NEW_VERSION }}"
+          echo "NEW_PORT=${{ env.NEW_PORT }}"
+
+
       - name: Deploy New Version to EC2
         uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: |
+          script: |
             IMAGE_TAG=${{ env.IMAGE_TAG }}
             NEW_VERSION=${{ env.NEW_VERSION }}
             NEW_PORT=${{ env.NEW_PORT }}
-          script: |
-            sudo docker pull kimsongmok/splanet:${IMAGE_TAG}
+            
+            echo "Deploying with IMAGE_TAG=$IMAGE_TAG, NEW_VERSION=$NEW_VERSION, NEW_PORT=$NEW_PORT"
+            sudo docker pull kimsongmok/splanet:$IMAGE_TAG
             sudo docker network inspect splanet >/dev/null 2>&1 || sudo docker network create splanet
-            sudo docker run -d --name splanet_${NEW_VERSION} \
+            sudo docker run -d --name splanet_$NEW_VERSION \
               --network splanet \
               --env-file /home/ubuntu/env.properties \
-              -p ${NEW_PORT}:8080 --restart unless-stopped kimsongmok/splanet:${IMAGE_TAG}
+              -p $NEW_PORT:8080 --restart unless-stopped kimsongmok/splanet:$IMAGE_TAG
 
       - name: Wait for Spring Boot Application to Start
         uses: appleboy/ssh-action@v0.1.6
@@ -124,23 +133,23 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: |
+          script: |
             NEW_PORT=${{ env.NEW_PORT }}
             NEW_VERSION=${{ env.NEW_VERSION }}
-          script: |
+            
             echo "Waiting for the application to be healthy on http://api.splanet.co.kr:${NEW_PORT}/actuator/health..."
             for i in {1..30}; do
-              if curl -s http://api.splanet.co.kr:${NEW_PORT}/actuator/health | grep '"status":"UP"' > /dev/null; then
+              if curl -s http://api.splanet.co.kr:$NEW_PORT/actuator/health | grep '"status":"UP"' > /dev/null; then
                 echo "Application is healthy and ready to receive traffic."
                 break
               fi
               echo "Waiting for application to start... (Attempt $i)"
               sleep 5
             done
-
+            
             if [ "$i" -eq 30 ]; then
               echo "Application did not start successfully within the expected time."
-              sudo docker logs splanet_${NEW_VERSION}
+              sudo docker logs splanet_$NEW_VERSION
               exit 1
             fi
 
@@ -150,9 +159,9 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: |
-            CURRENT_VERSION=${{ env.CURRENT_VERSION }}
           script: |
+            CURRENT_VERSION=${{ env.CURRENT_VERSION }}
+            
             if [ "$CURRENT_VERSION" == "blue" ]; then
               TARGET_GROUP_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:targetgroup/splanet-8081/${{ secrets.ARN_ID_8081 }}"
             else
@@ -167,9 +176,9 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: |
-            CURRENT_VERSION=${{ env.CURRENT_VERSION }}
           script: |
+            CURRENT_VERSION=${{ env.CURRENT_VERSION }}
+            
             if [ "$CURRENT_VERSION" != "none" ]; then
               sudo docker stop splanet_${CURRENT_VERSION}
               sudo docker rm splanet_${CURRENT_VERSION}
