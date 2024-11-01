@@ -32,7 +32,7 @@ public class NotificationScheduler {
     private final QueryPerformanceService queryPerformanceService;
 
 
-    @Scheduled(fixedRate = 300000)
+    @Scheduled(fixedRate = 60000)
     public void sendScheduledNotifications() {
         LocalDateTime now = LocalDateTime.now();
 
