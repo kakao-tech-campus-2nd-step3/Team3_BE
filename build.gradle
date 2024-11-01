@@ -15,6 +15,11 @@ java {
 	}
 }
 
+test {
+	useJUnitPlatform()
+	systemProperty 'spring.profiles.active', 'test'
+}
+
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
