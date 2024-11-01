@@ -5,10 +5,10 @@ on:
     branches:
       - develop
       - feat/96-feature-bluegreen
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -32,7 +32,7 @@ jobs:
       - name: Decode env.properties from GitHub Secrets
         run: |
           echo "${{ secrets.ENV_FILE }}" | base64 --decode > ./env.properties
-          
+
       - name: Decode Firebase config from GitHub Secrets
         run: |
           echo "${{ secrets.FIREBASE_CONFIG }}" | base64 --decode > ./splanet-firebase.json
@@ -81,7 +81,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            if [ "${steps.current_version.outputs.version}" == "blue" ]; then
+            if [ "${{ steps.current_version.outputs.version }}" == "blue" ]; then
               NEW_VERSION="green"
               NEW_PORT=8081
             else
@@ -102,12 +102,14 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            if [ "${steps.current_version.outputs.version}" == "blue" ]; then
+            if [ "${{ steps.current_version.outputs.version }}" == "blue" ]; then
+              NEW_VERSION="green"
               NEW_PORT=8081
             else
+              NEW_VERSION="blue"
               NEW_PORT=8080
             fi
-            
+
             echo "Waiting for the application to be healthy on http://api.splanet.co.kr:${NEW_PORT}/actuator/health..."
             for i in {1..30}; do
               if curl -s http://api.splanet.co.kr:${NEW_PORT}/actuator/health | grep '"status":"UP"' > /dev/null; then
@@ -117,8 +119,7 @@ jobs:
               echo "Waiting for application to start... (Attempt $i)"
               sleep 5
             done
-            
-            # If the application is not healthy after 40 attempts (200 seconds), fail the deployment
+
             if [ "$i" -eq 30 ]; then
               echo "Application did not start successfully within the expected time."
               sudo docker logs splanet_${NEW_VERSION}
@@ -151,7 +152,6 @@ jobs:
               sudo docker stop splanet_${{ steps.current_version.outputs.version }}
               sudo docker rm splanet_${{ steps.current_version.outputs.version }}
             fi
-
 
       - name: Clean up old Docker images
         uses: appleboy/ssh-action@v0.1.6
