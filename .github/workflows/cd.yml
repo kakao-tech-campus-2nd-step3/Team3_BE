@@ -80,8 +80,11 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: |
+            CURRENT_VERSION=${{ steps.current_version.outputs.version }}
+            IMAGE_TAG=${{ env.IMAGE_TAG }}
           script: |
-            if [ "${{ steps.current_version.outputs.version }}" == "blue" ]; then
+            if [ "$CURRENT_VERSION" == "blue" ]; then
               NEW_VERSION="green"
               NEW_PORT=8081
             else
@@ -101,12 +104,13 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: |
+            CURRENT_VERSION=${{ steps.current_version.outputs.version }}
+            NEW_VERSION=$(( "${{ steps.current_version.outputs.version }}" == "blue" ? "green" : "blue" ))
           script: |
-            if [ "${{ steps.current_version.outputs.version }}" == "blue" ]; then
-              NEW_VERSION="green"
+            if [ "$CURRENT_VERSION" == "blue" ]; then
               NEW_PORT=8081
             else
-              NEW_VERSION="blue"
               NEW_PORT=8080
             fi
 
@@ -132,8 +136,10 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: |
+            CURRENT_VERSION=${{ steps.current_version.outputs.version }}
           script: |
-            if [ "${{ steps.current_version.outputs.version }}" == "blue" ]; then
+            if [ "$CURRENT_VERSION" == "blue" ]; then
               TARGET_GROUP_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:targetgroup/splanet-8081/${{ secrets.ARN_ID_8081 }}"
             else
               TARGET_GROUP_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:targetgroup/splanet/${{ secrets.ARN_ID_8080 }}"
@@ -147,10 +153,12 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: |
+            CURRENT_VERSION=${{ steps.current_version.outputs.version }}
           script: |
-            if [ "${{ steps.current_version.outputs.version }}" != "none" ]; then
-              sudo docker stop splanet_${{ steps.current_version.outputs.version }}
-              sudo docker rm splanet_${{ steps.current_version.outputs.version }}
+            if [ "$CURRENT_VERSION" != "none" ]; then
+              sudo docker stop splanet_$CURRENT_VERSION
+              sudo docker rm splanet_$CURRENT_VERSION
             fi
 
       - name: Clean up old Docker images
