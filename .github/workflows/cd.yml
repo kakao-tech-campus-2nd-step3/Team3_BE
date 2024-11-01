@@ -9,6 +9,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -55,9 +56,6 @@ jobs:
           source: "./splanet-firebase.json"
           target: "/home/ubuntu/"
 
-      - name: Build and Push Docker image
-        run: docker buildx build --push --platform linux/amd64 -t kimsongmok/splanet:${{ env.IMAGE_TAG }} .
-
       - name: Determine Current Version
         id: current_version
         uses: appleboy/ssh-action@v0.1.6
@@ -74,6 +72,23 @@ jobs:
               echo "::set-output name=version::none"
             fi
 
+      - name: Determine New Version
+        id: determine_new_version
+        run: |
+          if [ "${{ steps.current_version.outputs.version }}" == "blue" ]; then
+            echo "NEW_VERSION=green" >> $GITHUB_ENV
+            echo "NEW_PORT=8081" >> $GITHUB_ENV
+          else
+            echo "NEW_VERSION=blue" >> $GITHUB_ENV
+            echo "NEW_PORT=8080" >> $GITHUB_ENV
+          fi
+          # 설정된 값을 다시 출력하여 확인
+          echo "NEW_VERSION=${{ env.NEW_VERSION }}" > new_version.env
+          echo "NEW_PORT=${{ env.NEW_PORT }}" >> new_version.env
+
+      - name: Load New Version
+        run: source new_version.env
+
       - name: Deploy New Version to EC2
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -81,22 +96,16 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           envs: |
-            CURRENT_VERSION=${{ steps.current_version.outputs.version }}
             IMAGE_TAG=${{ env.IMAGE_TAG }}
+            NEW_VERSION=${{ env.NEW_VERSION }}
+            NEW_PORT=${{ env.NEW_PORT }}
           script: |
-            if [ "$CURRENT_VERSION" == "blue" ]; then
-              NEW_VERSION="green"
-              NEW_PORT=8081
-            else
-              NEW_VERSION="blue"
-              NEW_PORT=8080
-            fi
             sudo docker pull kimsongmok/splanet:${{ env.IMAGE_TAG }}
             sudo docker network inspect splanet >/dev/null 2>&1 || sudo docker network create splanet
-            sudo docker run -d --name splanet_${NEW_VERSION} \
+            sudo docker run -d --name splanet_${{ env.NEW_VERSION }} \
               --network splanet \
               --env-file /home/ubuntu/env.properties \
-              -p ${NEW_PORT}:8080 --restart unless-stopped kimsongmok/splanet:${{ env.IMAGE_TAG }}
+              -p ${{ env.NEW_PORT }}:8080 --restart unless-stopped kimsongmok/splanet:${{ env.IMAGE_TAG }}
 
       - name: Wait for Spring Boot Application to Start
         uses: appleboy/ssh-action@v0.1.6
@@ -105,15 +114,9 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           envs: |
-            CURRENT_VERSION=${{ steps.current_version.outputs.version }}
-            NEW_VERSION=$(( "${{ steps.current_version.outputs.version }}" == "blue" ? "green" : "blue" ))
+            NEW_PORT=${{ env.NEW_PORT }}
+            NEW_VERSION=${{ env.NEW_VERSION }}
           script: |
-            if [ "$CURRENT_VERSION" == "blue" ]; then
-              NEW_PORT=8081
-            else
-              NEW_PORT=8080
-            fi
-
             echo "Waiting for the application to be healthy on http://api.splanet.co.kr:${NEW_PORT}/actuator/health..."
             for i in {1..30}; do
               if curl -s http://api.splanet.co.kr:${NEW_PORT}/actuator/health | grep '"status":"UP"' > /dev/null; then
