@@ -36,19 +36,24 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            gradle-${{ runner.os }}-
+#      - name: Cache Gradle dependencies
+#        uses: actions/cache@v3
+#        with:
+#          path: |
+#            ~/.gradle/caches/modules-2/files-2.1
+#            ~/.gradle/wrapper
+#          key: gradle-${{ runner.os }}-${{ hashFiles('build.gradle', 'settings.gradle') }}
+#          restore-keys: |
+#            gradle-${{ runner.os }}-
+
 
       - name: Decode env.properties from GitHub Secrets
         run: |
           echo "${{ secrets.ENV_FILE }}" | base64 --decode > ./src/main/resources/env.properties
+
+      - name: Decode Firebase config from GitHub Secrets
+        run: |
+          echo "${{ secrets.FIREBASE_CONFIG }}" | base64 --decode > ./src/main/resources/splanet-firebase.json
 
       - name: Set environment variables from env.properties
         run: |
@@ -79,7 +84,7 @@ jobs:
           fi
 
       - name: Build with Gradle
-        run: ./gradlew build
+        run: ./gradlew build -Dspring.profiles.active=test
 
       - name: Run Tests
-        run: ./gradlew test
+        run: ./gradlew test -Dspring.profiles.active=test

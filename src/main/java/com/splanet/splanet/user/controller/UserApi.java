@@ -63,4 +63,15 @@ public interface UserApi {
             @Parameter(description = "새로운 유저의 닉네임", required = true) @RequestParam String nickname,
             @Parameter(description = "새로운 유저의 프로필 이미지", required = false) @RequestParam(required = false) String profileImage,
             @Parameter(description = "새로운 유저의 프리미엄 여부", required = false) @RequestParam(required = false) Boolean isPremium);
+
+    @GetMapping("/nickname/{user_nickname}")
+    @Operation(summary = "닉네임으로 유저 조회", description = "특정 사용자의 닉네임으로 유저 정보를 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "유저 정보가 성공적으로 반환되었습니다.",
+                    content = @Content(schema = @Schema(implementation = UserResponseDto.class))),
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 유저입니다.", content = @Content),
+            @ApiResponse(responseCode = "500", description = "서버 오류.", content = @Content)
+    })
+    ResponseEntity<UserResponseDto> getUserByNickname(
+            @Parameter(description = "검색할 유저의 닉네임", required = true) @PathVariable String user_nickname);
 }
