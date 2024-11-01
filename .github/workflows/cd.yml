@@ -65,29 +65,27 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             if sudo docker ps --filter "name=splanet_blue" --format "{{.Names}}" | grep -q "splanet_blue"; then
-              echo "::set-output name=version::blue"
+              echo "blue" > current_version.txt
             elif sudo docker ps --filter "name=splanet_green" --format "{{.Names}}" | grep -q "splanet_green"; then
-              echo "::set-output name=version::green"
+              echo "green" > current_version.txt
             else
-              echo "::set-output name=version::none"
+              echo "none" > current_version.txt
             fi
+              cat current_version.txt
 
       - name: Determine New Version
-        id: determine_new_version
         run: |
-          if [ "${{ steps.current_version.outputs.version }}" == "blue" ]; then
-            echo "NEW_VERSION=green" >> $GITHUB_ENV
-            echo "NEW_PORT=8081" >> $GITHUB_ENV
+          CURRENT_VERSION=$(cat current_version.txt) 
+          echo "현재 버전은 $CURRENT_VERSION 입니다" 
+          
+          if [ "$CURRENT_VERSION" == "blue" ]; then
+            echo "NEW_VERSION=green" > new_version.txt
+            echo "NEW_PORT=8081" >> new_version.txt
           else
-            echo "NEW_VERSION=blue" >> $GITHUB_ENV
-            echo "NEW_PORT=8080" >> $GITHUB_ENV
+            echo "NEW_VERSION=blue" > new_version.txt
+            echo "NEW_PORT=8080" >> new_version.txt
           fi
-          # 설정된 값을 다시 출력하여 확인
-          echo "NEW_VERSION=${{ env.NEW_VERSION }}" > new_version.env
-          echo "NEW_PORT=${{ env.NEW_PORT }}" >> new_version.env
-
-      - name: Load New Version
-        run: source new_version.env
+            cat new_version.txt
 
       - name: Deploy New Version to EC2
         uses: appleboy/ssh-action@v0.1.6
@@ -95,17 +93,16 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: |
-            IMAGE_TAG=${{ env.IMAGE_TAG }}
-            NEW_VERSION=${{ env.NEW_VERSION }}
-            NEW_PORT=${{ env.NEW_PORT }}
           script: |
+            source new_version.txt  # NEW_VERSION과 NEW_PORT 값을 불러옵니다
+            echo "새 버전 $NEW_VERSION, 포트 $NEW_PORT 에 배포를 시작합니다"
             sudo docker pull kimsongmok/splanet:${{ env.IMAGE_TAG }}
             sudo docker network inspect splanet >/dev/null 2>&1 || sudo docker network create splanet
-            sudo docker run -d --name splanet_${{ env.NEW_VERSION }} \
+            sudo docker run -d --name splanet_$NEW_VERSION \
               --network splanet \
               --env-file /home/ubuntu/env.properties \
-              -p ${{ env.NEW_PORT }}:8080 --restart unless-stopped kimsongmok/splanet:${{ env.IMAGE_TAG }}
+              -p $NEW_PORT:8080 --restart unless-stopped kimsongmok/splanet:${{ env.IMAGE_TAG }}
+            
 
       - name: Wait for Spring Boot Application to Start
         uses: appleboy/ssh-action@v0.1.6
