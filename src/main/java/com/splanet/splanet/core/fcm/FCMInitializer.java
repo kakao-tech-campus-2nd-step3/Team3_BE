@@ -19,15 +19,19 @@ public class FCMInitializer {
     @PostConstruct
     public void initialize() {
         try {
-            GoogleCredentials googleCredentials = GoogleCredentials
-                    .fromStream(new ClassPathResource(FIREBASE_CONFIG_PATH).getInputStream());
-            FirebaseOptions options = new FirebaseOptions.Builder()
-                    .setCredentials(googleCredentials)
-                    .build();
-            FirebaseApp.initializeApp(options);
+            if (FirebaseApp.getApps().isEmpty()) {
+                GoogleCredentials googleCredentials = GoogleCredentials
+                        .fromStream(new ClassPathResource(FIREBASE_CONFIG_PATH).getInputStream());
+                FirebaseOptions options = new FirebaseOptions.Builder()
+                        .setCredentials(googleCredentials)
+                        .build();
+                FirebaseApp.initializeApp(options);
+                log.info("FirebaseApp 초기화 완료");
+            } else {
+                log.info("FirebaseApp이 이미 초기화되었습니다.");
+            }
         } catch (IOException e) {
-            log.info("FCM initialization error occurred.");
-            log.error("FCM error message : " + e.getMessage());
+            log.error("FCM 초기화 오류 발생: " + e.getMessage());
         }
     }
 }
