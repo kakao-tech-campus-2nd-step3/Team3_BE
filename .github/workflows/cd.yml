@@ -56,36 +56,49 @@ jobs:
           source: "./splanet-firebase.json"
           target: "/home/ubuntu/"
 
+      - name: Build and Push Docker image
+        run: docker buildx build --push --platform linux/amd64 -t kimsongmok/splanet:${{ env.IMAGE_TAG }} .
+
+      - name: Setup SSH Key
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > private_key.pem
+          chmod 600 private_key.pem
+
       - name: Determine Current Version
-        id: current_version
-        uses: appleboy/ssh-action@v0.1.6
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
+        id: determine_current_version
+        run: |
+          VERSION=$(ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_HOST }} '
             if sudo docker ps --filter "name=splanet_blue" --format "{{.Names}}" | grep -q "splanet_blue"; then
-              echo "blue" > current_version.txt
+              echo "blue"
             elif sudo docker ps --filter "name=splanet_green" --format "{{.Names}}" | grep -q "splanet_green"; then
-              echo "green" > current_version.txt
+              echo "green"
             else
-              echo "none" > current_version.txt
+              echo "none"
             fi
-              cat current_version.txt
+          ')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Set Current Version
+        run: echo "CURRENT_VERSION=${{ steps.determine_current_version.outputs.version }}" >> $GITHUB_ENV
 
       - name: Determine New Version
         run: |
-          CURRENT_VERSION=$(cat current_version.txt) 
-          echo "현재 버전은 $CURRENT_VERSION 입니다" 
-          
-          if [ "$CURRENT_VERSION" == "blue" ]; then
-            echo "NEW_VERSION=green" > new_version.txt
-            echo "NEW_PORT=8081" >> new_version.txt
+          if [ "${{ env.CURRENT_VERSION }}" == "blue" ]; then
+            echo "NEW_VERSION=green" >> $GITHUB_ENV
+            echo "NEW_PORT=8081" >> $GITHUB_ENV
+          elif [ "${{ env.CURRENT_VERSION }}" == "green" ]; then
+            echo "NEW_VERSION=blue" >> $GITHUB_ENV
+            echo "NEW_PORT=8080" >> $GITHUB_ENV
           else
-            echo "NEW_VERSION=blue" > new_version.txt
-            echo "NEW_PORT=8080" >> new_version.txt
+            echo "NEW_VERSION=blue" >> $GITHUB_ENV
+            echo "NEW_PORT=8080" >> $GITHUB_ENV
           fi
-            cat new_version.txt
+
+      - name: Print Current and New Version
+        run: |
+          echo "Current Version: $CURRENT_VERSION"
+          echo "New Version: $NEW_VERSION"
+          echo "New Port: $NEW_PORT"
 
       - name: Deploy New Version to EC2
         uses: appleboy/ssh-action@v0.1.6
@@ -93,16 +106,17 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: |
+            IMAGE_TAG=${{ env.IMAGE_TAG }}
+            NEW_VERSION=${{ env.NEW_VERSION }}
+            NEW_PORT=${{ env.NEW_PORT }}
           script: |
-            source new_version.txt  # NEW_VERSION과 NEW_PORT 값을 불러옵니다
-            echo "새 버전 $NEW_VERSION, 포트 $NEW_PORT 에 배포를 시작합니다"
-            sudo docker pull kimsongmok/splanet:${{ env.IMAGE_TAG }}
+            sudo docker pull kimsongmok/splanet:${IMAGE_TAG}
             sudo docker network inspect splanet >/dev/null 2>&1 || sudo docker network create splanet
-            sudo docker run -d --name splanet_$NEW_VERSION \
+            sudo docker run -d --name splanet_${NEW_VERSION} \
               --network splanet \
               --env-file /home/ubuntu/env.properties \
-              -p $NEW_PORT:8080 --restart unless-stopped kimsongmok/splanet:${{ env.IMAGE_TAG }}
-            
+              -p ${NEW_PORT}:8080 --restart unless-stopped kimsongmok/splanet:${IMAGE_TAG}
 
       - name: Wait for Spring Boot Application to Start
         uses: appleboy/ssh-action@v0.1.6
@@ -137,7 +151,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           envs: |
-            CURRENT_VERSION=${{ steps.current_version.outputs.version }}
+            CURRENT_VERSION=${{ env.CURRENT_VERSION }}
           script: |
             if [ "$CURRENT_VERSION" == "blue" ]; then
               TARGET_GROUP_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:targetgroup/splanet-8081/${{ secrets.ARN_ID_8081 }}"
@@ -154,11 +168,11 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           envs: |
-            CURRENT_VERSION=${{ steps.current_version.outputs.version }}
+            CURRENT_VERSION=${{ env.CURRENT_VERSION }}
           script: |
             if [ "$CURRENT_VERSION" != "none" ]; then
-              sudo docker stop splanet_$CURRENT_VERSION
-              sudo docker rm splanet_$CURRENT_VERSION
+              sudo docker stop splanet_${CURRENT_VERSION}
+              sudo docker rm splanet_${CURRENT_VERSION}
             fi
 
       - name: Clean up old Docker images
