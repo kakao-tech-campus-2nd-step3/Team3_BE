@@ -14,7 +14,7 @@ import java.io.IOException;
 @Slf4j
 public class FCMInitializer {
 
-    private static final String FIREBASE_CONFIG_PATH = "splanet-cef14-firebase-adminsdk-qe1dd-fcbc5d4a67.json";
+    private static final String FIREBASE_CONFIG_PATH = "splanet-firebase.json";
 
     @PostConstruct
     public void initialize() {
