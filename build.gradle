@@ -79,6 +79,10 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter'
 
 	implementation 'mysql:mysql-connector-java:8.0.33'  // 버전 추가'
+    
+	// FCM
+	implementation 'com.google.firebase:firebase-admin:6.8.1'
+
 }
 
 tasks.named('test') {
