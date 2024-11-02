@@ -139,7 +139,7 @@ jobs:
             
             echo "Waiting for the application to be healthy on http://api.splanet.co.kr:${NEW_PORT}/actuator/health..."
             for i in {1..30}; do
-              if curl -s http://api.splanet.co.kr:$NEW_PORT/actuator/health | grep '"status":"UP"' > /dev/null; then
+              if curl -s http://localhost:$NEW_PORT/actuator/health | grep '"status":"UP"' > /dev/null; then
                 echo "Application is healthy and ready to receive traffic."
                 break
               fi
