@@ -47,7 +47,7 @@ public class SwaggerConfig {
     private Info apiInfo() {
         return new Info()
                 .title("Splanet")
-                .description("Splanet의 API 문서, Version : Blue")
+                .description("Splanet의 API 문서, Version : Green")
                 .version("1.0.0");
     }
 }
