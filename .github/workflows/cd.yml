@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - develop
-      - feat/96-feature-bluegreen
 
 jobs:
   deploy:
@@ -161,14 +160,41 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             CURRENT_VERSION=${{ env.CURRENT_VERSION }}
+            NEW_VERSION=${{ env.NEW_VERSION }}
             
             if [ "$CURRENT_VERSION" == "blue" ]; then
-              TARGET_GROUP_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:targetgroup/splanet-8081/${{ secrets.ARN_ID_8081 }}"
+              OLD_TARGET_GROUP_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:targetgroup/splanet/${{ secrets.ARN_ID_8080 }}"
+              NEW_TARGET_GROUP_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:targetgroup/splanet-8081/${{ secrets.ARN_ID_8081 }}"
             else
-              TARGET_GROUP_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:targetgroup/splanet/${{ secrets.ARN_ID_8080 }}"
+              OLD_TARGET_GROUP_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:targetgroup/splanet-8081/${{ secrets.ARN_ID_8081 }}"
+              NEW_TARGET_GROUP_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:targetgroup/splanet/${{ secrets.ARN_ID_8080 }}"
             fi
+            
             aws elbv2 modify-listener --listener-arn arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:listener/app/splanet/${{ secrets.ARN_ID_443 }} \
-              --default-actions Type=forward,TargetGroupArn=$TARGET_GROUP_ARN
+              --default-actions '[{
+                "Type": "forward",
+                "ForwardConfig": {
+                  "TargetGroups": [
+                    {"TargetGroupArn": "'"$OLD_TARGET_GROUP_ARN"'", "Weight": 20},
+                    {"TargetGroupArn": "'"$NEW_TARGET_GROUP_ARN"'", "Weight": 80}
+                  ]
+                }
+              }]'
+            
+            for i in {1..5}; do
+              echo "Increasing traffic to the new version... (Step $i)"
+              aws elbv2 modify-listener --listener-arn arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:listener/app/splanet/${{ secrets.ARN_ID_443 }} \
+                --default-actions '[{
+                  "Type": "forward",
+                  "ForwardConfig": {
+                    "TargetGroups": [
+                      {"TargetGroupArn": "'"$OLD_TARGET_GROUP_ARN"'", "Weight": '$((100 - i * 20))'},
+                      {"TargetGroupArn": "'"$NEW_TARGET_GROUP_ARN"'", "Weight": '$((i * 20))'}
+                    ]
+                  }
+                }]'
+              sleep 10
+            done
 
       - name: Remove Old Version
         uses: appleboy/ssh-action@v0.1.6
@@ -193,3 +219,4 @@ jobs:
           script: |
             docker image ls --format "{{.ID}} {{.Repository}}:{{.Tag}}" | grep 'kimsongmok/splanet' | tail -n +4 | awk '{print $1}' | xargs docker rmi -f
             sudo docker system prune -f
+            
