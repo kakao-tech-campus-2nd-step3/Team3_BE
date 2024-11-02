@@ -153,7 +153,7 @@ jobs:
               exit 1
             fi
 
-      - name: Update Load Balancer Target Group
+      - name: Update Load Balancer Target Group with Weighted Target Groups
         uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -161,14 +161,44 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             CURRENT_VERSION=${{ env.CURRENT_VERSION }}
+            NEW_VERSION=${{ env.NEW_VERSION }}
             
+            # 타겟 그룹 ARN 설정
             if [ "$CURRENT_VERSION" == "blue" ]; then
-              TARGET_GROUP_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:targetgroup/splanet-8081/${{ secrets.ARN_ID_8081 }}"
+              OLD_TARGET_GROUP_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:targetgroup/splanet/${{ secrets.ARN_ID_8080 }}"
+              NEW_TARGET_GROUP_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:targetgroup/splanet-8081/${{ secrets.ARN_ID_8081 }}"
             else
-              TARGET_GROUP_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:targetgroup/splanet/${{ secrets.ARN_ID_8080 }}"
+              OLD_TARGET_GROUP_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:targetgroup/splanet-8081/${{ secrets.ARN_ID_8081 }}"
+              NEW_TARGET_GROUP_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:targetgroup/splanet/${{ secrets.ARN_ID_8080 }}"
             fi
+            
+            # AWS CLI 명령어에 JSON 포함하여 가중치 기반 트래픽 전환
             aws elbv2 modify-listener --listener-arn arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:listener/app/splanet/${{ secrets.ARN_ID_443 }} \
-              --default-actions Type=forward,TargetGroupArn=$TARGET_GROUP_ARN
+              --default-actions '[{
+                "Type": "forward",
+                "ForwardConfig": {
+                  "TargetGroups": [
+                    {"TargetGroupArn": "'"$OLD_TARGET_GROUP_ARN"'", "Weight": 20},
+                    {"TargetGroupArn": "'"$NEW_TARGET_GROUP_ARN"'", "Weight": 80}
+                  ]
+                }
+              }]'
+            
+            # 점진적 전환을 위해 단계별로 Weight 조정
+            for i in {1..5}; do
+              echo "Increasing traffic to the new version... (Step $i)"
+              aws elbv2 modify-listener --listener-arn arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:listener/app/splanet/${{ secrets.ARN_ID_443 }} \
+                --default-actions '[{
+                  "Type": "forward",
+                  "ForwardConfig": {
+                    "TargetGroups": [
+                      {"TargetGroupArn": "'"$OLD_TARGET_GROUP_ARN"'", "Weight": '$((100 - i * 20))'},
+                      {"TargetGroupArn": "'"$NEW_TARGET_GROUP_ARN"'", "Weight": '$((i * 20))'}
+                    ]
+                  }
+                }]'
+              sleep 10
+            done
 
       - name: Remove Old Version
         uses: appleboy/ssh-action@v0.1.6
