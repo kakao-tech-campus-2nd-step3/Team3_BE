@@ -36,6 +36,9 @@ public class PlanService {
   }
 
   private long convertLocalDateTimeToTimestamp(LocalDateTime localDateTime) {
+    if (localDateTime == null) {
+      throw new IllegalArgumentException("LocalDateTime 값이 null입니다.");
+    }
     return localDateTime.toEpochSecond(ZoneOffset.of("+9"));
   }
 
@@ -98,15 +101,12 @@ public class PlanService {
     Plan plan = planRepository.findById(planId)
             .orElseThrow(() -> new BusinessException(ErrorCode.PLAN_NOT_FOUND));
 
-    return PlanResponseDto.builder()
-            .id(plan.getId())
-            .title(plan.getTitle())
-            .description(plan.getDescription())
-            .startTimestamp(convertLocalDateTimeToTimestamp(plan.getStartDate()))
-            .endTimestamp(convertLocalDateTimeToTimestamp(plan.getEndDate()))
-            .build();
-  }
+    if (plan.getStartDate() == null || plan.getEndDate() == null) {
+      throw new IllegalArgumentException("시작 또는 종료 날짜가 null입니다.");
+    }
 
+    return planMapper.toResponseDto(plan);
+  }
   @Transactional(readOnly = true)
   public List<PlanResponseDto> getAllPlansByUserId(Long userId) {
     List<Plan> plans = planRepository.findAllByUserId(userId);

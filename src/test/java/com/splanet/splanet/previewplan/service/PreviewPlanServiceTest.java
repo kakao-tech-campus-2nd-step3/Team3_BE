@@ -15,6 +15,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.data.redis.core.RedisTemplate;
 
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -39,33 +41,44 @@ class PreviewPlanServiceTest {
         MockitoAnnotations.openMocks(this);
     }
 
-    @Test
-    void 플랜카드_성공적으로_저장됨() {
-        // given
-        PlanCardRequestDto requestDto = new PlanCardRequestDto("title", "description", "2024-10-10T10:00:00", "2024-10-10T12:00:00");
-        PlanCard newPlanCard = PlanCard.builder()
-                .customKey("deviceId:groupId:cardId")
-                .deviceId("deviceId")
-                .groupId("groupId")
-                .cardId("cardId")
-                .title(requestDto.title())
-                .description(requestDto.description())
-                .startDate(requestDto.startDate())
-                .endDate(requestDto.endDate())
-                .build();
+  @Test
+  void 플랜카드_성공적으로_저장됨() {
+    // given
+    PlanCardRequestDto requestDto = new PlanCardRequestDto("title", "description", "2024-10-10T10:00:00", "2024-10-10T12:00:00");
 
-        when(planCardRepository.save(any(PlanCard.class))).thenReturn(newPlanCard);
+    // 한국 시간으로 설정된 startDate와 endDate
+    String startDate = ZonedDateTime.parse("2024-10-10T10:00:00+09:00").toString();
+    String endDate = ZonedDateTime.parse("2024-10-10T12:00:00+09:00").toString();
 
-        // when
-        PlanCardResponseDto result = previewPlanService.savePlanCard("deviceId", "groupId", requestDto);
+    PlanCard newPlanCard = PlanCard.builder()
+            .customKey("deviceId:groupId:cardId")
+            .deviceId("deviceId")
+            .groupId("groupId")
+            .cardId("cardId")
+            .title(requestDto.title())
+            .description(requestDto.description())
+            .startDate(startDate)
+            .endDate(endDate)
+            .build();
 
-        // then
-        assertEquals("title", result.title());
-        assertEquals("description", result.description());
-        assertEquals("2024-10-10T10:00:00", result.startDate());
-        verify(planCardRepository, times(1)).save(any(PlanCard.class));
-    }
+    when(planCardRepository.save(any(PlanCard.class))).thenReturn(newPlanCard);
 
+    // when
+    PlanCardResponseDto result = previewPlanService.savePlanCard("deviceId", "groupId", requestDto);
+
+    // then
+    assertEquals("title", result.title());
+    assertEquals("description", result.description());
+
+    // 기대되는 KST 타임스탬프 (UTC+9)
+    long expectedStartTimestamp = ZonedDateTime.parse("2024-10-10T10:00:00+09:00").toEpochSecond();
+    long expectedEndTimestamp = ZonedDateTime.parse("2024-10-10T12:00:00+09:00").toEpochSecond();
+
+    assertEquals(expectedStartTimestamp, result.startTimestamp());
+    assertEquals(expectedEndTimestamp, result.endTimestamp());
+
+    verify(planCardRepository, times(1)).save(any(PlanCard.class));
+  }
     @Test
     void 플랜카드_찾을_수_없음_예외발생() {
         // given
