@@ -15,8 +15,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -25,101 +26,163 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PlanService {
 
-    private final PlanRepository planRepository;
-    private final PlanMapper planMapper;
-    private final UserRepository userRepository;
-    private final PreviewPlanService previewPlanService;
+  private final PlanRepository planRepository;
+  private final PlanMapper planMapper;
+  private final UserRepository userRepository;
+  private final PreviewPlanService previewPlanService;
 
+  private LocalDateTime convertTimestampToLocalDateTime(long timestamp) {
+    return LocalDateTime.ofInstant(Instant.ofEpochSecond(timestamp), ZoneOffset.of("+9"));
+  }
 
-    @Transactional
-    public PlanResponseDto createPlan(Long userId, PlanRequestDto requestDto) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+  private long convertLocalDateTimeToTimestamp(LocalDateTime localDateTime) {
+    return localDateTime.toEpochSecond(ZoneOffset.of("+9"));
+  }
 
-        Plan plan = planMapper.toEntity(requestDto, user);
-        planRepository.save(plan);
-        return planMapper.toResponseDto(plan);
-    }
+  @Transactional
+  public PlanResponseDto createPlan(Long userId, PlanRequestDto requestDto) {
+    User user = userRepository.findById(userId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-    @Transactional
-    public List<PlanResponseDto> saveGroupCardsToUser(Long userId, String deviceId, String groupId) { // Redis에 있던 데이터를 실제 유저의 Plan 테이블로 저장
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    // 타임스탬프를 LocalDateTime으로 변환
+    LocalDateTime startDate = convertTimestampToLocalDateTime(requestDto.getStartTimestamp());
+    LocalDateTime endDate = convertTimestampToLocalDateTime(requestDto.getEndTimestamp());
 
-        Set<PlanCardResponseDto> previewCards = previewPlanService.getPlanCardsByGroup(deviceId, groupId);
+    Plan plan = Plan.builder()
+            .title(requestDto.getTitle())
+            .description(requestDto.getDescription())
+            .startDate(startDate)
+            .endDate(endDate)
+            .user(user)
+            .accessibility(requestDto.getAccessibility())
+            .isCompleted(requestDto.getIsCompleted())
+            .build();
 
-        DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+    planRepository.save(plan);
 
-        List<Plan> savedPlans = previewCards.stream()
-                .map(previewCard -> convertToPlan(previewCard, user, formatter))
-                .map(planRepository::save)
-                .collect(Collectors.toList());
+    // LocalDateTime을 타임스탬프로 변환하여 반환
+    return PlanResponseDto.builder()
+            .id(plan.getId())
+            .title(plan.getTitle())
+            .description(plan.getDescription())
+            .startTimestamp(convertLocalDateTimeToTimestamp(plan.getStartDate()))
+            .endTimestamp(convertLocalDateTimeToTimestamp(plan.getEndDate()))
+            .build();
+  }
 
-        return savedPlans.stream()
-                .map(planMapper::toResponseDto)
-                .collect(Collectors.toList());
-    }
+  @Transactional
+  public List<PlanResponseDto> saveGroupCardsToUser(Long userId, String deviceId, String groupId) {
+    User user = userRepository.findById(userId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-    @Transactional(readOnly = true)
-    public PlanResponseDto getPlanById(Long planId) {
-        Plan plan = planRepository.findById(planId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.PLAN_NOT_FOUND));
-        return planMapper.toResponseDto(plan);
-    }
+    Set<PlanCardResponseDto> previewCards = previewPlanService.getPlanCardsByGroup(deviceId, groupId);
 
-    @Transactional(readOnly = true)
-    public List<PlanResponseDto> getAllPlansByUserId(Long userId) {
-        List<Plan> plans = planRepository.findAllByUserId(userId);
-        return plans.stream()
-                .map(planMapper::toResponseDto)
-                .collect(Collectors.toList());
-    }
+    List<Plan> savedPlans = previewCards.stream()
+            .map(previewCard -> convertToPlan(previewCard, user))
+            .map(planRepository::save)
+            .collect(Collectors.toList());
 
-    @Transactional
-    public PlanResponseDto updatePlan(Long planId, PlanRequestDto requestDto) {
-        Plan plan = planRepository.findById(planId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.PLAN_NOT_FOUND));
+    return savedPlans.stream()
+            .map(plan -> PlanResponseDto.builder()
+                    .id(plan.getId())
+                    .title(plan.getTitle())
+                    .description(plan.getDescription())
+                    .startTimestamp(convertLocalDateTimeToTimestamp(plan.getStartDate()))
+                    .endTimestamp(convertLocalDateTimeToTimestamp(plan.getEndDate()))
+                    .build())
+            .collect(Collectors.toList());
+  }
 
-        plan = plan.toBuilder()
-                .title(requestDto.getTitle())
-                .description(requestDto.getDescription())
-                .startDate(requestDto.getStartDate())
-                .endDate(requestDto.getEndDate())
-                .accessibility(requestDto.getAccessibility())
-                .isCompleted(requestDto.getIsCompleted())
-                .build();
+  @Transactional(readOnly = true)
+  public PlanResponseDto getPlanById(Long planId) {
+    Plan plan = planRepository.findById(planId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.PLAN_NOT_FOUND));
 
-        planRepository.save(plan);
-        return planMapper.toResponseDto(plan);
-    }
+    return PlanResponseDto.builder()
+            .id(plan.getId())
+            .title(plan.getTitle())
+            .description(plan.getDescription())
+            .startTimestamp(convertLocalDateTimeToTimestamp(plan.getStartDate()))
+            .endTimestamp(convertLocalDateTimeToTimestamp(plan.getEndDate()))
+            .build();
+  }
 
-    @Transactional
-    public void deletePlan(Long planId) {
-        Plan plan = planRepository.findById(planId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.PLAN_NOT_FOUND));
-        planRepository.delete(plan);
-    }
+  @Transactional(readOnly = true)
+  public List<PlanResponseDto> getAllPlansByUserId(Long userId) {
+    List<Plan> plans = planRepository.findAllByUserId(userId);
 
-    private Plan convertToPlan(PlanCardResponseDto previewCard, User user, DateTimeFormatter formatter) {
-        LocalDateTime startDate = LocalDateTime.parse(previewCard.startDate(), formatter);
-        LocalDateTime endDate = LocalDateTime.parse(previewCard.endDate(), formatter);
+    return plans.stream()
+            .map(plan -> PlanResponseDto.builder()
+                    .id(plan.getId())
+                    .title(plan.getTitle())
+                    .description(plan.getDescription())
+                    .startTimestamp(convertLocalDateTimeToTimestamp(plan.getStartDate()))
+                    .endTimestamp(convertLocalDateTimeToTimestamp(plan.getEndDate()))
+                    .build())
+            .collect(Collectors.toList());
+  }
 
-        PlanRequestDto planRequestDto = PlanRequestDto.builder()
-                .title(previewCard.title())
-                .description(previewCard.description())
-                .startDate(startDate)
-                .endDate(endDate)
-                .build();
+  @Transactional
+  public PlanResponseDto updatePlan(Long planId, PlanRequestDto requestDto) {
+    Plan plan = planRepository.findById(planId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.PLAN_NOT_FOUND));
 
-        return planMapper.toEntity(planRequestDto, user);
-    }
+    LocalDateTime startDate = convertTimestampToLocalDateTime(requestDto.getStartTimestamp());
+    LocalDateTime endDate = convertTimestampToLocalDateTime(requestDto.getEndTimestamp());
 
-    @Transactional(readOnly = true)
-    public List<PlanResponseDto> getAllFuturePlansByUserId(Long userId) {
-        LocalDateTime now = LocalDateTime.now();
-        List<Plan> futurePlans = planRepository.findAllByUserIdAndStartDateAfter(userId, now);
-        return futurePlans.stream()
-                .map(planMapper::toResponseDto)
-                .collect(Collectors.toList());
-    }
+    plan = plan.toBuilder()
+            .title(requestDto.getTitle())
+            .description(requestDto.getDescription())
+            .startDate(startDate)
+            .endDate(endDate)
+            .accessibility(requestDto.getAccessibility())
+            .isCompleted(requestDto.getIsCompleted())
+            .build();
+
+    planRepository.save(plan);
+
+    return PlanResponseDto.builder()
+            .id(plan.getId())
+            .title(plan.getTitle())
+            .description(plan.getDescription())
+            .startTimestamp(convertLocalDateTimeToTimestamp(plan.getStartDate()))
+            .endTimestamp(convertLocalDateTimeToTimestamp(plan.getEndDate()))
+            .build();
+  }
+
+  @Transactional
+  public void deletePlan(Long planId) {
+    Plan plan = planRepository.findById(planId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.PLAN_NOT_FOUND));
+    planRepository.delete(plan);
+  }
+
+  private Plan convertToPlan(PlanCardResponseDto previewCard, User user) {
+    LocalDateTime startDate = convertTimestampToLocalDateTime(previewCard.startTimestamp());
+    LocalDateTime endDate = convertTimestampToLocalDateTime(previewCard.endTimestamp());
+
+    return Plan.builder()
+            .title(previewCard.title())
+            .description(previewCard.description())
+            .startDate(startDate)
+            .endDate(endDate)
+            .user(user)
+            .build();
+  }
+
+  @Transactional(readOnly = true)
+  public List<PlanResponseDto> getAllFuturePlansByUserId(Long userId) {
+    LocalDateTime now = LocalDateTime.now();
+    List<Plan> futurePlans = planRepository.findAllByUserIdAndStartDateAfter(userId, now);
+
+    return futurePlans.stream()
+            .map(plan -> PlanResponseDto.builder()
+                    .id(plan.getId())
+                    .title(plan.getTitle())
+                    .description(plan.getDescription())
+                    .startTimestamp(convertLocalDateTimeToTimestamp(plan.getStartDate()))
+                    .endTimestamp(convertLocalDateTimeToTimestamp(plan.getEndDate()))
+                    .build())
+            .collect(Collectors.toList());
+  }
 }
