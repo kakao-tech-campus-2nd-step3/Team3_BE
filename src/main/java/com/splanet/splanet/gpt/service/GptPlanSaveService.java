@@ -15,6 +15,8 @@ public class GptPlanSaveService {
     public void saveGptResponsePlans(PlanGroupRequestDto planGroupRequestDto) {
         String deviceId = planGroupRequestDto.deviceId();
         String groupId = planGroupRequestDto.groupId();
+        
+        previewPlanService.deleteAllPreviewPlansByDeviceId(deviceId);
 
         // JSON 응답에서 planCards 리스트를 순회하며 개별 PlanCard를 저장
         for (PlanCardRequestDto planCardRequestDto : planGroupRequestDto.planCards()) {
