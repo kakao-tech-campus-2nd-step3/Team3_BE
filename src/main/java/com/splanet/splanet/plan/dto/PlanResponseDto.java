@@ -4,23 +4,21 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.time.LocalDateTime;
-
 @Getter
 @Builder
 public class PlanResponseDto {
-    private Long id;
-    private String title;
-    private String description;
-    private LocalDateTime startDate;
-    private LocalDateTime endDate;
+  private Long id;
+  private String title;
+  private String description;
+  private long startTimestamp; // 타임스탬프 사용
+  private long endTimestamp;   // 타임스탬프 사용
 
-    @JsonIgnore
-    private Boolean accessibility;
-    @JsonIgnore
-    private Boolean isCompleted;
-    @JsonIgnore
-    private LocalDateTime createdAt;
-    @JsonIgnore
-    private LocalDateTime updatedAt;
+  @JsonIgnore
+  private Boolean accessibility;
+  @JsonIgnore
+  private Boolean isCompleted;
+  @JsonIgnore
+  private long createdAt;
+  @JsonIgnore
+  private long updatedAt;
 }
