@@ -48,7 +48,10 @@ public enum ErrorCode {
     SELF_FRIEND_REQUEST_NOT_ALLOWED("본인에게 친구요청을 보낼 수 없습니다.", HttpStatus.BAD_REQUEST),
 
     // redis
-    REDIS_SCAN_FAILED("Redis 키 스캔 중 오류가 발생했습니다.", HttpStatus.SERVICE_UNAVAILABLE);
+    REDIS_SCAN_FAILED("Redis 키 스캔 중 오류가 발생했습니다.", HttpStatus.SERVICE_UNAVAILABLE),
+
+    INVALID_PLAN_FORMAT("", HttpStatus.BAD_REQUEST);
+
 
     private final String message;
     private final HttpStatus status;
