@@ -33,9 +33,11 @@ public class Plan extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @NotNull
     @Column(nullable = false)
     private LocalDateTime startDate;
 
+    @NotNull
     @Column(nullable = false)
     private LocalDateTime endDate;
 
@@ -46,4 +48,11 @@ public class Plan extends BaseEntity {
     @Builder.Default
     @Column(nullable = false)
     private Boolean isCompleted = false;
+
+
+  public void validateDates() {
+    if (startDate.isAfter(endDate)) {
+      throw new IllegalArgumentException("시작 날짜는 종료 날짜보다 이후일 수 없습니다.");
+    }
+  }
 }

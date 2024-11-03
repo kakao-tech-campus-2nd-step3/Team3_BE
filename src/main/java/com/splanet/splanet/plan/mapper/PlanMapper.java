@@ -12,13 +12,17 @@ import java.time.ZoneOffset;
 
 @Component
 public class PlanMapper {
+  private static final ZoneOffset SEOUL_ZONE_OFFSET = ZoneOffset.of("+09:00");
 
   private LocalDateTime convertTimestampToLocalDateTime(long timestamp) {
-    return LocalDateTime.ofInstant(Instant.ofEpochSecond(timestamp), ZoneOffset.of("+9"));
+    return LocalDateTime.ofInstant(Instant.ofEpochSecond(timestamp), SEOUL_ZONE_OFFSET);
   }
 
   private long convertLocalDateTimeToTimestamp(LocalDateTime localDateTime) {
-    return localDateTime.toEpochSecond(ZoneOffset.of("+9"));
+    if (localDateTime == null) {
+      return 0L;
+    }
+    return localDateTime.toEpochSecond(SEOUL_ZONE_OFFSET);
   }
 
   public Plan toEntity(PlanRequestDto requestDto, User user) {
@@ -34,14 +38,16 @@ public class PlanMapper {
   }
 
   public PlanResponseDto toResponseDto(Plan plan) {
+    if (plan == null) {
+      throw new IllegalArgumentException("Plan cannot be null");
+    }
+
     return PlanResponseDto.builder()
             .id(plan.getId())
             .title(plan.getTitle())
             .description(plan.getDescription())
             .startTimestamp(convertLocalDateTimeToTimestamp(plan.getStartDate()))
             .endTimestamp(convertLocalDateTimeToTimestamp(plan.getEndDate()))
-            .accessibility(plan.getAccessibility())
-            .isCompleted(plan.getIsCompleted())
             .createdAt(convertLocalDateTimeToTimestamp(plan.getCreatedAt()))
             .updatedAt(convertLocalDateTimeToTimestamp(plan.getUpdatedAt()))
             .build();
