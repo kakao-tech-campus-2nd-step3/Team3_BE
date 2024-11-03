@@ -24,8 +24,8 @@ public class SubscriptionResponse {
 
         public SubscriptionDetails(Subscription subscription) {
             this.id = subscription.getId();
-            this.startDate = subscription.getStartDate().toString();
-            this.endDate = subscription.getEndDate().toString();
+            this.startDate = subscription.getStartDate() != null ? subscription.getStartDate().toString() : null;
+            this.endDate = subscription.getEndDate() != null ? subscription.getEndDate().toString() : null;
         }
     }
 }
