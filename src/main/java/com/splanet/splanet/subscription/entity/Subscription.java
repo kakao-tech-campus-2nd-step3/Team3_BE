@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @Entity
 public class Subscription extends BaseEntity {
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
