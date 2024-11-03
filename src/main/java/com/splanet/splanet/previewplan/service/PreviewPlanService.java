@@ -69,6 +69,19 @@ public class PreviewPlanService {
         updatePlanGroup(deviceId, groupId, cardId, false);
     }
 
+    public void deleteAllPreviewPlansByDeviceId(String deviceId) {
+        Set<String> groupKeys = scanKeysByPattern(PLAN_GROUP_PREFIX + deviceId + ":*");
+
+        for (String groupKey : groupKeys) {
+            String groupId = extractGroupIdFromKey(groupKey);
+
+            Set<String> cardKeys = scanKeysByPattern(PLAN_CARD_PREFIX + deviceId + ":" + groupId + ":*");
+            cardKeys.forEach(redisTemplate::delete);
+
+            redisTemplate.delete(groupKey);
+        }
+    }
+
     public Set<PlanGroupWithCardsResponseDto> getPreviewPlans(String deviceId) {
         Set<String> groupKeys = scanKeysByPattern(PLAN_GROUP_PREFIX + deviceId + ":*");
 
