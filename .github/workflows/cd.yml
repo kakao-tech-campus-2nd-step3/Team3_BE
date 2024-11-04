@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - develop
+      - 'weekly/**'
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
