@@ -15,6 +15,11 @@ java {
 	}
 }
 
+test {
+	useJUnitPlatform()
+	systemProperty 'spring.profiles.active', 'test'
+}
+
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
@@ -68,12 +73,20 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
 	//gpt
-	// implementation 'org.springframework.boot:spring-boot-starter-web'
-	// implementation 'com.fasterxml.jackson.core:jackson-databind'
-	// implementation 'org.springframework.boot:spring-boot-starter'
-	implementation platform("org.springframework.ai:spring-ai-bom:0.8.0")
+	// spring-ai-bom을 통해 전체 버전 관리를 일관되게 설정
+	implementation platform("org.springframework.ai:spring-ai-bom:1.0.0-SNAPSHOT")
+	// OpenAI API와 Spring Boot 통합을 위해 필요한 의존성 추가
 	implementation 'org.springframework.ai:spring-ai-openai'
+	implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter'
+	// Spring Boot 및 Jackson 라이브러리 추가
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
+	implementation 'org.springframework.boot:spring-boot-starter'
 
+	implementation 'mysql:mysql-connector-java:8.0.33'  // 버전 추가'
+    
+	// FCM
+	implementation 'com.google.firebase:firebase-admin:6.8.1'
 
 }
 

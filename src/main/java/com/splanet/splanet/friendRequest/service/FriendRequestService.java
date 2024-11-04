@@ -210,4 +210,15 @@ public class FriendRequestService {
                 ))
                 .collect(Collectors.toList());
     }
+
+    // 친구요청 취소하기
+    public void cancelFriendRequest(Long requestId, Long userId) {
+        FriendRequest friendRequest = friendRequestRepository.findById(requestId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.FRIEND_REQUEST_NOT_FOUND));
+
+        if (!friendRequest.getRequester().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+        friendRequestRepository.delete(friendRequest);
+    }
 }

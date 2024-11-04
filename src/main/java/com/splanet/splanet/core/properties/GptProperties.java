@@ -1,4 +1,4 @@
-package com.splanet.splanet.gpt;
+package com.splanet.splanet.core.properties;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -7,8 +7,8 @@ import org.springframework.context.annotation.Configuration;
 
 @Getter
 @Setter
-@ConfigurationProperties(prefix = "gpt-api-key")
 @Configuration
-public class OpenAiProperties {
-    private String apiKey;
+@ConfigurationProperties(prefix = "spring.ai.openai")
+public class GptProperties {
+    private String gptModel;
 }
