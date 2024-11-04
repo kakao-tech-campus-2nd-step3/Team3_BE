@@ -1,6 +1,5 @@
 package com.splanet.splanet.user.entity;
 
-import com.splanet.splanet.comment.entity.Comment;
 import com.splanet.splanet.core.BaseEntity;
 import com.splanet.splanet.notification.entity.FcmToken;
 import com.splanet.splanet.subscription.entity.Subscription;
@@ -20,8 +19,8 @@ import java.util.List;
 @SuperBuilder(toBuilder = true)
 public class User extends BaseEntity {
 
-  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = false)
-  private Subscription subscription;
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+  private List<Subscription> subscriptions = new ArrayList<>();
 
   @NotBlank
   @Size(max = 100)
@@ -35,7 +34,6 @@ public class User extends BaseEntity {
   @Column(name = "kakao_id", unique = true)
   private Long kakaoId;
 
-  @Setter
   @Builder.Default
   @Column(name = "is_premium")
   private Boolean isPremium = false;
