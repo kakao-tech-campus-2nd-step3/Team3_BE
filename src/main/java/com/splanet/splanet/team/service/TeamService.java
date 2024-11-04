@@ -228,15 +228,15 @@ public class TeamService {
   // 8. 유저가 속한 팀의 모든 멤버 조회
   @Transactional(readOnly = true)
   public List<TeamMemberDto> getTeamMembers(Long teamId) {
-    // 팀에 속한 모든 사용자 관계 조회 (관리자 포함)
     List<TeamUserRelation> teamUserRelations = teamUserRelationRepository.findAllByTeamWithUser(teamId);
 
-    // TeamUserRelation에서 사용자 정보를 가져와 TeamMemberDto로 변환
     return teamUserRelations.stream()
             .map(relation -> new TeamMemberDto(
                     relation.getUser().getId(),
                     relation.getUser().getNickname(),
-                    relation.getUser().getProfileImage()))
+                    relation.getUser().getProfileImage(),
+                    relation.getRole().name()  // 역할 정보 추가
+            ))
             .collect(Collectors.toList());
   }
 
