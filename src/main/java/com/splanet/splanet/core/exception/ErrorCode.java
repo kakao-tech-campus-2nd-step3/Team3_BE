@@ -23,6 +23,7 @@ public enum ErrorCode {
 
     // payment
     PAYMENT_NOT_FOUND("결제 정보가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+    UNAUTHORIZED_ACCESS("다른 유저의 결제 정보에 접근할 수 없습니다.", HttpStatus.UNAUTHORIZED),
 
     // comment
     COMMENT_NOT_FOUND("댓글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
