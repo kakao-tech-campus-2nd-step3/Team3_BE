@@ -61,12 +61,12 @@ public class GptPlanSaveService {
         }
     }
 
-    private String formatTimestampToISO(long timestamp) {
-        return Instant.ofEpochMilli(timestamp)
-                .atZone(ZoneId.systemDefault())
-                .toLocalDateTime()
-                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-    }
+  private String formatTimestampToISO(long timestamp) {
+    return Instant.ofEpochMilli(timestamp)
+            .atZone(ZoneId.of("Asia/Seoul")) // 한국 시간으로 변환
+            .toLocalDateTime()
+            .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+  }
 
     private PlanGroupRequestDto parsePlanGroupRequestDto(String convertedContent) {
         try {
