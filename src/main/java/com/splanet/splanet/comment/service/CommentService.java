@@ -37,6 +37,10 @@ public class CommentService {
         User writer = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
+        if (user.getId().equals(writer.getId())) {
+            throw new BusinessException(ErrorCode.INVALID_COMMENT_ID, "본인은 본인에게 댓글을 달 수 없습니다.");
+        }
+
         Comment comment = Comment.builder()
                 .user(user)
                 .writer(writer)
@@ -51,7 +55,9 @@ public class CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
 
-        if (!comment.getWriter().getId().equals(userId)) {
+        Long writerId = userId;
+
+        if (!comment.getWriter().getId().equals(writerId)) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
 
