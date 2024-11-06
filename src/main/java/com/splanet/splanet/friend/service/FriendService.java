@@ -16,7 +16,6 @@ import jakarta.transaction.Transactional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -52,38 +51,38 @@ public class FriendService {
                 .collect(Collectors.toList());
     }
 
-  // 친구의 공개 플랜 조회
-  public ResponseEntity<List<PlanResponseDto>> getFriendPlan(Long friendId, Long userId) {
-    // 친구 목록에 friendId가 있는지 확인
-    boolean isFriend = friendRepository.existsByUserIdAndFriendId(userId, friendId);
+    // 친구의 공개 플랜 조회
+    public ResponseEntity<List<PlanResponseDto>> getFriendPlan(Long friendId, Long userId) {
+        // 친구 목록에 friendId가 있는지 확인
+        boolean isFriend = friendRepository.existsByUserIdAndFriendId(userId, friendId);
 
-    if (!isFriend) {
-      throw new BusinessException(ErrorCode.FRIEND_NOT_FOUND);
+        if (!isFriend) {
+            throw new BusinessException(ErrorCode.FRIEND_NOT_FOUND);
+        }
+
+        List<Plan> publicPlans = planRepository.findAllByUserIdAndAccessibility(friendId, true);
+
+        // 공개된 플랜이 없을 경우, 빈 목록 반환
+        if (publicPlans.isEmpty()) {
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+
+        List<PlanResponseDto> planResponseDtos = publicPlans.stream()
+                .map(plan -> PlanResponseDto.builder()
+                        .id(plan.getId())
+                        .title(plan.getTitle())
+                        .description(plan.getDescription())
+                        .startDate(plan.getStartDate())
+                        .endDate(plan.getEndDate())
+                        .accessibility(plan.getAccessibility())
+                        .isCompleted(plan.getIsCompleted())
+                        .createdAt(plan.getCreatedAt())
+                        .updatedAt(plan.getUpdatedAt())
+                        .build())
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(planResponseDtos);
     }
-
-    List<Plan> publicPlans = planRepository.findAllByUserIdAndAccessibility(friendId, true);
-
-    // 공개된 플랜이 없을 경우, 빈 목록 반환
-    if (publicPlans.isEmpty()) {
-      return ResponseEntity.ok(Collections.emptyList());
-    }
-
-    List<PlanResponseDto> planResponseDtos = publicPlans.stream()
-            .map(plan -> PlanResponseDto.builder()
-                    .id(plan.getId())
-                    .title(plan.getTitle())
-                    .description(plan.getDescription())
-                    .startTimestamp(plan.getStartDate().toEpochSecond(ZoneOffset.of("+9"))) // 타임스탬프로 변환
-                    .endTimestamp(plan.getEndDate().toEpochSecond(ZoneOffset.of("+9")))    // 타임스탬프로 변환
-                    .accessibility(plan.getAccessibility())
-                    .isCompleted(plan.getIsCompleted())
-                    .createdAt(plan.getCreatedAt().toEpochSecond(ZoneOffset.of("+9")))     // 타임스탬프로 변환
-                    .updatedAt(plan.getUpdatedAt().toEpochSecond(ZoneOffset.of("+9")))     // 타임스탬프로 변환
-                    .build())
-            .collect(Collectors.toList());
-
-    return ResponseEntity.ok(planResponseDtos);
-  }
 
     // 친구 삭제(취소)하기
     @Transactional

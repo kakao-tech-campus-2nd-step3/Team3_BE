@@ -1,3 +1,4 @@
+
 package com.splanet.splanet.previewplan.controller;
 
 import com.splanet.splanet.previewplan.dto.PlanCardRequestDto;
@@ -77,14 +78,4 @@ public interface PreviewPlanApi {
     })
     ResponseEntity<Set<PlanGroupWithCardsResponseDto>> getPreviewPlans(
             @Parameter(description = "조회할 디바이스 ID", required = true) @RequestParam String deviceId);
-
-    @DeleteMapping("/delete-all")
-    @Operation(summary = "모든 임시 플랜 삭제", description = "특정 deviceId에 해당하는 모든 임시 플랜을 삭제합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "모든 임시 플랜이 성공적으로 삭제되었습니다."),
-            @ApiResponse(responseCode = "404", description = "해당 deviceId에 해당하는 임시 플랜이 존재하지 않습니다.", content = @Content)
-    })
-    ResponseEntity<Void> deleteAllPreviewPlansByDeviceId(
-            @Parameter(description = "삭제할 deviceId", required = true) @RequestParam String deviceId);
-
 }
