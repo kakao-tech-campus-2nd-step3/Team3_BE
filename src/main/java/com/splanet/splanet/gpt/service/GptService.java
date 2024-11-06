@@ -3,18 +3,20 @@ package com.splanet.splanet.gpt.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.splanet.splanet.core.properties.GptProperties;
+import com.splanet.splanet.gpt.dto.PlanJsonDto;
 import com.splanet.splanet.plan.dto.PlanResponseDto;
 import com.splanet.splanet.plan.service.PlanService;
 import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
 
 @Service
 public class GptService {
@@ -26,18 +28,20 @@ public class GptService {
 
   private static final double RESPONSE_TEMPERATURE = 0.8;
   private static final String PROMPT_TEMPLATE_STRONG =
-          "사용자 입력: \"%s\" (deviceId: %s) (groupId: %s) GMT기준이 아니야 KST 기준으로 일정을 제공해줘 기존 일정이 있다면 기존 시간과는 겹치지 않게 해 줘 예를들어, 기존일정(KST):%s 는 이미 예약된 시간이므로 제외하고 가능한 시간대에 일정을 생성해 줘.현재 시간 이후로 가능한 자주 반복하여 짧고 집중적으로 일정을 완수할 수 있도록 계획을 세워줘. 시험이 포함된 경우, 시험 당일이 아닌 전날까지 준비가 완료되도록 해줘 (%s 기준). 모든 일정은 한국 시간(UTC+9)을 기준으로 설정해줘.";
+          "User input: \"%s\" (deviceId: %s) (groupId: %s). Provide the schedule in KST time, not GMT. If there are any existing schedules, make sure they do not overlap. For example, existing schedules (KST):%s should be excluded as they are already booked. Generate the schedule in available time slots. After the current time, create a plan that can be completed frequently and intensively. If there is an exam, ensure preparation is completed the day before the exam date (based on %s). All schedules should be in Korean time (UTC+9).";
+
   private static final String PROMPT_TEMPLATE_MODERATE =
-          "사용자 입력: \"%s\" (deviceId: %s) (groupId: %s) GMT기준이 아니야 KST 기준으로 일정을 제공해줘 기존 일정이 있다면 기존 시간과는 겹치지 않게 해 줘 예를들어, 기존일정(KST):%s 는 이미 예약된 시간이므로 제외하고 가능한 시간대에 일정을 생성해 줘.현재 시간 이후로 적당한 간격을 두고 모든 일정을 완수할 수 있도록 계획해줘. 시험이 포함된 경우, 시험 당일이 아닌 전날까지 준비가 완료되도록 해줘 (%s 기준). 모든 일정은 한국 시간(UTC+9)을 기준으로 설정해줘.";
+          "User input: \"%s\" (deviceId: %s) (groupId: %s). Provide the schedule in KST time, not GMT. If there are any existing schedules, make sure they do not overlap. For example, existing schedules (KST):%s should be excluded as they are already booked. Generate the schedule in available time slots. After the current time, create a plan with moderate intervals to complete all tasks. If there is an exam, ensure preparation is completed the day before the exam date (based on %s). All schedules should be in Korean time (UTC+9).";
+
   private static final String PROMPT_TEMPLATE_LIGHT =
-          "사용자 입력: \"%s\" (deviceId: %s) (groupId: %s) GMT기준이 아니야 KST 기준으로 일정을 제공해줘 기존 일정이 있다면 기존 시간과는 겹치지 않게 해 줘 예를들어, 기존일정(KST):%s 는 이미 예약된 시간이므로 제외하고 가능한 시간대에 일정을 생성해 줘. 현재 시간 이후로 여유 있게 모든 일정을 완수할 수 있도록 계획해줘. 시험이 포함된 경우, 시험 당일이 아닌 전날까지 준비가 완료되도록 해줘 (%s 기준). 모든 일정은 한국 시간(UTC+9)을 기준으로 설정해줘.";
+          "User input: \"%s\" (deviceId: %s) (groupId: %s). Provide the schedule in KST time, not GMT. If there are any existing schedules, make sure they do not overlap. For example, existing schedules (KST):%s should be excluded as they are already booked. Generate the schedule in available time slots. After the current time, create a plan with ample time to complete all tasks. If there is an exam, ensure preparation is completed the day before the exam date (based on %s). All schedules should be in Korean time (UTC+9).";
 
   public GptService(OpenAiApi openAiApi, GptProperties gptProperties, PlanService planService, ObjectMapper objectMapper) {
     this.openAiApi = openAiApi;
     this.gptProperties = gptProperties;
     this.planService = planService;
     this.objectMapper = objectMapper;
-    this.objectMapper.setTimeZone(TimeZone.getTimeZone("Asia/Seoul")); // ObjectMapper에 시간대 설정
+    this.objectMapper.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
   }
 
   public String generateResponseForStrong(String userInput, Long userId, String deviceId) {
@@ -55,7 +59,7 @@ public class GptService {
   private String generateResponse(String userInput, Long userId, String deviceId, String promptTemplate, int groupId) {
     String currentTime = getCurrentTime();
     List<PlanResponseDto> futurePlans = (userId != null) ? planService.getAllFuturePlansByUserId(userId) : List.of();
-    String planJson = convertPlansToJson(futurePlans);
+    String planJson = convertPlansToJsonWithLocalDateTime(futurePlans);
     String fullPrompt = String.format(promptTemplate, userInput, deviceId, groupId, planJson, currentTime);
     System.out.println(fullPrompt);
 
@@ -67,15 +71,30 @@ public class GptService {
 
   private String getCurrentTime() {
     return LocalDateTime.now(ZoneId.of("Asia/Seoul"))
-            .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME); // 오프셋 없이 포맷 설정
+            .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
   }
 
-  private String convertPlansToJson(List<PlanResponseDto> futurePlans) {
+  private String convertPlansToJsonWithLocalDateTime(List<PlanResponseDto> futurePlans) {
+    List<PlanJsonDto> convertedPlans = futurePlans.stream()
+            .map(plan -> new PlanJsonDto(
+                    plan.getId(),
+                    plan.getTitle(),
+                    plan.getDescription(),
+                    convertTimestampToLocalDateTime(plan.getStartTimestamp()),
+                    convertTimestampToLocalDateTime(plan.getEndTimestamp())
+            ))
+            .collect(Collectors.toList());
+
     try {
-      return objectMapper.writeValueAsString(futurePlans);
+      return objectMapper.writeValueAsString(convertedPlans);
     } catch (JsonProcessingException e) {
+      e.printStackTrace();
       return "[]";
     }
+  }
+
+  private LocalDateTime convertTimestampToLocalDateTime(long timestamp) {
+    return LocalDateTime.ofInstant(Instant.ofEpochSecond(timestamp), ZoneId.of("Asia/Seoul"));
   }
 
   private OpenAiApi.ChatCompletionMessage createUserMessage(String fullPrompt) {
