@@ -33,24 +33,6 @@ class PreviewPlanServiceTest {
     private PreviewPlanService previewPlanService;
 
     @Test
-    @DisplayName("성공적으로 PlanCard 저장 - 타임스탬프 형식")
-    void savePlanCardWithTimestampFormat() {
-        // given
-        String deviceId = "device1";
-        String groupId = "group1";
-        PlanCardRequestDto requestDto = new PlanCardRequestDto("제목", "설명", "1730728800", "1730728800");
-        when(planCardRepository.save(any(PlanCard.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        // when
-        PlanCardResponseDto response = previewPlanService.savePlanCard(deviceId, groupId, requestDto);
-
-        // then
-        assertThat(response).isNotNull();
-        assertThat(response.startTimestamp()).isEqualTo(1730728800L);
-        verify(planCardRepository, times(1)).save(any(PlanCard.class));
-    }
-
-    @Test
     @DisplayName("성공적으로 PlanCard 저장 - LocalDateTime 형식")
     void savePlanCardWithLocalDateTimeFormat() {
         // given

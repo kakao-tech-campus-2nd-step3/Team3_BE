@@ -41,12 +41,6 @@ public class PreviewPlanController implements PreviewPlanApi {
     }
 
     @Override
-    public ResponseEntity<Void> deleteAllPreviewPlansByDeviceId(String deviceId) {
-        previewPlanService.deleteAllPreviewPlansByDeviceId(deviceId);
-        return ResponseEntity.ok().build();
-    }
-
-    @Override
     public ResponseEntity<Set<PlanGroupWithCardsResponseDto>> getPreviewPlans(String deviceId) {
         Set<PlanGroupWithCardsResponseDto> previewPlans = previewPlanService.getPreviewPlans(deviceId);
         return ResponseEntity.ok(previewPlans);
