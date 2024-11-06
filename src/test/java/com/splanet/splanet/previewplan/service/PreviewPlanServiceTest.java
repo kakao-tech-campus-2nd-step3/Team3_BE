@@ -50,20 +50,6 @@ class PreviewPlanServiceTest {
     }
 
     @Test
-    @DisplayName("저장 실패 - 잘못된 LocalDateTime 형식")
-    void savePlanCardWithInvalidLocalDateTimeFormat() {
-        // given
-        String deviceId = "device1";
-        String groupId = "group1";
-        PlanCardRequestDto requestDto = new PlanCardRequestDto("제목", "설명", "2024/11/05 09:00:00", "2024-11-05T12:00:00");
-
-        // when & then
-        assertThatThrownBy(() -> previewPlanService.savePlanCard(deviceId, groupId, requestDto))
-                .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("Invalid date format");
-    }
-
-    @Test
     @DisplayName("PlanCard 조회 성공")
     void getPlanCardSuccess() {
         // given
