@@ -65,6 +65,6 @@ public class PaymentService {
             throw new BusinessException(ErrorCode.UNAUTHORIZED_ACCESS);
         }
 
-        paymentRepository.deleteById(paymentId);
+        paymentRepository.delete(payment);
     }
 }
