@@ -1,10 +1,13 @@
 package com.splanet.splanet.previewplan.dto;
 
+import com.splanet.splanet.core.exception.BusinessException;
 import com.splanet.splanet.previewplan.entity.PlanCard;
+import com.splanet.splanet.core.exception.ErrorCode;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 public record PlanCardResponseDto(
         String deviceId,
@@ -12,15 +15,16 @@ public record PlanCardResponseDto(
         String cardId,
         String title,
         String description,
-        long startTimestamp, // 타임스탬프 사용
-        long endTimestamp    // 타임스탬프 사용
+        long startTimestamp,
+        long endTimestamp
 ) {
-  private static final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-
   public static PlanCardResponseDto from(PlanCard planCard) {
-    // String을 LocalDateTime으로 변환 후 타임스탬프로 변환
-    LocalDateTime startDate = LocalDateTime.parse(planCard.getStartDate(), formatter);
-    LocalDateTime endDate = LocalDateTime.parse(planCard.getEndDate(), formatter);
+    if (planCard.getStartDate() == null || planCard.getEndDate() == null) {
+      throw new BusinessException(ErrorCode.INVALID_DATE_FORMAT, "StartDate or EndDate cannot be null");
+    }
+
+    long startTimestamp = parseDateToTimestamp(planCard.getStartDate());
+    long endTimestamp = parseDateToTimestamp(planCard.getEndDate());
 
     return new PlanCardResponseDto(
             planCard.getDeviceId(),
@@ -28,8 +32,25 @@ public record PlanCardResponseDto(
             planCard.getCardId(),
             planCard.getTitle(),
             planCard.getDescription(),
-            startDate.toEpochSecond(ZoneOffset.of("+9")),
-            endDate.toEpochSecond(ZoneOffset.of("+9"))
+            startTimestamp,
+            endTimestamp
     );
+  }
+
+  private static long parseDateToTimestamp(String date) {
+    if (date == null) {
+      throw new BusinessException(ErrorCode.INVALID_DATE_FORMAT, "Date cannot be null");
+    }
+
+    try {
+      return Long.parseLong(date);
+    } catch (NumberFormatException e) {
+      try {
+        LocalDateTime dateTime = LocalDateTime.parse(date, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        return dateTime.toEpochSecond(ZoneOffset.of("+9"));
+      } catch (DateTimeParseException ex) {
+        throw new BusinessException(ErrorCode.INVALID_DATE_FORMAT, "Invalid date format");
+      }
+    }
   }
 }
