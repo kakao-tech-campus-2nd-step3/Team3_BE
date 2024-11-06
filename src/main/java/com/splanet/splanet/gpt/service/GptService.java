@@ -28,13 +28,11 @@ public class GptService {
 
   private static final double RESPONSE_TEMPERATURE = 0.8;
   private static final String PROMPT_TEMPLATE_STRONG =
-          "User input: \"%s\" (deviceId: %s) (groupId: %s). Provide the schedule in KST time, not GMT. If there are any existing schedules, make sure they do not overlap. For example, existing schedules (KST):%s should be excluded as they are already booked. Generate the schedule in available time slots. After the current time, create a plan that can be completed frequently and intensively. If there is an exam, ensure preparation is completed the day before the exam date (based on %s). All schedules should be in Korean time (UTC+9).";
-
+          "사용자 입력: \"%s\" (deviceId: %s) (groupId: %s) 기존 일정이 있다면 해당 시간과는 겹치지 않게 해 줘 기존일정:%s 현재 시간 이후로 가능한 자주 반복하여 짧고 집중적으로 일정을 완수할 수 있도록 계획을 세워줘. 시험이 포함된 경우, 시험 당일이 아닌 전날까지 준비가 완료되도록 해줘 (%s 기준).";
   private static final String PROMPT_TEMPLATE_MODERATE =
-          "User input: \"%s\" (deviceId: %s) (groupId: %s). Provide the schedule in KST time, not GMT. If there are any existing schedules, make sure they do not overlap. For example, existing schedules (KST):%s should be excluded as they are already booked. Generate the schedule in available time slots. After the current time, create a plan with moderate intervals to complete all tasks. If there is an exam, ensure preparation is completed the day before the exam date (based on %s). All schedules should be in Korean time (UTC+9).";
-
+          "사용자 입력: \"%s\" (deviceId: %s) (groupId: %s) 기존 일정이 있다면 해당 시간과는 겹치지 않게 해 줘 기존일정:%s 현재 시간 이후로 적당한 간격을 두고 모든 일정을 완수할 수 있도록 계획해줘. 시험이 포함된 경우, 시험 당일이 아닌 전날까지 준비가 완료되도록 해줘 (%s 기준).";
   private static final String PROMPT_TEMPLATE_LIGHT =
-          "User input: \"%s\" (deviceId: %s) (groupId: %s). Provide the schedule in KST time, not GMT. If there are any existing schedules, make sure they do not overlap. For example, existing schedules (KST):%s should be excluded as they are already booked. Generate the schedule in available time slots. After the current time, create a plan with ample time to complete all tasks. If there is an exam, ensure preparation is completed the day before the exam date (based on %s). All schedules should be in Korean time (UTC+9).";
+          "사용자 입력: \"%s\" (deviceId: %s) (groupId: %s) 기존 일정이 있다면 해당 시간과는 겹치지 않게 해 줘 기존일정:%s 현재 시간 이후로 여유 있게 모든 일정을 완수할 수 있도록 계획해줘. 시험이 포함된 경우, 시험 당일이 아닌 전날까지 준비가 완료되도록 해줘 (%s 기준).";
 
   public GptService(OpenAiApi openAiApi, GptProperties gptProperties, PlanService planService, ObjectMapper objectMapper) {
     this.openAiApi = openAiApi;
