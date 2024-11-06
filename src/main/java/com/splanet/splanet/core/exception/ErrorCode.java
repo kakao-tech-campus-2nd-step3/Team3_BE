@@ -15,6 +15,7 @@ public enum ErrorCode {
 
     // Plan
     PLAN_NOT_FOUND("플랜이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+    INVALID_DATE_FORMAT("올바르지 않은 날짜 형식입니다.", HttpStatus.BAD_REQUEST),
 
     // Subscription
     ALREADY_CANCELED("이미 취소된 구독입니다.", HttpStatus.BAD_REQUEST),
