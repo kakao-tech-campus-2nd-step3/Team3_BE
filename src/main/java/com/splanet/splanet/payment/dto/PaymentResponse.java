@@ -1,7 +1,6 @@
 package com.splanet.splanet.payment.dto;
 
 import com.splanet.splanet.payment.entity.Payment;
-
 import java.time.LocalDateTime;
 
 public record PaymentResponse(
@@ -17,7 +16,7 @@ public record PaymentResponse(
                 payment.getId(),
                 payment.getSubscription().getId(),
                 payment.getPrice(),
-                payment.getStatus().name().toLowerCase(),
+                payment.getStatus().name(),
                 payment.getPaymentDate(),
                 payment.getCreatedAt()
         );

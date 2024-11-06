@@ -21,7 +21,7 @@ public class Subscription extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @OneToOne(mappedBy = "subscription", cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = false)
+    @OneToOne(mappedBy = "subscription", fetch = FetchType.LAZY, optional = false)
     private Payment payment;
 
     @Enumerated(EnumType.STRING)
