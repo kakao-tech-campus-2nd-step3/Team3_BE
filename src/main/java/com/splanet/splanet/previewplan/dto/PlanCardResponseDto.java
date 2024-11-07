@@ -11,15 +11,15 @@ public record PlanCardResponseDto(
         String startDate,
         String endDate
 ) {
-    public static PlanCardResponseDto from(PlanCard planCard) {
-        return new PlanCardResponseDto(
-                planCard.getDeviceId(),
-                planCard.getGroupId(),
-                planCard.getCardId(),
-                planCard.getTitle(),
-                planCard.getDescription(),
-                planCard.getStartDate(),
-                planCard.getEndDate()
-        );
-    }
+  public static PlanCardResponseDto from(PlanCard planCard) {
+    return new PlanCardResponseDto(
+            planCard.getDeviceId(),
+            planCard.getGroupId(),
+            planCard.getCardId(),
+            planCard.getTitle(),
+            planCard.getDescription(),
+            planCard.getStartDate(),
+            planCard.getEndDate()
+    );
+  }
 }

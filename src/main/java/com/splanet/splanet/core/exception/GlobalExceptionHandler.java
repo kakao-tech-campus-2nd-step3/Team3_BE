@@ -14,7 +14,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     protected ResponseEntity<ErrorResponse> handleBusinessException(BusinessException ex) {
         ErrorCode errorCode = ex.getErrorCode();
-        ErrorResponse response = new ErrorResponse(errorCode.getMessage(), errorCode.getStatus().value());
+
+        String message = errorCode == ErrorCode.INVALID_PLAN_FORMAT ? ex.getMessage() : errorCode.getMessage();
+        ErrorResponse response = new ErrorResponse(message, errorCode.getStatus().value());
+
         return new ResponseEntity<>(response, errorCode.getStatus());
     }
 

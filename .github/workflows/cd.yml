@@ -1,9 +1,11 @@
-name: CD (자동배포)
+name: CD (무중단배포)
 
 on:
   push:
     branches:
       - develop
+      - 'weekly/**'
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -31,7 +33,7 @@ jobs:
       - name: Decode env.properties from GitHub Secrets
         run: |
           echo "${{ secrets.ENV_FILE }}" | base64 --decode > ./env.properties
-          
+
       - name: Decode Firebase config from GitHub Secrets
         run: |
           echo "${{ secrets.FIREBASE_CONFIG }}" | base64 --decode > ./splanet-firebase.json
@@ -57,32 +59,158 @@ jobs:
       - name: Build and Push Docker image
         run: docker buildx build --push --platform linux/amd64 -t kimsongmok/splanet:${{ env.IMAGE_TAG }} .
 
-      - name: Deploy to EC2
+      - name: Setup SSH Key
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > private_key.pem
+          chmod 600 private_key.pem
+
+      - name: Determine Current Version
+        id: determine_current_version
+        run: |
+          VERSION=$(ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_HOST }} '
+            if sudo docker ps --filter "name=splanet_blue" --format "{{.Names}}" | grep -q "splanet_blue"; then
+              echo "blue"
+            elif sudo docker ps --filter "name=splanet_green" --format "{{.Names}}" | grep -q "splanet_green"; then
+              echo "green"
+            else
+              echo "none"
+            fi
+          ')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Set Current Version
+        run: echo "CURRENT_VERSION=${{ steps.determine_current_version.outputs.version }}" >> $GITHUB_ENV
+
+      - name: Determine New Version
+        run: |
+          if [ "${{ env.CURRENT_VERSION }}" == "blue" ]; then
+            echo "NEW_VERSION=green" >> $GITHUB_ENV
+            echo "NEW_PORT=8081" >> $GITHUB_ENV
+          elif [ "${{ env.CURRENT_VERSION }}" == "green" ]; then
+            echo "NEW_VERSION=blue" >> $GITHUB_ENV
+            echo "NEW_PORT=8080" >> $GITHUB_ENV
+          else
+            echo "NEW_VERSION=blue" >> $GITHUB_ENV
+            echo "NEW_PORT=8080" >> $GITHUB_ENV
+          fi
+
+      - name: Print Current and New Version
+        run: |
+          echo "Current Version: $CURRENT_VERSION"
+          echo "New Version: $NEW_VERSION"
+          echo "New Port: $NEW_PORT"
+
+      - name: Debug Environment Variables
+        run: |
+          echo "IMAGE_TAG=${{ env.IMAGE_TAG }}"
+          echo "CURRENT_VERSION=${{ env.CURRENT_VERSION }}"
+          echo "NEW_VERSION=${{ env.NEW_VERSION }}"
+          echo "NEW_PORT=${{ env.NEW_PORT }}"
+
+
+      - name: Deploy New Version to EC2
         uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            sudo docker pull kimsongmok/splanet:${{ env.IMAGE_TAG }}
-            sudo docker stop splanet || true
-            sudo docker rm splanet || true
+            IMAGE_TAG=${{ env.IMAGE_TAG }}
+            NEW_VERSION=${{ env.NEW_VERSION }}
+            NEW_PORT=${{ env.NEW_PORT }}
+            
+            echo "Deploying with IMAGE_TAG=$IMAGE_TAG, NEW_VERSION=$NEW_VERSION, NEW_PORT=$NEW_PORT"
+            sudo docker pull kimsongmok/splanet:$IMAGE_TAG
             sudo docker network inspect splanet >/dev/null 2>&1 || sudo docker network create splanet
-            sudo docker run -d --name splanet \
+            sudo docker run -d --name splanet_$NEW_VERSION \
               --network splanet \
               --env-file /home/ubuntu/env.properties \
-              -p 8080:8080 --restart unless-stopped kimsongmok/splanet:${{ env.IMAGE_TAG }}
+              -p $NEW_PORT:8080 --restart unless-stopped kimsongmok/splanet:$IMAGE_TAG
 
-      - name: Check Docker container status
+      - name: Wait for Spring Boot Application to Start
         uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            sudo docker ps -a
-            sudo docker logs splanet
+            NEW_PORT=${{ env.NEW_PORT }}
+            NEW_VERSION=${{ env.NEW_VERSION }}
             
+            echo "Waiting for the application to be healthy on http://api.splanet.co.kr:${NEW_PORT}/actuator/health..."
+            for i in {1..30}; do
+              if curl -s http://localhost:$NEW_PORT/actuator/health | grep '"status":"UP"' > /dev/null; then
+                echo "Application is healthy and ready to receive traffic."
+                break
+              fi
+              echo "Waiting for application to start... (Attempt $i)"
+              sleep 5
+            done
+            
+            if [ "$i" -eq 30 ]; then
+              echo "Application did not start successfully within the expected time."
+              sudo docker logs splanet_$NEW_VERSION
+              exit 1
+            fi
+
+      - name: Update Load Balancer Target Group
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            CURRENT_VERSION=${{ env.CURRENT_VERSION }}
+            NEW_VERSION=${{ env.NEW_VERSION }}
+            
+            if [ "$CURRENT_VERSION" == "blue" ]; then
+              OLD_TARGET_GROUP_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:targetgroup/splanet/${{ secrets.ARN_ID_8080 }}"
+              NEW_TARGET_GROUP_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:targetgroup/splanet-8081/${{ secrets.ARN_ID_8081 }}"
+            else
+              OLD_TARGET_GROUP_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:targetgroup/splanet-8081/${{ secrets.ARN_ID_8081 }}"
+              NEW_TARGET_GROUP_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:targetgroup/splanet/${{ secrets.ARN_ID_8080 }}"
+            fi
+            
+            aws elbv2 modify-listener --listener-arn arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:listener/app/splanet/${{ secrets.ARN_ID_443 }} \
+              --default-actions '[{
+                "Type": "forward",
+                "ForwardConfig": {
+                  "TargetGroups": [
+                    {"TargetGroupArn": "'"$OLD_TARGET_GROUP_ARN"'", "Weight": 20},
+                    {"TargetGroupArn": "'"$NEW_TARGET_GROUP_ARN"'", "Weight": 80}
+                  ]
+                }
+              }]'
+            
+            for i in {1..5}; do
+              echo "Increasing traffic to the new version... (Step $i)"
+              aws elbv2 modify-listener --listener-arn arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:listener/app/splanet/${{ secrets.ARN_ID_443 }} \
+                --default-actions '[{
+                  "Type": "forward",
+                  "ForwardConfig": {
+                    "TargetGroups": [
+                      {"TargetGroupArn": "'"$OLD_TARGET_GROUP_ARN"'", "Weight": '$((100 - i * 20))'},
+                      {"TargetGroupArn": "'"$NEW_TARGET_GROUP_ARN"'", "Weight": '$((i * 20))'}
+                    ]
+                  }
+                }]'
+              sleep 10
+            done
+
+      - name: Remove Old Version
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            CURRENT_VERSION=${{ env.CURRENT_VERSION }}
+            
+            if [ "$CURRENT_VERSION" != "none" ]; then
+              sudo docker stop splanet_${CURRENT_VERSION}
+              sudo docker rm splanet_${CURRENT_VERSION}
+            fi
+
       - name: Clean up old Docker images
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -92,3 +220,4 @@ jobs:
           script: |
             docker image ls --format "{{.ID}} {{.Repository}}:{{.Tag}}" | grep 'kimsongmok/splanet' | tail -n +4 | awk '{print $1}' | xargs docker rmi -f
             sudo docker system prune -f
+            
