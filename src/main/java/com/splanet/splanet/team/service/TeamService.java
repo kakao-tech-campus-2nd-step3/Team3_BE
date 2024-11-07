@@ -80,6 +80,11 @@ public class TeamService {
       throw new BusinessException(ErrorCode.USER_ALREADY_IN_TEAM);
     }
 
+    // 이미 초대가 존재하는지 확인
+    if (teamInvitationRepository.findByTeamAndUserAndStatus(team, userToInvite, InvitationStatus.PENDING).isPresent()) {
+      throw new BusinessException(ErrorCode.INVITATION_ALREADY_SENT);
+    }
+
     // 초대 저장
     TeamInvitation invitation = new TeamInvitation(team, userToInvite);
     teamInvitationRepository.save(invitation);
