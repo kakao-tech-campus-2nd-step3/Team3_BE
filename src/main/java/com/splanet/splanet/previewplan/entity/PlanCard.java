@@ -1,3 +1,4 @@
+
 package com.splanet.splanet.previewplan.entity;
 
 import lombok.AllArgsConstructor;
@@ -36,4 +37,3 @@ public class PlanCard {
         return UUID.randomUUID().toString().split("-")[0];
     }
 }
-

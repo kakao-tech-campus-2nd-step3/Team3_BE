@@ -15,10 +15,12 @@ public enum ErrorCode {
 
     // Plan
     PLAN_NOT_FOUND("플랜이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+    INVALID_DATE_FORMAT("올바르지 않은 날짜 형식입니다.", HttpStatus.BAD_REQUEST),
 
     // Subscription
     ALREADY_CANCELED("이미 취소된 구독입니다.", HttpStatus.BAD_REQUEST),
     SUBSCRIPTION_NOT_FOUND("활성화된 구독을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    ALREADY_SUBSCRIBED("이미 활성화된 구독이 존재합니다.", HttpStatus.BAD_REQUEST),
 
     // payment
     PAYMENT_NOT_FOUND("결제 정보가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
@@ -36,6 +38,7 @@ public enum ErrorCode {
     INVITATION_ALREADY_PROCESSED("초대가 이미 처리되었습니다.", HttpStatus.BAD_REQUEST),
     INVITATION_ALREADY_SENT("초대가 이미 존재합니다.", HttpStatus.BAD_REQUEST),
     USER_ALREADY_IN_TEAM("해당 유저는 이미 팀에 속해 있습니다.", HttpStatus.BAD_REQUEST),
+    INVITATION_ALREADY_SENT("초대가 이미 존재합니다.", HttpStatus.BAD_REQUEST),
 
 
     // friend
@@ -49,7 +52,10 @@ public enum ErrorCode {
     SELF_FRIEND_REQUEST_NOT_ALLOWED("본인에게 친구요청을 보낼 수 없습니다.", HttpStatus.BAD_REQUEST),
 
     // redis
-    REDIS_SCAN_FAILED("Redis 키 스캔 중 오류가 발생했습니다.", HttpStatus.SERVICE_UNAVAILABLE);
+    REDIS_SCAN_FAILED("Redis 키 스캔 중 오류가 발생했습니다.", HttpStatus.SERVICE_UNAVAILABLE),
+
+    INVALID_PLAN_FORMAT("", HttpStatus.BAD_REQUEST);
+
 
     private final String message;
     private final HttpStatus status;

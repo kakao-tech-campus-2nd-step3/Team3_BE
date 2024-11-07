@@ -1,32 +1,30 @@
-version: '3'
+#version: '3'
 
 services:
-#  mysql:
-#    container_name: mysql
-#    image: mysql:8.0
-#    restart: always
-#    environment:
-#      MYSQL_USER: ${MYSQL_USER}
-#      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-#      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-#      MYSQL_DATABASE: ${MYSQL_DATABASE}
-#    volumes:
-#      - ./splanet-db/mysql:/var/lib/mysql
-#    ports:
-#      - 3306:3306
-#    networks:
-#      - splanet
-#
-#  redis:
-#    container_name: redis
-#    image: redis
-#    ports:
-#      - 6379:6379
-#    networks:
-#      - splanet
+  mysql:
+    container_name: mysql
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    volumes:
+      - ./splanet-db/mysql:/var/lib/mysql
+    ports:
+      - 3306:3306
+    networks:
+      - splanet
 
+  redis:
+    container_name: redis
+    image: redis
+    ports:
+      - 6379:6379
+    networks:
+      - splanet
 
-# 개발할때는 주석처리하여 로컬로 개발합니다.
   springboot:
     container_name: springboot_splanet
     build:
@@ -44,6 +42,53 @@ services:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
     networks:
       - splanet
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus
+    restart: always
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+    networks:
+      - splanet
+    extra_hosts:
+      - "mysqld-exporter:127.0.0.1"
+
+  node-exporter:
+    image: prom/node-exporter
+    ports:
+      - "9100:9100"
+    networks:
+      - splanet
+  mysqld-exporter:
+    image: prom/mysqld-exporter
+    environment:
+      DATA_SOURCE_NAME: "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(mysql:3306)/"
+    ports:
+      - "9104:9104"
+    networks:
+      - splanet
+
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana
+    restart: always
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    ports:
+      - 3000:3000
+    depends_on:
+      - mysql
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+    networks:
+      - splanet
+
+volumes:
+  grafana-storage:
 
 networks:
   splanet:
