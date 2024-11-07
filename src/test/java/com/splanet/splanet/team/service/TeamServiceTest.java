@@ -238,4 +238,5 @@ public class TeamServiceTest {
 
     assertEquals(ErrorCode.INVITATION_ALREADY_SENT, exception.getErrorCode());
   }
+
 }

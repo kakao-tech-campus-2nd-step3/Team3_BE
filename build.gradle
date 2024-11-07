@@ -82,6 +82,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
 	implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
 
 	implementation 'mysql:mysql-connector-java:8.0.33'  // 버전 추가'
     
