@@ -3,8 +3,15 @@ global:
 
 scrape_configs:
   - job_name: 'springboot'
+    metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['springboot:8080']
+      - targets: ['host.docker.internal:8080']
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
+  - job_name: 'node_exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+  - job_name: 'mysqld_exporter'
+    static_configs:
+      - targets: ['mysqld-exporter:9104']
