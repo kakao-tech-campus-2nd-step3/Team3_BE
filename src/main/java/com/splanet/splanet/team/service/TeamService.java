@@ -57,7 +57,6 @@ public class TeamService {
     return new TeamDto(team.getId(), team.getTeamName(), new UserDto(user.getId(), user.getNickname()), null);
   }
 
-  // 2. 팀 초대
   @Transactional
   public TeamInvitationDto inviteUserToTeamByNickname(Long teamId, Long adminId, String nickname) {
     Team team = findTeamById(teamId);
@@ -75,14 +74,14 @@ public class TeamService {
     User userToInvite = userRepository.findByNickname(nickname)
             .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
+    // 초대가 이미 존재하는지 확인 (이 부분을 먼저 수행)
+    if (teamInvitationRepository.findByTeamAndUserAndStatus(team, userToInvite, InvitationStatus.PENDING).isPresent()) {
+      throw new BusinessException(ErrorCode.INVITATION_ALREADY_SENT);
+    }
+
     // 이미 팀에 있는지 확인
     if (teamUserRelationRepository.findByTeamAndUser(team, userToInvite).isPresent()) {
       throw new BusinessException(ErrorCode.USER_ALREADY_IN_TEAM);
-    }
-
-    // 이미 초대가 존재하는지 확인
-    if (teamInvitationRepository.findByTeamAndUserAndStatus(team, userToInvite, InvitationStatus.PENDING).isPresent()) {
-      throw new BusinessException(ErrorCode.INVITATION_ALREADY_SENT);
     }
 
     // 초대 저장
