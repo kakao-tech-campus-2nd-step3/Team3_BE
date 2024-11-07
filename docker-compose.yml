@@ -53,6 +53,24 @@ services:
       - 9090:9090
     networks:
       - splanet
+    extra_hosts:
+      - "mysqld-exporter:127.0.0.1"
+
+  node-exporter:
+    image: prom/node-exporter
+    ports:
+      - "9100:9100"
+    networks:
+      - splanet
+  mysqld-exporter:
+    image: prom/mysqld-exporter
+    environment:
+      DATA_SOURCE_NAME: "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(mysql:3306)/"
+    ports:
+      - "9104:9104"
+    networks:
+      - splanet
+
 
   grafana:
     container_name: grafana
@@ -62,6 +80,8 @@ services:
       - grafana-storage:/var/lib/grafana
     ports:
       - 3000:3000
+    depends_on:
+      - mysql
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
     networks:
