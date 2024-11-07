@@ -51,11 +51,12 @@ clova:
   speech:
     client-secret: ${CLOVA_CLIENT_SECRET}
     language: ko
+
 management:
   endpoints:
     web:
       exposure:
-        include: prometheus
+        include: prometheus, health
   prometheus:
     metrics:
       export:
