@@ -7,7 +7,6 @@ import com.splanet.splanet.comment.entity.Comment;
 import com.splanet.splanet.comment.repository.CommentRepository;
 import com.splanet.splanet.comment.service.CommentService;
 import com.splanet.splanet.core.exception.BusinessException;
-import com.splanet.splanet.core.exception.ErrorCode;
 import com.splanet.splanet.jwt.JwtTokenProvider;
 import com.splanet.splanet.user.entity.User;
 import com.splanet.splanet.user.repository.UserRepository;
@@ -17,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -197,5 +197,23 @@ class CommentControllerIntegrationTest {
                 .andExpect(result -> assertThat(result.getResolvedException())
                         .isInstanceOf(BusinessException.class)
                         .hasMessageContaining("댓글을 찾을 수 없습니다."));
+    }
+
+    @Test
+    void 댓글_작성_실패_작성자와_댓글달린유저가_같은경우() throws Exception {
+        CommentRequest commentRequest = new CommentRequest("자기 자신에게 댓글 작성 시도");
+
+        String sameUserToken = "Bearer " + jwtTokenProvider.createAccessToken(testUser.getId());
+
+        mockMvc.perform(post("/api/comments")
+                        .header("Authorization", sameUserToken)
+                        .param("writerId", String.valueOf(testUser.getId()))
+                        .param("userId", String.valueOf(testUser.getId()))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentRequest)))
+                .andExpect(status().isBadRequest())
+                .andExpect(result -> assertThat(result.getResolvedException())
+                        .isInstanceOf(BusinessException.class)
+                        .hasMessageContaining("잘못된 요청입니다 (유효하지 않은 댓글 ID)."));
     }
 }
