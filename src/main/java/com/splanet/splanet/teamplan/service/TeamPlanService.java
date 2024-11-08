@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -44,6 +45,8 @@ public class TeamPlanService {
   @Transactional
   public TeamPlanResponseDto createTeamPlan(Long userId, Long teamId, TeamPlanRequestDto requestDto) {
     validateAdmin(teamId, userId);
+
+    validateDateTime(requestDto.startDate(), requestDto.endDate());
 
     Team team = findTeamById(teamId);
 
@@ -91,6 +94,8 @@ public class TeamPlanService {
   public TeamPlanResponseDto updateTeamPlan(Long userId, Long teamId, Long planId, TeamPlanRequestDto requestDto) {
     validateAdmin(teamId, userId);
 
+    validateDateTime(requestDto.startDate(), requestDto.endDate());
+
     TeamPlan teamPlan = teamPlanRepository.findById(planId)
             .orElseThrow(() -> new BusinessException(ErrorCode.PLAN_NOT_FOUND));
 
@@ -128,5 +133,14 @@ public class TeamPlanService {
   private User findUserById(Long userId) {
     return userRepository.findById(userId)
             .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+  }
+
+  private void validateDateTime(LocalDateTime startDate, LocalDateTime endDate) {
+    if (startDate == null || endDate == null) {
+      throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "시작 또는 종료 시간은 null일 수 없습니다.");
+    }
+    if (startDate.isAfter(endDate)) {
+      throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "시작 시간은 종료 시간보다 이후일 수 없습니다.");
+    }
   }
 }
