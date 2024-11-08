@@ -1,0 +1,122 @@
+name: 롤백
+
+on:
+  workflow_dispatch:
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup SSH Key
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > private_key.pem
+          chmod 600 private_key.pem
+
+      - name: Determine Current Version
+        id: determine_current_version
+        run: |
+          CURRENT_VERSION=$(ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_HOST }} '
+            if sudo docker ps --filter "name=splanet_blue" --filter "status=running" --format "{{.Names}}" | grep -q "splanet_blue"; then
+              echo "blue"
+            elif sudo docker ps --filter "name=splanet_green" --filter "status=running" | grep -q "splanet_green"; then
+              echo "green"
+            else
+              echo "none"
+            fi
+          ')
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Set Current and Previous Version Variables
+        run: |
+          echo "CURRENT_VERSION=${{ steps.determine_current_version.outputs.current_version }}" >> $GITHUB_ENV
+          if [ "${{ env.CURRENT_VERSION }}" == "blue" ]; then
+            echo "PREVIOUS_VERSION=green" >> $GITHUB_ENV
+            echo "PREVIOUS_PORT=8081" >> $GITHUB_ENV
+          else
+            echo "PREVIOUS_VERSION=blue" >> $GITHUB_ENV
+            echo "PREVIOUS_PORT=8080" >> $GITHUB_ENV
+          fi
+
+      - name: Start Previous Version
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            PREVIOUS_VERSION=${{ env.PREVIOUS_VERSION }}
+            echo "Starting previous version container: splanet_$PREVIOUS_VERSION"
+            sudo docker start splanet_$PREVIOUS_VERSION
+
+      - name: Wait for Previous Version to be Healthy
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            PREVIOUS_PORT=${{ env.PREVIOUS_PORT }}
+            echo "Waiting for the application to be healthy on http://localhost:${PREVIOUS_PORT}/actuator/health..."
+            for i in {1..30}; do
+              if curl -s http://localhost:$PREVIOUS_PORT/actuator/health | grep '"status":"UP"' > /dev/null; then
+                echo "Application is healthy and ready to receive traffic."
+                break
+              fi
+              echo "Waiting for application to start... (Attempt $i)"
+              sleep 5
+            done
+            if [ "$i" -eq 30 ]; then
+              echo "Application did not start successfully within the expected time."
+              exit 1
+            fi
+
+      - name: Update Load Balancer Target Group
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            CURRENT_VERSION=${{ env.CURRENT_VERSION }}
+            PREVIOUS_VERSION=${{ env.PREVIOUS_VERSION }}
+
+            if [ "$PREVIOUS_VERSION" == "blue" ]; then
+              NEW_TARGET_GROUP_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:targetgroup/splanet/${{ secrets.ARN_ID_8080 }}"
+              OLD_TARGET_GROUP_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:targetgroup/splanet-8081/${{ secrets.ARN_ID_8081 }}"
+            else
+              NEW_TARGET_GROUP_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:targetgroup/splanet-8081/${{ secrets.ARN_ID_8081 }}"
+              OLD_TARGET_GROUP_ARN="arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:targetgroup/splanet/${{ secrets.ARN_ID_8080 }}"
+            fi
+
+            echo "Gradually shifting traffic to previous version..."
+            for i in {1..5}; do
+              TRAFFIC_NEW=$((i * 20))
+              TRAFFIC_OLD=$((100 - TRAFFIC_NEW))
+              echo "Setting previous version traffic to $TRAFFIC_NEW% and current version to $TRAFFIC_OLD% (Step $i)"
+            
+              aws elbv2 modify-listener --listener-arn arn:aws:elasticloadbalancing:ap-northeast-2:${{ secrets.AWS_ACCOUNT_ID }}:listener/app/splanet/${{ secrets.ARN_ID_443 }} \
+                --default-actions '[{
+                  "Type": "forward",
+                  "ForwardConfig": {
+                    "TargetGroups": [
+                      {"TargetGroupArn": "'"$NEW_TARGET_GROUP_ARN"'", "Weight": '"$TRAFFIC_NEW"'},
+                      {"TargetGroupArn": "'"$OLD_TARGET_GROUP_ARN"'", "Weight": '"$TRAFFIC_OLD"'}
+                    ]
+                  }
+                }]'
+              sleep 5
+            done
+
+      - name: Stop Current Version
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            CURRENT_VERSION=${{ env.CURRENT_VERSION }}
+            if [ "$CURRENT_VERSION" != "none" ]; then
+              echo "Stopping current version: splanet_$CURRENT_VERSION"
+              sudo docker stop splanet_$CURRENT_VERSION
+            fi

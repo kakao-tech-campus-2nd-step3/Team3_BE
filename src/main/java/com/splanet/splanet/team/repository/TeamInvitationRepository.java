@@ -12,4 +12,5 @@ import java.util.Optional;
 public interface TeamInvitationRepository extends JpaRepository<TeamInvitation, Long> {
   List<TeamInvitation> findAllByUserAndStatus(User user, InvitationStatus status);
   List<TeamInvitation> findAllByTeamAndStatus(Team team, InvitationStatus status);
+  Optional<TeamInvitation> findByTeamAndUserAndStatus(Team team, User user, InvitationStatus status);
 }
