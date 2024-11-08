@@ -120,6 +120,7 @@ jobs:
             NEW_PORT=${{ env.NEW_PORT }}
             
             echo "Deploying with IMAGE_TAG=$IMAGE_TAG, NEW_VERSION=$NEW_VERSION, NEW_PORT=$NEW_PORT"
+            sudo docker rm splanet_$NEW_VERSION
             sudo docker pull kimsongmok/splanet:$IMAGE_TAG
             sudo docker network inspect splanet >/dev/null 2>&1 || sudo docker network create splanet
             sudo docker run -d --name splanet_$NEW_VERSION \
@@ -198,7 +199,7 @@ jobs:
               sleep 10
             done
 
-      - name: Remove Old Version
+      - name: Stop Old Version
         uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -209,7 +210,6 @@ jobs:
             
             if [ "$CURRENT_VERSION" != "none" ]; then
               sudo docker stop splanet_${CURRENT_VERSION}
-              sudo docker rm splanet_${CURRENT_VERSION}
             fi
 
       - name: Clean up old Docker images
@@ -220,5 +220,4 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             docker image ls --format "{{.ID}} {{.Repository}}:{{.Tag}}" | grep 'kimsongmok/splanet' | tail -n +4 | awk '{print $1}' | xargs docker rmi -f
-            sudo docker system prune -f
-            
+ 
