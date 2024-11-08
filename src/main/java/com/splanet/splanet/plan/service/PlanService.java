@@ -30,11 +30,12 @@ public class PlanService {
     private final UserRepository userRepository;
     private final PreviewPlanService previewPlanService;
 
-
     @Transactional
     public PlanResponseDto createPlan(Long userId, PlanRequestDto requestDto) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        validateDateTime(requestDto.getStartDate(), requestDto.getEndDate());
 
         Plan plan = planMapper.toEntity(requestDto, user);
         planRepository.save(plan);
@@ -42,7 +43,7 @@ public class PlanService {
     }
 
     @Transactional
-    public List<PlanResponseDto> saveGroupCardsToUser(Long userId, String deviceId, String groupId) { // Redis에 있던 데이터를 실제 유저의 Plan 테이블로 저장
+    public List<PlanResponseDto> saveGroupCardsToUser(Long userId, String deviceId, String groupId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
@@ -79,6 +80,8 @@ public class PlanService {
     public PlanResponseDto updatePlan(Long planId, PlanRequestDto requestDto) {
         Plan plan = planRepository.findById(planId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PLAN_NOT_FOUND));
+
+        validateDateTime(requestDto.getStartDate(), requestDto.getEndDate());
 
         plan = plan.toBuilder()
                 .title(requestDto.getTitle())
@@ -121,5 +124,14 @@ public class PlanService {
         return futurePlans.stream()
                 .map(planMapper::toResponseDto)
                 .collect(Collectors.toList());
+    }
+
+    private void validateDateTime(LocalDateTime startDate, LocalDateTime endDate) {
+        if (startDate == null || endDate == null) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "시작 또는 종료 시간은 null일 수 없습니다.");
+        }
+        if (startDate.isAfter(endDate)) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "시작 시간은 종료 시간보다 이후일 수 없습니다.");
+        }
     }
 }
