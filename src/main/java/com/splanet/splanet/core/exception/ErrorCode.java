@@ -24,6 +24,7 @@ public enum ErrorCode {
 
     // payment
     PAYMENT_NOT_FOUND("결제 정보가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+    UNAUTHORIZED_ACCESS("다른 유저의 결제 정보에 접근할 수 없습니다.", HttpStatus.UNAUTHORIZED),
 
     // comment
     COMMENT_NOT_FOUND("댓글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
@@ -38,7 +39,6 @@ public enum ErrorCode {
     INVITATION_ALREADY_PROCESSED("초대가 이미 처리되었습니다.", HttpStatus.BAD_REQUEST),
     INVITATION_ALREADY_SENT("초대가 이미 존재합니다.", HttpStatus.BAD_REQUEST),
     USER_ALREADY_IN_TEAM("해당 유저는 이미 팀에 속해 있습니다.", HttpStatus.BAD_REQUEST),
-
 
     // friend
     FRIEND_NOT_FOUND("친구가 아닙니다.",HttpStatus.NOT_FOUND),

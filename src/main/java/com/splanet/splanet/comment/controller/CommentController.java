@@ -22,8 +22,8 @@ public class CommentController implements CommentApi {
     }
 
     @Override
-    public ResponseEntity<String> createComment(Long userId, CommentRequest request) {
-        commentService.createComment(userId, request);
+    public ResponseEntity<String> createComment(Long writerId, Long userId, CommentRequest request) {
+        commentService.createComment(writerId, userId, request);
         return ResponseEntity.ok("댓글이 성공적으로 작성되었습니다.");
     }
 

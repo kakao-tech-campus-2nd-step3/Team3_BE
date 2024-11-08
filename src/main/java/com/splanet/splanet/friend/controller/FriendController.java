@@ -19,7 +19,7 @@ public class FriendController implements FriendApi {
     private final FriendService friendService;
 
     public FriendController(FriendService friendService) {
-        this.friendService = friendService;;
+        this.friendService = friendService;
     }
 
     @Override
