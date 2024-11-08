@@ -57,7 +57,6 @@ public class TeamService {
     return new TeamDto(team.getId(), team.getTeamName(), new UserDto(user.getId(), user.getNickname()), null);
   }
 
-  // 2. 팀 초대
   @Transactional
   public TeamInvitationDto inviteUserToTeamByNickname(Long teamId, Long adminId, String nickname) {
     Team team = findTeamById(teamId);
@@ -74,6 +73,11 @@ public class TeamService {
     // 초대할 유저 찾기
     User userToInvite = userRepository.findByNickname(nickname)
             .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+    // 초대가 이미 존재하는지 확인 (이 부분을 먼저 수행)
+    if (teamInvitationRepository.findByTeamAndUserAndStatus(team, userToInvite, InvitationStatus.PENDING).isPresent()) {
+      throw new BusinessException(ErrorCode.INVITATION_ALREADY_SENT);
+    }
 
     // 이미 팀에 있는지 확인
     if (teamUserRelationRepository.findByTeamAndUser(team, userToInvite).isPresent()) {
@@ -228,15 +232,15 @@ public class TeamService {
   // 8. 유저가 속한 팀의 모든 멤버 조회
   @Transactional(readOnly = true)
   public List<TeamMemberDto> getTeamMembers(Long teamId) {
-    // 팀에 속한 모든 사용자 관계 조회 (관리자 포함)
     List<TeamUserRelation> teamUserRelations = teamUserRelationRepository.findAllByTeamWithUser(teamId);
 
-    // TeamUserRelation에서 사용자 정보를 가져와 TeamMemberDto로 변환
     return teamUserRelations.stream()
             .map(relation -> new TeamMemberDto(
                     relation.getUser().getId(),
                     relation.getUser().getNickname(),
-                    relation.getUser().getProfileImage()))
+                    relation.getUser().getProfileImage(),
+                    relation.getRole().name()  // 역할 정보 추가
+            ))
             .collect(Collectors.toList());
   }
 

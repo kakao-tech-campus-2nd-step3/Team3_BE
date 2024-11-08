@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  redis:
+    container_name: redis
+    image: redis:6
+    ports:
+      - "6379:6379"
+    restart: always   # 예기치 않은 오류 시 자동으로 재시작
+    networks:
+      - backend-network
+
+  springboot:
+    container_name: springboot_splanet
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always   # 예기치 않은 오류 시 자동으로 재시작
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://${RDS_ENDPOINT}:3306/${MYSQL_DATABASE}
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+    ports:
+      - "8080:8080"
+    networks:
+      - backend-network
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus
+    restart: always   # 예기치 않은 오류 시 자동으로 재시작
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - backend-network
+
+  node-exporter:
+    image: prom/node-exporter
+    ports:
+      - "9100:9100"
+    restart: always   # 예기치 않은 오류 시 자동으로 재시작
+    networks:
+      - backend-network
+
+  mysqld-exporter:
+    image: prom/mysqld-exporter
+    environment:
+      DATA_SOURCE_NAME: "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(${RDS_ENDPOINT}:3306)/"
+    ports:
+      - "9104:9104"
+    restart: always   # 예기치 않은 오류 시 자동으로 재시작
+    networks:
+      - backend-network
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana
+    restart: always   # 예기치 않은 오류 시 자동으로 재시작
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+    networks:
+      - backend-network
+
+volumes:
+  grafana-storage:
+
+networks:
+  backend-network:
+    driver: bridge
