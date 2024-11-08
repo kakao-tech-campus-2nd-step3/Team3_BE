@@ -13,9 +13,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     protected ResponseEntity<ErrorResponse> handleBusinessException(BusinessException ex) {
-        ErrorCode errorCode = ex.getErrorCode();
-        ErrorResponse response = new ErrorResponse(errorCode.getMessage(), errorCode.getStatus().value());
-        return new ResponseEntity<>(response, errorCode.getStatus());
+        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage(), ex.getErrorCode().getStatus().value());
+        return new ResponseEntity<>(errorResponse, ex.getErrorCode().getStatus());
     }
 
     @ExceptionHandler(ConstraintViolationException.class)

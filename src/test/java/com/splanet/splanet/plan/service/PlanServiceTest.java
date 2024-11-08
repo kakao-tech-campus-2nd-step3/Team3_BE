@@ -16,7 +16,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -73,6 +72,7 @@ class PlanServiceTest {
     void 플랜_생성_유저없음() {
         // given
         Long userId = 1L;
+        User user = User.builder().id(userId).build();
         PlanRequestDto requestDto = PlanRequestDto.builder().build();
 
         given(userRepository.findById(userId)).willReturn(Optional.empty());
@@ -81,6 +81,66 @@ class PlanServiceTest {
         assertThatThrownBy(() -> planService.createPlan(userId, requestDto))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining(ErrorCode.USER_NOT_FOUND.getMessage());
+    }
+
+    @Test
+    void 플랜_생성_시작시간_NULL() {
+        // given
+        Long userId = 1L;
+        User user = User.builder().id(userId).build();
+        PlanRequestDto requestDto = PlanRequestDto.builder()
+                .title("테스트 플랜")
+                .description("테스트 설명")
+                .startDate(null)
+                .endDate(LocalDateTime.now().plusHours(2))
+                .build();
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+
+        // when & then
+        assertThatThrownBy(() -> planService.createPlan(userId, requestDto))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("시작 또는 종료 시간은 null일 수 없습니다.");
+    }
+
+    @Test
+    void 플랜_생성_종료시간_NULL() {
+        // given
+        Long userId = 1L;
+        User user = User.builder().id(userId).build();
+        PlanRequestDto requestDto = PlanRequestDto.builder()
+                .title("테스트 플랜")
+                .description("테스트 설명")
+                .startDate(LocalDateTime.now())
+                .endDate(null)
+                .build();
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+
+        // when & then
+        assertThatThrownBy(() -> planService.createPlan(userId, requestDto))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("시작 또는 종료 시간은 null일 수 없습니다.");
+    }
+
+    @Test
+    void 플랜_생성_시작시간_종료시간보다_늦음() {
+        // given
+        Long userId = 1L;
+        User user = User.builder().id(userId).build();
+        PlanRequestDto requestDto = PlanRequestDto.builder()
+                .title("테스트 플랜")
+                .description("테스트 설명")
+                .startDate(LocalDateTime.now().plusHours(2))
+                .endDate(LocalDateTime.now())
+                .build();
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+
+        // when & then
+        assertThatThrownBy(() -> planService.createPlan(userId, requestDto))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("시작 시간은 종료 시간보다 이후일 수 없습니다.");
     }
 
     @Test
@@ -123,6 +183,8 @@ class PlanServiceTest {
         PlanRequestDto requestDto = PlanRequestDto.builder()
                 .title("수정된 플랜")
                 .description("수정된 설명")
+                .startDate(LocalDateTime.now())
+                .endDate(LocalDateTime.now().plusHours(2))
                 .build();
 
         Plan updatedPlan = existingPlan.toBuilder()
@@ -136,7 +198,6 @@ class PlanServiceTest {
                 .description("수정된 설명")
                 .build();
 
-        // Mocking PlanRepository and PlanMapper
         given(planRepository.findById(planId)).willReturn(Optional.of(existingPlan));
         given(planRepository.save(any(Plan.class))).willReturn(updatedPlan);
         given(planMapper.toResponseDto(any(Plan.class))).willReturn(responseDto);
@@ -163,6 +224,63 @@ class PlanServiceTest {
         assertThatThrownBy(() -> planService.updatePlan(planId, requestDto))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining(ErrorCode.PLAN_NOT_FOUND.getMessage());
+    }
+
+    @Test
+    void 플랜_업데이트_시작시간_NULL() {
+        // given
+        Long planId = 1L;
+        PlanRequestDto requestDto = PlanRequestDto.builder()
+                .title("수정된 플랜")
+                .description("수정된 설명")
+                .startDate(null)
+                .endDate(LocalDateTime.now().plusHours(2))
+                .build();
+
+        given(planRepository.findById(planId)).willReturn(Optional.of(Plan.builder().build()));
+
+        // when & then
+        assertThatThrownBy(() -> planService.updatePlan(planId, requestDto))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("시작 또는 종료 시간은 null일 수 없습니다.");
+    }
+
+    @Test
+    void 플랜_업데이트_종료시간_NULL() {
+        // given
+        Long planId = 1L;
+        PlanRequestDto requestDto = PlanRequestDto.builder()
+                .title("수정된 플랜")
+                .description("수정된 설명")
+                .startDate(LocalDateTime.now())
+                .endDate(null)
+                .build();
+
+        given(planRepository.findById(planId)).willReturn(Optional.of(Plan.builder().build()));
+
+        // when & then
+        assertThatThrownBy(() -> planService.updatePlan(planId, requestDto))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("시작 또는 종료 시간은 null일 수 없습니다.");
+    }
+
+    @Test
+    void 플랜_업데이트_시작시간_종료시간보다_늦음() {
+        // given
+        Long planId = 1L;
+        PlanRequestDto requestDto = PlanRequestDto.builder()
+                .title("수정된 플랜")
+                .description("수정된 설명")
+                .startDate(LocalDateTime.now().plusHours(2))
+                .endDate(LocalDateTime.now())
+                .build();
+
+        given(planRepository.findById(planId)).willReturn(Optional.of(Plan.builder().build()));
+
+        // when & then
+        assertThatThrownBy(() -> planService.updatePlan(planId, requestDto))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("시작 시간은 종료 시간보다 이후일 수 없습니다.");
     }
 
     @Test

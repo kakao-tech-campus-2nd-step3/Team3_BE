@@ -4,10 +4,7 @@ import com.splanet.splanet.core.exception.BusinessException;
 import com.splanet.splanet.core.exception.ErrorCode;
 import com.splanet.splanet.team.dto.TeamDto;
 import com.splanet.splanet.team.dto.TeamInvitationDto;
-import com.splanet.splanet.team.entity.Team;
-import com.splanet.splanet.team.entity.TeamInvitation;
-import com.splanet.splanet.team.entity.TeamUserRelation;
-import com.splanet.splanet.team.entity.UserTeamRole;
+import com.splanet.splanet.team.entity.*;
 import com.splanet.splanet.team.repository.TeamInvitationRepository;
 import com.splanet.splanet.team.repository.TeamRepository;
 import com.splanet.splanet.team.repository.TeamUserRelationRepository;
@@ -215,4 +212,31 @@ public class TeamServiceTest {
 
     assertEquals(ErrorCode.ACCESS_DENIED, exception.getErrorCode());
   }
+
+  @Test
+  public void testInviteUserToTeam_InvitationAlreadySent() {
+    // 관리자 권한 확인을 위해 ADMIN으로 설정
+    when(teamUserRelationRepository.findByTeamAndUser(any(Team.class), any(User.class)))
+            .thenReturn(Optional.of(testRelation));
+
+    User invitedUser = User.builder()
+            .id(2L)
+            .nickname("inviteUser")
+            .profileImage("profileImage")
+            .build();
+
+    // 이미 보낸 초대가 PENDING 상태로 존재하는 상황을 설정
+    TeamInvitation existingInvitation = new TeamInvitation(testTeam, invitedUser);
+    when(userRepository.findByNickname(anyString())).thenReturn(Optional.of(invitedUser));
+    when(teamInvitationRepository.findByTeamAndUserAndStatus(testTeam, invitedUser, InvitationStatus.PENDING))
+            .thenReturn(Optional.of(existingInvitation));
+
+    // 초대가 이미 존재하는 경우 예외를 기대
+    BusinessException exception = assertThrows(BusinessException.class, () ->
+            teamService.inviteUserToTeamByNickname(1L, 1L, "inviteUser")
+    );
+
+    assertEquals(ErrorCode.INVITATION_ALREADY_SENT, exception.getErrorCode());
+  }
+
 }
