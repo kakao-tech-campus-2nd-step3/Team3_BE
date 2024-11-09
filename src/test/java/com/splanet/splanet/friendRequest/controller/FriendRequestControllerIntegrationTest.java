@@ -120,7 +120,7 @@ class FriendRequestControllerIntegrationTest {
 
     @Test
     @WithMockUser
-    void 친구_요청_수락_이미_수락된_요청() throws Exception {
+    void 친구_요청_수락_실패_이미_수락된_요청() throws Exception {
         // 이미 수락된 친구 요청을 시도
         User receiverUser = User.builder()
                 .nickname("friendUser")
@@ -156,7 +156,7 @@ class FriendRequestControllerIntegrationTest {
 
     @Test
     @WithMockUser
-    void 친구_요청_거절_이미_수락된_요청() throws Exception {
+    void 친구_요청_거절_실패_이미_수락된_요청() throws Exception {
         // 이미 수락된 친구 요청을 시도
         User receiverUser = User.builder()
                 .nickname("friendUser")
@@ -257,5 +257,25 @@ class FriendRequestControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("해당 친구 요청을 찾을 수 없습니다."));
+    }
+
+    @Test
+    @WithMockUser
+    void 친구_요청_목록_조회_성공_받은_요청() throws Exception {
+        mockMvc.perform(get("/api/friends/requests/received")
+                        .header("Authorization", accessToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
+    }
+
+    @Test
+    @WithMockUser
+    void 친구_요청_목록_조회_성공_보낸_요청() throws Exception {
+        mockMvc.perform(get("/api/friends/requests/sent")
+                        .header("Authorization", accessToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
     }
 }
