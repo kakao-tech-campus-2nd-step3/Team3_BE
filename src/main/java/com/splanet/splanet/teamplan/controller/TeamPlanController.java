@@ -17,7 +17,7 @@ public class TeamPlanController implements TeamPlanApi{
   private final TeamPlanService teamPlanService;
 
   // 팀 플랜 생성
-  @PostMapping
+  @Override
   public ResponseEntity<TeamPlanResponseDto> createTeamPlan(
           @AuthenticationPrincipal Long userId,
           @PathVariable Long teamId,
@@ -27,7 +27,7 @@ public class TeamPlanController implements TeamPlanApi{
   }
 
   // 팀 플랜 조회
-  @GetMapping("/{planId}")
+  @Override
   public ResponseEntity<TeamPlanResponseDto> getTeamPlan(
           @PathVariable Long teamId,
           @PathVariable Long planId) {
@@ -36,14 +36,14 @@ public class TeamPlanController implements TeamPlanApi{
   }
 
   // 팀의 모든 플랜 조회
-  @GetMapping
+  @Override
   public ResponseEntity<List<TeamPlanResponseDto>> getAllTeamPlans(@PathVariable Long teamId) {
     List<TeamPlanResponseDto> plans = teamPlanService.getAllTeamPlans(teamId);
     return ResponseEntity.ok(plans);
   }
 
   // 팀 플랜 수정
-  @PutMapping("/{planId}")
+  @Override
   public ResponseEntity<TeamPlanResponseDto> updateTeamPlan(
           @AuthenticationPrincipal Long userId,
           @PathVariable Long teamId,
@@ -54,7 +54,7 @@ public class TeamPlanController implements TeamPlanApi{
   }
 
   // 팀 플랜 삭제
-  @DeleteMapping("/{planId}")
+  @Override
   public ResponseEntity<Void> deleteTeamPlan(
           @AuthenticationPrincipal Long userId,
           @PathVariable Long teamId,
