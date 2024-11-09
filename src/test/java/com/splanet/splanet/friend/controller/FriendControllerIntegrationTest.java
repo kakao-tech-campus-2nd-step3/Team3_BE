@@ -169,4 +169,16 @@ class FriendControllerIntegrationTest {
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("유효하지 않은 토큰입니다."));
     }
+
+    @Test
+    @WithMockUser
+    void 친구_플랜_조회_실패_친구가_아님() throws Exception {
+        Long nonFriendId = 999L;
+
+        mockMvc.perform(get("/api/friends/{friendId}/plans", nonFriendId)
+                        .header("Authorization", accessToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("친구가 아닙니다."));
+    }
 }
