@@ -215,4 +215,32 @@ class CommentControllerIntegrationTest {
                         .isInstanceOf(BusinessException.class)
                         .hasMessageContaining("잘못된 요청입니다 (유효하지 않은 댓글 ID)."));
     }
+
+    @Test
+    void 댓글_조회_특정_유저() throws Exception {
+        // testUser가 작성한 댓글 추가
+        Comment comment = Comment.builder()
+                .user(testUser)
+                .writer(writerUser)
+                .content("testUser의 댓글")
+                .build();
+        commentRepository.save(comment);
+
+        // testUser의 댓글만 조회하는 API 요청
+        mockMvc.perform(get("/api/comments/{userId}", testUser.getId())
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].content").value("testUser의 댓글"));
+    }
+
+    @Test
+    void 댓글_조회_존재하지_않는_댓글() throws Exception {
+        Long nonExistentCommentId = 999L;
+
+        mockMvc.perform(get("/api/comments/{id}", nonExistentCommentId)
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(content().json("[]"));
+    }
 }
