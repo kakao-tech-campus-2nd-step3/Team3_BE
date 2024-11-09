@@ -1,4 +1,4 @@
-package com.splanet.splanet.team.api;
+package com.splanet.splanet.team.controller;
 
 import com.splanet.splanet.team.dto.TeamDto;
 import com.splanet.splanet.team.dto.TeamInvitationDto;
