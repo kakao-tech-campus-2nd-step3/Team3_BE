@@ -83,7 +83,7 @@ public class TeamServiceTest {
     BusinessException exception = assertThrows(BusinessException.class, () ->
             teamService.createTeam("", 1L)
     );
-    assertEquals(ErrorCode.INVALID_INPUT_VALUE, exception.getErrorCode());
+    assertEquals(ErrorCode.TEAM_NAME_NOT_FOUND, exception.getErrorCode());
   }
 
   @Test
