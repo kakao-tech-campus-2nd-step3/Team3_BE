@@ -14,26 +14,19 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
   private final LogService logService;
 
+  // 기본 생성자 추가
   public CustomOAuth2UserService(LogService logService) {
     this.logService = logService;
   }
 
   @Override
   public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-
     OAuth2User oAuth2User = super.loadUser(userRequest);
     Map<String, Object> attributes = oAuth2User.getAttributes();
 
     if (!attributes.containsKey("id")) {
       throw new OAuth2AuthenticationException("카카오 사용자 정보가 없습니다.");
     }
-
-    Long userId = (Long) attributes.get("id");
-    String deviceId = oAuth2User.getName();
-
-    // 로그인 시 로그 기록
-    logService.recordLoginLog(userId, deviceId);
-
     return oAuth2User;
   }
 }

@@ -19,13 +19,12 @@ public class LogService {
   }
 
   // 로그인 성공 시 로그 기록
-  public void recordLoginLog(Long userId, String deviceId) {
+  public void recordLoginLog(Long userId, String deviceId, String requestPath, String headers) {
     String timestamp = getCurrentKstTimestamp();
-    String logMessage = String.format("eventType: LOGIN_SUCCESS, userId: %s, deviceId: %s, timestamp: %s",
-            userId, deviceId, timestamp);
+    String logMessage = String.format("eventType: LOGIN_SUCCESS, userId: %s, deviceId: %s, timestamp: %s, requestPath: %s, headers: %s",
+            userId, deviceId, timestamp, requestPath, headers);
     writeLog(logMessage);
   }
-
   // 실제 로그 파일에 기록
   private void writeLog(String logMessage) {
     try (FileWriter writer = new FileWriter(logPath, true)) {
