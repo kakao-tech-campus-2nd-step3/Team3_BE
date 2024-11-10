@@ -1,4 +1,4 @@
 package com.splanet.splanet.comment.dto;
 
-public record CommentRequest(String content) {
+public record CommentRequest(Long userId, String content) {
 }
