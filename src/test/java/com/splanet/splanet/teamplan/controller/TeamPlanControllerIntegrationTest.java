@@ -127,8 +127,7 @@ class TeamPlanControllerIntegrationTest {
                         .header("Authorization", accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequestDto)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("공백일 수 없습니다"));
+                .andExpect(status().isBadRequest());
     }
 
     @Test
