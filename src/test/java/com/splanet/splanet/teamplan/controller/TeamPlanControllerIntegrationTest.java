@@ -140,6 +140,48 @@ class TeamPlanControllerIntegrationTest {
     }
 
     @Test
+    void 팀플랜_수정_성공() throws Exception {
+        TeamPlanRequestDto createRequestDto = new TeamPlanRequestDto(
+                "수정 전 테스트 플랜",
+                "수정 전 테스트 설명",
+                LocalDateTime.parse("2024-11-11T09:00:00"),
+                LocalDateTime.parse("2024-11-11T10:00:00"),
+                true,
+                false
+        );
+
+        String response = mockMvc.perform(post("/api/teams/{teamId}/plans", teamId)
+                        .header("Authorization", accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequestDto)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        Long planId = JsonPath.parse(response).read("$.id", Long.class);
+
+        TeamPlanRequestDto updateRequestDto = new TeamPlanRequestDto(
+                "수정된 플랜 제목",
+                "수정된 플랜 설명",
+                LocalDateTime.parse("2024-11-11T10:00:00"),
+                LocalDateTime.parse("2024-11-11T11:00:00"),
+                false,
+                true
+        );
+
+        mockMvc.perform(put("/api/teams/{teamId}/plans/{planId}", teamId, planId)
+                        .header("Authorization", accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequestDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("수정된 플랜 제목"))
+                .andExpect(jsonPath("$.description").value("수정된 플랜 설명"))
+                .andExpect(jsonPath("$.startDate").value("2024-11-11T10:00:00"))
+                .andExpect(jsonPath("$.endDate").value("2024-11-11T11:00:00"))
+                .andExpect(jsonPath("$.accessibility").value(false))
+                .andExpect(jsonPath("$.isCompleted").value(true));
+    }
+
+    @Test
     void 팀플랜_수정_플랜없음() throws Exception {
         // 존재하지 않는 플랜 ID로 수정 요청을 보낼 때
         mockMvc.perform(put("/api/teams/{teamId}/plans/{planId}", teamId, 999L)
