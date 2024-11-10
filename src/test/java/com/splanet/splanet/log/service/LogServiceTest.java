@@ -44,9 +44,11 @@ class LogServiceTest {
     // given
     Long userId = 1L;
     String deviceId = "testDeviceId";
+    String requestPath = "/test/login";
+    String headers = "User-Agent: TestAgent, Accept: */*";
 
     // when
-    logService.recordLoginLog(userId, deviceId);
+    logService.recordLoginLog(userId, deviceId, requestPath, headers);
 
     // then
     File logFile = new File(logPath);
@@ -55,7 +57,7 @@ class LogServiceTest {
     // 로그 파일 내용 확인
     try {
       String content = Files.readString(logFile.toPath());
-      assertThat(content).contains("eventType: LOGIN_SUCCESS", "userId: 1", "deviceId: testDeviceId");
+      assertThat(content).contains("eventType: LOGIN_SUCCESS", "userId: 1", "deviceId: testDeviceId", "requestPath: /test/login", "headers: User-Agent: TestAgent, Accept: */*");
     } catch (IOException e) {
       e.printStackTrace();
     }
