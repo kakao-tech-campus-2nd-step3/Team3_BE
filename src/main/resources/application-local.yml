@@ -10,17 +10,11 @@ spring:
       port: 6379
   security:
     oauth2:
-      redirect-url: http://localhost:5173/oauth2/redirect
+      redirect-dev-url: http://localhost:5173/oauth2/redirect
+      redirect-prod-url: https://www.splanet.co.kr/oauth2/redirect
+      origin-dev: http://localhost:5173
+      origin-prod: https://splanet.co.kr
       client:
         registration:
           kakao:
             redirect-uri: http://localhost:8080/login/oauth2/code/kakao
-#management:
-#  endpoints:
-#    web:
-#      exposure:
-#        include: prometheus
-#  prometheus:
-#    metrics:
-#      export:
-#        enabled: true
