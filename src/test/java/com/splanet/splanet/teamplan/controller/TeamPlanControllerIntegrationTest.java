@@ -1,6 +1,7 @@
 package com.splanet.splanet.teamplan.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
 import com.splanet.splanet.team.entity.Team;
 import com.splanet.splanet.team.entity.TeamUserRelation;
 import com.splanet.splanet.team.entity.UserTeamRole;
@@ -17,11 +18,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -103,5 +106,32 @@ class TeamPlanControllerIntegrationTest {
                 .andExpect(jsonPath("$.endDate").value("2024-11-10T09:59:23.542"))
                 .andExpect(jsonPath("$.accessibility").value(true))
                 .andExpect(jsonPath("$.isCompleted").value(true));
+    }
+
+    @Test
+    void 팀플랜_조회_성공() throws Exception {
+        TeamPlanRequestDto requestDto = new TeamPlanRequestDto(
+                "11/10 테스트용 플랜",
+                "11/10 테스트용 플랜",
+                LocalDateTime.parse("2024-11-10T09:59:23.542"),
+                LocalDateTime.parse("2024-11-10T09:59:23.542"),
+                true,
+                true
+        );
+
+        String response = mockMvc.perform(post("/api/teams/{teamId}/plans", teamId)
+                        .header("Authorization", accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("11/10 테스트용 플랜"))
+                .andReturn().getResponse().getContentAsString();
+
+        String planId = JsonPath.parse(response).read("$.id").toString();
+
+        mockMvc.perform(get("/api/teams/{teamId}/plans/{planId}", teamId, planId)
+                        .header("Authorization", accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("11/10 테스트용 플랜"));
     }
 }
