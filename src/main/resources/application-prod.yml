@@ -12,8 +12,8 @@ spring:
     oauth2:
       redirect-dev-url: http://localhost:5173/oauth2/redirect
       redirect-prod-url: https://www.splanet.co.kr/oauth2/redirect
-      origin-dev: http://localhost:5173
-      origin-prod: https://splanet.co.kr
+      origin-dev: localhost
+      origin-prod: splanet.co.kr
       client:
         registration:
           kakao:
