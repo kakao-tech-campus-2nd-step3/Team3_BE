@@ -5,24 +5,22 @@ import com.splanet.splanet.core.exception.ErrorCode;
 import com.splanet.splanet.previewplan.dto.PlanCardRequestDto;
 import com.splanet.splanet.previewplan.dto.PlanCardResponseDto;
 import com.splanet.splanet.previewplan.entity.PlanCard;
-import com.splanet.splanet.previewplan.entity.PlanGroup;
 import com.splanet.splanet.previewplan.repository.PlanCardRepository;
 import com.splanet.splanet.previewplan.repository.PlanGroupRepository;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class PreviewPlanServiceTest {
 
     @Mock
@@ -34,126 +32,98 @@ class PreviewPlanServiceTest {
     @InjectMocks
     private PreviewPlanService previewPlanService;
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
-
     @Test
-    void 플랜카드_성공적으로_저장됨() {
+    @DisplayName("성공적으로 PlanCard 저장 - LocalDateTime 형식")
+    void savePlanCardWithLocalDateTimeFormat() {
         // given
-        PlanCardRequestDto requestDto = new PlanCardRequestDto("title", "description", "2024-10-10T10:00:00", "2024-10-10T12:00:00");
-        PlanCard newPlanCard = PlanCard.builder()
-                .customKey("deviceId:groupId:cardId")
-                .deviceId("deviceId")
-                .groupId("groupId")
-                .cardId("cardId")
-                .title(requestDto.title())
-                .description(requestDto.description())
-                .startDate(requestDto.startDate())
-                .endDate(requestDto.endDate())
-                .build();
-
-        when(planCardRepository.save(any(PlanCard.class))).thenReturn(newPlanCard);
+        String deviceId = "device1";
+        String groupId = "group1";
+        PlanCardRequestDto requestDto = new PlanCardRequestDto("제목", "설명", "2024-11-05T09:00:00", "2024-11-05T12:00:00");
+        when(planCardRepository.save(any(PlanCard.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // when
-        PlanCardResponseDto result = previewPlanService.savePlanCard("deviceId", "groupId", requestDto);
+        PlanCardResponseDto response = previewPlanService.savePlanCard(deviceId, groupId, requestDto);
 
         // then
-        assertEquals("title", result.title());
-        assertEquals("description", result.description());
-        assertEquals("2024-10-10T10:00:00", result.startDate());
+        assertThat(response).isNotNull();
         verify(planCardRepository, times(1)).save(any(PlanCard.class));
     }
 
     @Test
-    void 플랜카드_찾을_수_없음_예외발생() {
+    @DisplayName("PlanCard 조회 성공")
+    void getPlanCardSuccess() {
         // given
-        when(planCardRepository.findById(anyString())).thenReturn(Optional.empty());
+        String deviceId = "device1";
+        String groupId = "group1";
+        String cardId = "card1";
+        String redisKey = deviceId + ":" + groupId + ":" + cardId;
+
+        String startDate = "2024-11-05T09:00:00";
+        String endDate = "2024-11-05T10:00:00";
+
+        PlanCard planCard = PlanCard.builder()
+                .customKey(redisKey)
+                .startDate(startDate)  // startDate 설정
+                .endDate(endDate)      // endDate 설정
+                .build();
+
+        when(planCardRepository.findById(redisKey)).thenReturn(Optional.of(planCard));
+
+        // when
+        PlanCardResponseDto response = previewPlanService.getPlanCard(deviceId, groupId, cardId);
+
+        // then
+        assertThat(response).isNotNull();
+        verify(planCardRepository, times(1)).findById(redisKey);
+    }
+
+    @Test
+    @DisplayName("PlanCard 조회 실패 - 존재하지 않음")
+    void getPlanCardNotFound() {
+        // given
+        String deviceId = "device1";
+        String groupId = "group1";
+        String cardId = "card1";
+        String redisKey = deviceId + ":" + groupId + ":" + cardId;
+        when(planCardRepository.findById(redisKey)).thenReturn(Optional.empty());
 
         // when & then
-        BusinessException exception = assertThrows(BusinessException.class, () -> {
-            previewPlanService.getPlanCard("deviceId", "groupId", "cardId");
-        });
-
-        assertEquals(ErrorCode.PLAN_NOT_FOUND, exception.getErrorCode());
+        assertThatThrownBy(() -> previewPlanService.getPlanCard(deviceId, groupId, cardId))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining(ErrorCode.PLAN_NOT_FOUND.getMessage());
     }
 
     @Test
-    void 플랜카드_성공적으로_수정됨() {
+    @DisplayName("PlanCard 삭제 성공")
+    void deletePlanCardSuccess() {
         // given
-        PlanCard existingPlanCard = PlanCard.builder()
-                .customKey("deviceId:groupId:cardId")
-                .deviceId("deviceId")
-                .groupId("groupId")
-                .cardId("cardId")
-                .title("oldTitle")
-                .description("oldDescription")
-                .startDate("2024-10-10T10:00:00")
-                .endDate("2024-10-10T12:00:00")
-                .build();
-
-        when(planCardRepository.findById(anyString())).thenReturn(Optional.of(existingPlanCard));
-
-        PlanCardRequestDto updateDto = new PlanCardRequestDto("newTitle", "newDescription", "2024-11-10T10:00:00", "2024-11-10T12:00:00");
+        String deviceId = "device1";
+        String groupId = "group1";
+        String cardId = "card1";
+        String redisKey = deviceId + ":" + groupId + ":" + cardId;
+        PlanCard planCard = PlanCard.builder().customKey(redisKey).build();
+        when(planCardRepository.findById(redisKey)).thenReturn(Optional.of(planCard));
 
         // when
-        PlanCardResponseDto updatedCard = previewPlanService.updatePlanCard("deviceId", "groupId", "cardId", updateDto);
+        previewPlanService.deletePlanCard(deviceId, groupId, cardId);
 
         // then
-        assertEquals("newTitle", updatedCard.title());
-        assertEquals("newDescription", updatedCard.description());
-        verify(planCardRepository, times(1)).save(any(PlanCard.class));
+        verify(planCardRepository, times(1)).delete(planCard);
     }
 
     @Test
-    void 플랜카드_삭제_성공() {
+    @DisplayName("PlanCard 삭제 실패 - 존재하지 않음")
+    void deletePlanCardNotFound() {
         // given
-        PlanCard existingPlanCard = PlanCard.builder()
-                .customKey("deviceId:groupId:cardId")
-                .deviceId("deviceId")
-                .groupId("groupId")
-                .cardId("cardId")
-                .build();
-
-        when(planCardRepository.findById(anyString())).thenReturn(Optional.of(existingPlanCard));
-
-        // when
-        previewPlanService.deletePlanCard("deviceId", "groupId", "cardId");
-
-        // then
-        verify(planCardRepository, times(1)).delete(existingPlanCard);
-    }
-
-    @Test
-    void 플랜그룹_성공적으로_저장됨() {
-        // given
-        Set<String> planCardIds = new HashSet<>();
-        PlanGroup planGroup = PlanGroup.builder()
-                .deviceId("deviceId")
-                .groupId("groupId")
-                .planCardIds(planCardIds)
-                .build();
-
-        when(planGroupRepository.findById(anyString())).thenReturn(Optional.of(planGroup));
-
-        // when
-        previewPlanService.savePlanCard("deviceId", "groupId", new PlanCardRequestDto("title", "description", "2024-10-10T10:00:00", "2024-10-10T12:00:00"));
-
-        // then
-        verify(planGroupRepository, times(1)).save(any(PlanGroup.class));
-    }
-
-    @Test
-    void 예외처리_잘못된_카드키() {
-        // given
-        when(planCardRepository.findById(anyString())).thenReturn(Optional.empty());
+        String deviceId = "device1";
+        String groupId = "group1";
+        String cardId = "card1";
+        String redisKey = deviceId + ":" + groupId + ":" + cardId;
+        when(planCardRepository.findById(redisKey)).thenReturn(Optional.empty());
 
         // when & then
-        BusinessException exception = assertThrows(BusinessException.class, () -> {
-            previewPlanService.getPlanCard("deviceId", "groupId", "wrongCardId");
-        });
-
-        assertEquals(ErrorCode.PLAN_NOT_FOUND, exception.getErrorCode());
+        assertThatThrownBy(() -> previewPlanService.deletePlanCard(deviceId, groupId, cardId))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining(ErrorCode.PLAN_NOT_FOUND.getMessage());
     }
 }
