@@ -44,8 +44,7 @@ public interface CommentApi {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     ResponseEntity<String> createComment(
-            @Parameter(description = "작성자(인증된 유저)의 ID", required = true) @AuthenticationPrincipal Long writerId,
-            @Parameter(description = "대상 유저의 ID", required = true) @RequestParam Long userId,
+            @Parameter(description = "인증된 유저의 ID", required = true) @AuthenticationPrincipal Long userId,
             @Parameter(description = "댓글 작성 요청 정보", required = true) @RequestBody CommentRequest request);
 
     @PutMapping("/{commentId}")
