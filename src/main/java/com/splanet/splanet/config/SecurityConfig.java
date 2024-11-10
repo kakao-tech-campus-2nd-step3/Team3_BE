@@ -75,7 +75,7 @@ public class SecurityConfig {
   }
 
   private OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler() {
-    return new OAuth2AuthenticationSuccessHandler(jwtTokenProvider, userRepository, tokenService, oAuth2Properties);
+    return new OAuth2AuthenticationSuccessHandler(jwtTokenProvider, userRepository, tokenService, oAuth2Properties, logService);
   }
 
   private JwtAuthenticationFilter jwtAuthenticationFilter() {
