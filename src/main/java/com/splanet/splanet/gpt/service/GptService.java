@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class GptService {
@@ -23,12 +24,11 @@ public class GptService {
     private final ObjectMapper objectMapper;
 
     private static final double RESPONSE_TEMPERATURE = 0.8;
-    private static final String PROMPT_TEMPLATE_STRONG =
-            "사용자 입력: \"%s\" (deviceId: %s) (groupId: %s) 기존 일정이 있다면 해당 시간과는 겹치지 않게 해 줘 기존일정:%s 현재 시간 이후로 가능한 자주 반복하여 짧고 집중적으로 일정을 완수할 수 있도록 계획을 세워줘. 시험이 포함된 경우, 시험 당일이 아닌 전날까지 준비가 완료되도록 해줘 (%s 기준). 모든 일정은 한국 시간(UTC+9)을 기준으로 설정해줘.";
-    private static final String PROMPT_TEMPLATE_MODERATE =
-            "사용자 입력: \"%s\" (deviceId: %s) (groupId: %s) 기존 일정이 있다면 해당 시간과는 겹치지 않게 해 줘 기존일정:%s 현재 시간 이후로 적당한 간격을 두고 모든 일정을 완수할 수 있도록 계획해줘. 시험이 포함된 경우, 시험 당일이 아닌 전날까지 준비가 완료되도록 해줘 (%s 기준). 모든 일정은 한국 시간(UTC+9)을 기준으로 설정해줘.";
-    private static final String PROMPT_TEMPLATE_LIGHT =
-            "사용자 입력: \"%s\" (deviceId: %s) (groupId: %s) 기존 일정이 있다면 해당 시간과는 겹치지 않게 해 줘 기존일정:%s 현재 시간 이후로 여유 있게 모든 일정을 완수할 수 있도록 계획해줘. 시험이 포함된 경우, 시험 당일이 아닌 전날까지 준비가 완료되도록 해줘 (%s 기준). 모든 일정은 한국 시간(UTC+9)을 기준으로 설정해줘.";
+    private static final Map<Integer, String> PROMPT_TEMPLATES = Map.of(
+            3, "사용자 입력: \"%s\" (deviceId: %s) (groupId: %s) 기존 일정이 있다면 해당 시간과는 겹치지 않게 해 줘 기존일정:%s 현재 시간 이후로 가능한 자주 반복하여 짧고 집중적으로 일정을 완수할 수 있도록 계획을 세워줘. 시험이 포함된 경우, 시험 당일이 아닌 전날까지 준비가 완료되도록 해줘 (%s 기준). 모든 일정은 한국 시간(UTC+9)을 기준으로 설정해줘.",
+            2, "사용자 입력: \"%s\" (deviceId: %s) (groupId: %s) 기존 일정이 있다면 해당 시간과는 겹치지 않게 해 줘 기존일정:%s 현재 시간 이후로 적당한 간격을 두고 모든 일정을 완수할 수 있도록 계획해줘. 시험이 포함된 경우, 시험 당일이 아닌 전날까지 준비가 완료되도록 해줘 (%s 기준). 모든 일정은 한국 시간(UTC+9)을 기준으로 설정해줘.",
+            1, "사용자 입력: \"%s\" (deviceId: %s) (groupId: %s) 기존 일정이 있다면 해당 시간과는 겹치지 않게 해 줘 기존일정:%s 현재 시간 이후로 여유 있게 모든 일정을 완수할 수 있도록 계획해줘. 시험이 포함된 경우, 시험 당일이 아닌 전날까지 준비가 완료되도록 해줘 (%s 기준). 모든 일정은 한국 시간(UTC+9)을 기준으로 설정해줘."
+    );
 
     public GptService(OpenAiApi openAiApi, GptProperties gptProperties, PlanService planService, ObjectMapper objectMapper) {
         this.openAiApi = openAiApi;
@@ -37,24 +37,12 @@ public class GptService {
         this.objectMapper = objectMapper;
     }
 
-    public String generateResponseForStrong(String userInput, Long userId, String deviceId) {
-        return generateResponse(userInput, userId, deviceId, PROMPT_TEMPLATE_STRONG, 3);
-    }
-
-    public String generateResponseForModerate(String userInput, Long userId, String deviceId) {
-        return generateResponse(userInput, userId, deviceId, PROMPT_TEMPLATE_MODERATE, 2);
-    }
-
-    public String generateResponseForLight(String userInput, Long userId, String deviceId) {
-        return generateResponse(userInput, userId, deviceId, PROMPT_TEMPLATE_LIGHT, 1);
-    }
-
-    private String generateResponse(String userInput, Long userId, String deviceId, String promptTemplate, int groupId) {
+    public String generateResponse(String userInput, Long userId, String deviceId, int groupId) {
         String currentTime = getCurrentTime();
         List<PlanResponseDto> futurePlans = (userId != null) ? planService.getAllFuturePlansByUserId(userId) : List.of();
         String planJson = convertPlansToJson(futurePlans);
+        String promptTemplate = PROMPT_TEMPLATES.get(groupId);
         String fullPrompt = String.format(promptTemplate, userInput, deviceId, groupId, planJson, currentTime);
-        System.out.println(fullPrompt);
 
         OpenAiApi.ChatCompletionMessage userMessage = createUserMessage(fullPrompt);
         OpenAiApi.ChatCompletionRequest chatRequest = createChatRequest(userMessage);
