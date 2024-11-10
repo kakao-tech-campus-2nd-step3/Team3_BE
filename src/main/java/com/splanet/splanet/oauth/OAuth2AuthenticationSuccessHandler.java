@@ -67,7 +67,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     tokenService.storeRefreshToken(refreshToken, user.getId(), deviceId);
 
 
-    String redirectUrlWithParams = UriComponentsBuilder.fromUriString(oAuth2Properties.getRedirectUrl())
+    String redirectUrlWithParams = UriComponentsBuilder.fromUriString(oAuth2Properties.getRedirectDevUrl())
             .queryParam("access", accessToken)
             .queryParam("refresh", refreshToken)
             .queryParam("deviceId", deviceId)
