@@ -18,5 +18,9 @@ COPY --from=builder build/libs/*.jar app.jar
 # 런타임에서도 동일하게 환경 변수 사용
 ENV SPRING_PROFILES_ACTIVE=prod
 
+# 로그 파일 디렉터리 생성 및 권한 설정
+RUN mkdir -p /app/logs && chmod 777 /app/logs
+ENV LOG_PATH=/app/logs/splanet.log
+
+# 앱 실행
 ENTRYPOINT ["java", "-jar", "/app.jar"]
-VOLUME /tmp
