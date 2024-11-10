@@ -113,6 +113,52 @@ class TeamPlanControllerIntegrationTest {
     }
 
     @Test
+    void 팀플랜_생성_실패_필드누락() throws Exception {
+        TeamPlanRequestDto invalidRequestDto = new TeamPlanRequestDto(
+                null,
+                "필드 누락 테스트 설명",
+                LocalDateTime.now(),
+                LocalDateTime.now().plusHours(1),
+                true,
+                false
+        );
+
+        mockMvc.perform(post("/api/teams/{teamId}/plans", teamId)
+                        .header("Authorization", accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidRequestDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("공백일 수 없습니다"));
+    }
+
+    @Test
+    void 팀플랜_생성_실패_권한없음() throws Exception {
+        User otherUser = User.builder()
+                .nickname("unauthorizedUser")
+                .profileImage("otherimage.png")
+                .build();
+        userRepository.save(otherUser);
+
+        String otherUserAccessToken = "Bearer " + jwtTokenProvider.createAccessToken(otherUser.getId());
+
+        TeamPlanRequestDto requestDto = new TeamPlanRequestDto(
+                "권한 없는 사용자 테스트 플랜",
+                "권한 없는 사용자 설명",
+                LocalDateTime.parse("2024-11-12T09:00:00"),
+                LocalDateTime.parse("2024-11-12T10:00:00"),
+                true,
+                false
+        );
+
+        mockMvc.perform(post("/api/teams/{teamId}/plans", teamId)
+                        .header("Authorization", otherUserAccessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("권한이 없습니다."));
+    }
+
+    @Test
     void 팀플랜_조회_성공() throws Exception {
         TeamPlanRequestDto requestDto = new TeamPlanRequestDto(
                 "11/10 테스트용 플랜",
@@ -194,6 +240,50 @@ class TeamPlanControllerIntegrationTest {
     }
 
     @Test
+    void 팀플랜_수정_권한없음() throws Exception {
+        User otherUser = User.builder()
+                .nickname("unauthorizedUser")
+                .profileImage("otherimage.png")
+                .build();
+        userRepository.save(otherUser);
+
+        String otherUserAccessToken = "Bearer " + jwtTokenProvider.createAccessToken(otherUser.getId());
+
+        TeamPlanRequestDto createRequestDto = new TeamPlanRequestDto(
+                "권한 테스트 플랜",
+                "권한 테스트 설명",
+                LocalDateTime.parse("2024-11-12T09:00:00"),
+                LocalDateTime.parse("2024-11-12T10:00:00"),
+                true,
+                false
+        );
+        String response = mockMvc.perform(post("/api/teams/{teamId}/plans", teamId)
+                        .header("Authorization", accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequestDto)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        Long planId = JsonPath.parse(response).read("$.id", Long.class);
+
+        TeamPlanRequestDto updateRequestDto = new TeamPlanRequestDto(
+                "권한 없는 수정",
+                "권한 없는 설명",
+                LocalDateTime.now(),
+                LocalDateTime.now().plusHours(1),
+                true,
+                true
+        );
+
+        mockMvc.perform(put("/api/teams/{teamId}/plans/{planId}", teamId, planId)
+                        .header("Authorization", otherUserAccessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequestDto)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("권한이 없습니다."));
+    }
+
+    @Test
     void 팀플랜_삭제_성공() throws Exception {
         TeamPlanRequestDto requestDto = new TeamPlanRequestDto(
                 "삭제용 테스트 플랜",
@@ -221,5 +311,49 @@ class TeamPlanControllerIntegrationTest {
                         .header("Authorization", accessToken))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("플랜이 존재하지 않습니다."));
+    }
+
+    @Test
+    void 팀플랜_삭제_실패_플랜없음() throws Exception {
+        Long nonExistentPlanId = 999L;
+
+        mockMvc.perform(delete("/api/teams/{teamId}/plans/{planId}", teamId, nonExistentPlanId)
+                        .header("Authorization", accessToken))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("플랜이 존재하지 않습니다."));
+    }
+
+    @Test
+    void 팀플랜_삭제_실패_권한없음() throws Exception {
+        TeamPlanRequestDto requestDto = new TeamPlanRequestDto(
+                "삭제 권한 없는 사용자 테스트 플랜",
+                "삭제 권한 없는 사용자 설명",
+                LocalDateTime.parse("2024-11-11T09:00:00"),
+                LocalDateTime.parse("2024-11-11T10:00:00"),
+                true,
+                false
+        );
+
+        String response = mockMvc.perform(post("/api/teams/{teamId}/plans", teamId)
+                        .header("Authorization", accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        Long planId = JsonPath.parse(response).read("$.id", Long.class);
+
+        User otherUser = User.builder()
+                .nickname("unauthorizedUser")
+                .profileImage("otherimage.png")
+                .build();
+        userRepository.save(otherUser);
+
+        String otherUserAccessToken = "Bearer " + jwtTokenProvider.createAccessToken(otherUser.getId());
+
+        mockMvc.perform(delete("/api/teams/{teamId}/plans/{planId}", teamId, planId)
+                        .header("Authorization", otherUserAccessToken))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("권한이 없습니다."));
     }
 }
