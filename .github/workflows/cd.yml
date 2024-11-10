@@ -5,6 +5,7 @@ on:
     branches:
       - develop
       - 'weekly/**'
+      - 142-refactor-cd-update
 
 jobs:
   deploy:
@@ -126,6 +127,8 @@ jobs:
             sudo docker run -d --name splanet_$NEW_VERSION \
               --network splanet \
               --env-file /home/ubuntu/env.properties \
+              -e LOG_PATH=/app/logs/splanet.log \
+              -v /home/ubuntu/logs:/app/logs \
               -p $NEW_PORT:8080 --restart unless-stopped kimsongmok/splanet:$IMAGE_TAG
 
       - name: Wait for Spring Boot Application to Start
