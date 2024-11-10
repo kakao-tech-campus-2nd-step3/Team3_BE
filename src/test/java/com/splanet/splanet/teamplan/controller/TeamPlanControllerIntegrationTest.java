@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,9 +54,11 @@ class TeamPlanControllerIntegrationTest {
 
     private String accessToken;
     private Long userId;
+    private Long teamId;
 
     @BeforeEach
     void setUp() {
+        // 사용자 생성
         User user = User.builder()
                 .nickname("testuser")
                 .profileImage("testimage.png")
@@ -65,10 +66,12 @@ class TeamPlanControllerIntegrationTest {
         userRepository.save(user);
         userId = user.getId();
 
+        // 팀 생성
         Team team = new Team("팀네임여기있음!", user);
-        System.out.println("팀네임출력해: " + team.getTeamName());
         teamRepository.save(team);
+        teamId = team.getId();
 
+        // 팀 사용자 관계 설정
         TeamUserRelation relation = new TeamUserRelation(team, user, UserTeamRole.ADMIN);
         teamUserRelationRepository.save(relation);
 
@@ -77,7 +80,6 @@ class TeamPlanControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
     void 팀플랜_생성_성공() throws Exception {
         // 팀 플랜 생성 요청 DTO
         TeamPlanRequestDto requestDto = new TeamPlanRequestDto(
@@ -90,7 +92,7 @@ class TeamPlanControllerIntegrationTest {
         );
 
         // 팀 플랜을 생성하는 요청
-        mockMvc.perform(post("/api/teams/{teamId}/plans", 1)
+        mockMvc.perform(post("/api/teams/{teamId}/plans", teamId)
                         .header("Authorization", accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
@@ -102,6 +104,4 @@ class TeamPlanControllerIntegrationTest {
                 .andExpect(jsonPath("$.accessibility").value(true))
                 .andExpect(jsonPath("$.isCompleted").value(true));
     }
-
-
 }
