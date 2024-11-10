@@ -25,7 +25,6 @@ public class LogService {
             userId, deviceId, timestamp, requestPath, headers);
     writeLog(logMessage);
   }
-
   // 실제 로그 파일에 기록
   private void writeLog(String logMessage) {
     try (FileWriter writer = new FileWriter(logPath, true)) {
