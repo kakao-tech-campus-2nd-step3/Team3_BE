@@ -31,15 +31,11 @@ public class CommentService {
 
     // 댓글 작성
     @Transactional
-    public void createComment(Long writerId, Long userId, CommentRequest request) {
-        User user = userRepository.findById(userId)
+    public void createComment(Long userId, CommentRequest request) {
+        User user = userRepository.findById(request.userId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        User writer = userRepository.findById(writerId)
+        User writer = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        if (user.getId().equals(writer.getId())) {
-            throw new BusinessException(ErrorCode.INVALID_COMMENT_ID);
-        }
 
         Comment comment = Comment.builder()
                 .user(user)
