@@ -98,7 +98,8 @@ class TeamControllerIntegrationTest {
 //                        .contentType(MediaType.APPLICATION_JSON)
 //                        .param("userId", userId.toString()))
 //                .andExpect(status().isBadRequest())
-//                .andExpect(jsonPath("$.message").value("팀 이름은 필수 입력 항목입니다."));
+//                .andExpect(jsonPath("$.errorCode").value("TEAM_NAME_NOT_FOUND"))
+//                .andExpect(jsonPath("$.message").value("팀이름이 비어 있습니다."));
 //    }
 //
 //    @Test
