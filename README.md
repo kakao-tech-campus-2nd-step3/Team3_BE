@@ -14,6 +14,9 @@
 </div>
 <br>
 
+<div align="center">
+    <b>Splanet:</b> <a href="https://www.splanet.co.kr" target="_blank"><b>https://www.splanet.co.kr</b></a>
+</div>
 
 ## 📖 목차
 * [프로젝트 개요](#-프로젝트-개요)
@@ -34,7 +37,7 @@ Splanet은 당신이 해야 할 일을 기반으로, 당신에게 맞는 일정�
 - **기획 의도**: 복잡한 일정 관리를 지양하고, 음성을 통해 간편하고 직관적으로 일정을 생성할 수 있는 서비스를 제공하고자 했습니다.
 - **주요 개발 기능**: 
   - **카카오 로그인**을 통한 간편한 사용자 인증
-  - **실시간 음성 인식**을 통해 사용자가 손쉽게 일정을 작성하도록 지원
+  - **실시간 음성 인식**을 통해 편하게 할 일 목록 작성
   - **플랜 자동 생성** 기능을 통해 사용자의 요구에 맞는 추천 일정 제공
   - **플랜 관리 및 친구와의 공유** 기능을 통해 소셜 요소 추가
 
@@ -116,6 +119,23 @@ Splanet은 당신이 해야 할 일을 기반으로, 당신에게 맞는 일정�
 | **Infrastructure** | ![Amazon EC2](https://img.shields.io/badge/Amazon%20EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white) ![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white) |
 
 ---
+
+## 🛠 시스템 아키텍처
+
+<div align="center">
+    <img src="https://github.com/user-attachments/assets/2b6749af-8542-4c2f-8329-d3bfa5bdcc25" width="700" alt="System Architecture Diagram">
+</div>
+
+### 시스템 구성 요약
+
+
+| 구성 요소          | 설명                                                                                                                                                                                                        |
+|--------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **배포 링크**      | [프론트엔드 (Vercel 배포): https://www.splanet.co.kr](https://www.splanet.co.kr) <br> [백엔드 (EC2 배포): https://api.splanet.co.kr](https://api.splanet.co.kr)                                                       |
+| **프론트엔드**     | 프론트엔드는 **Vercel에서 배포**되며, React와 Vite로 구성되어 있습니다.                                                                                                                                                         |
+| **백엔드**         | 백엔드는 AWS EC2 인스턴스에서 Docker 컨테이너로 배포됩니다. <br/>**MySQL(Amazon RDS)** 와 연동하여 데이터를 관리하며, Redis를 통해 캐싱 및 토큰을 처리합니다.                                                                                            |
+| **무중단 배포 (Blue-Green Deployment)** | **Elastic Load Balancer (ELB)** 를 사용하여 두 개의 백엔드 인스턴스(Blue와 Green)로 트래픽을 분산시켜 무중단 배포를 지원합니다. <br> 새로운 버전이 배포될 때, 먼저 하나의 서버 컨테이너가 업데이트되고, 이후 ELB를 통해 트래픽을 새 컨테이너로 전환하여 사용자에게 끊김 없는 서비스를 제공합니다. (다운타임 1초 미만) |
+| **CI/CD 파이프라인** | GitHub Actions를 통해 자동화된 CI/CD 파이프라인을 구성하였으며, 코드 업데이트가 발생할 때마다 Vercel과 EC2에서 자동으로 빌드 및 배포가 이루어집니다. 이를 통해 개발과 배포 과정의 효율성을 높였습니다.                                                                            |
 
 ## 🗂 데이터베이스 ERD
 
