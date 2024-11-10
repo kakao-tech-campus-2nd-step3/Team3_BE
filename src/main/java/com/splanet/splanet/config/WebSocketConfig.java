@@ -19,6 +19,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(speechWebSocketHandler, "/ws/stt")
-                .setAllowedOrigins("*");
+                .setAllowedOrigins("http://localhost:5173", "https://www.splanet.co.kr");
     }
 }
