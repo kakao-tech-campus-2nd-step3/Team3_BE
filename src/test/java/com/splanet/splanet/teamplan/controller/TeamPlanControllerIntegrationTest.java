@@ -8,6 +8,8 @@ import com.splanet.splanet.team.entity.UserTeamRole;
 import com.splanet.splanet.team.repository.TeamRepository;
 import com.splanet.splanet.team.repository.TeamUserRelationRepository;
 import com.splanet.splanet.teamplan.dto.TeamPlanRequestDto;
+import com.splanet.splanet.teamplan.entity.TeamPlan;
+import com.splanet.splanet.teamplan.repository.TeamPlanRepository;
 import com.splanet.splanet.teamplan.service.TeamPlanService;
 import com.splanet.splanet.jwt.JwtTokenProvider;
 import com.splanet.splanet.user.entity.User;
@@ -24,8 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -48,6 +49,9 @@ class TeamPlanControllerIntegrationTest {
 
     @Autowired
     private TeamUserRelationRepository teamUserRelationRepository;
+
+    @Autowired
+    private TeamPlanRepository teamPlanRepository;
 
     @Autowired
     private TeamRepository teamRepository;
@@ -133,5 +137,47 @@ class TeamPlanControllerIntegrationTest {
                         .header("Authorization", accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("11/10 테스트용 플랜"));
+    }
+
+    @Test
+    void 팀플랜_수정_플랜없음() throws Exception {
+        // 존재하지 않는 플랜 ID로 수정 요청을 보낼 때
+        mockMvc.perform(put("/api/teams/{teamId}/plans/{planId}", teamId, 999L)
+                        .header("Authorization", accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TeamPlanRequestDto(
+                                "수정된 플랜 제목", "수정된 플랜 설명", LocalDateTime.now(), LocalDateTime.now(), true, true))))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("플랜이 존재하지 않습니다."));
+    }
+
+    @Test
+    void 팀플랜_삭제_성공() throws Exception {
+        TeamPlanRequestDto requestDto = new TeamPlanRequestDto(
+                "삭제용 테스트 플랜",
+                "삭제용 테스트 설명",
+                LocalDateTime.parse("2024-11-11T09:59:23.542"),
+                LocalDateTime.parse("2024-11-11T10:59:23.542"),
+                true,
+                false
+        );
+
+        String response = mockMvc.perform(post("/api/teams/{teamId}/plans", teamId)
+                        .header("Authorization", accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        Long planId = JsonPath.parse(response).read("$.id", Long.class);
+
+        mockMvc.perform(delete("/api/teams/{teamId}/plans/{planId}", teamId, planId)
+                        .header("Authorization", accessToken))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/api/teams/{teamId}/plans/{planId}", teamId, planId)
+                        .header("Authorization", accessToken))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("플랜이 존재하지 않습니다."));
     }
 }
