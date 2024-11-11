@@ -22,10 +22,12 @@ public class ApiLoggingInterceptor implements HandlerInterceptor {
   public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
     String requestPath = request.getRequestURI();
     String headers = getLoggableHeadersAsString(request);
-    String deviceId = request.getHeader("deviceId"); // 예시로 Header에서 deviceId 추출
 
-    // 로그 기록 (userId는 로그인 여부에 따라 추가)
-    Long userId = (Long) request.getAttribute("userId"); // 로그인한 사용자라면 userId가 있을 것으로 가정
+    // 세션에서 userId와 deviceId 가져오기
+    Long userId = (Long) request.getSession().getAttribute("userId");
+    String deviceId = (String) request.getSession().getAttribute("deviceId");
+
+    // 로그 기록
     logService.recordApiRequestLog(userId, deviceId, requestPath, headers);
 
     return true;
