@@ -62,17 +62,26 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
     tokenService.storeRefreshToken(refreshToken, user.getId(), deviceId);
 
-    // 로그인 성공 시 로그 기록 (리다이렉트 전에 수행)
-    logService.recordLoginLog(user.getId(), deviceId, request.getRequestURI(), getLoggableHeadersAsString(request));
+    // 로그인 성공 시 로그 기록
+    String requestPath = request.getRequestURI();
+    String headers = getHeadersAsString(request);
+    logService.recordLoginLog(user.getId(), deviceId, requestPath, headers);
 
     // 세션에 userId와 deviceId 저장
     request.getSession().setAttribute("userId", user.getId());
     request.getSession().setAttribute("deviceId", deviceId);
 
-    // Redirect URL 설정
-    String host = request.getHeader("host");
-    String redirectUrl = host.contains(oAuth2Properties.getOriginDev()) ?
-            oAuth2Properties.getRedirectDevUrl() : oAuth2Properties.getRedirectProdUrl();
+    // Redirect URL 설정 (referer 사용)
+    String referer = request.getHeader("referer");
+    String redirectUrl;
+    if (referer.contains(oAuth2Properties.getOriginDev())) {
+      redirectUrl = oAuth2Properties.getRedirectDevUrl();
+    } else if (referer.contains(oAuth2Properties.getOriginProd())) {
+      redirectUrl = oAuth2Properties.getRedirectProdUrl();
+    } else {
+      redirectUrl = oAuth2Properties.getRedirectProdUrl();
+    }
+
     String redirectUrlWithParams = UriComponentsBuilder.fromUriString(redirectUrl)
             .queryParam("access", accessToken)
             .queryParam("refresh", refreshToken)
@@ -85,7 +94,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         response.sendRedirect(redirectUrlWithParams);
 
         // 토큰 정보는 제외하고 리다이렉트 URL만 로그에 기록
-        logService.recordApiRequestLog(user.getId(), deviceId, "Redirected to: " + redirectUrl, getLoggableHeadersAsString(request));
+        logService.recordApiRequestLog(user.getId(), deviceId, "Redirected to: " + redirectUrl, headers);
       } catch (IOException e) {
         logService.recordErrorLog("Failed to redirect after successful authentication", e);
       }
@@ -94,30 +103,17 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     }
   }
 
-  private String getLoggableHeadersAsString(HttpServletRequest request) {
-    List<String> loggableHeaders = List.of("host", "referer", "user-agent", "accept");
-    StringBuilder headers = new StringBuilder();
-    loggableHeaders.forEach(headerName -> {
-      String headerValue = request.getHeader(headerName);
-      if (headerValue != null) {
-        headers.append(headerName).append(": ").append(headerValue).append(", ");
-      }
-    });
-    return headers.toString();
-  }
-
-  private String generateUniqueNickname(String nickname) {
-    String uniqueSuffix = UUID.randomUUID().toString().split("-")[0];
-
-    return userRepository.findByNickname(nickname)
-            .map(existingUser -> nickname + "#" + uniqueSuffix)
-            .orElse(nickname);
-  }
-
   private String getHeadersAsString(HttpServletRequest request) {
     StringBuilder headers = new StringBuilder();
     request.getHeaderNames().asIterator().forEachRemaining(headerName ->
             headers.append(headerName).append(": ").append(request.getHeader(headerName)).append(", "));
     return headers.toString();
+  }
+
+  private String generateUniqueNickname(String nickname) {
+    String uniqueSuffix = UUID.randomUUID().toString().split("-")[0];
+    return userRepository.findByNickname(nickname)
+            .map(existingUser -> nickname + "#" + uniqueSuffix)
+            .orElse(nickname);
   }
 }
