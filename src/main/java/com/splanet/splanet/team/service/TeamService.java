@@ -39,7 +39,7 @@ public class TeamService {
   @Transactional
   public TeamDto createTeam(String teamName, Long userId) {
     if (teamName == null || teamName.isBlank()) {
-      throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+      throw new BusinessException(ErrorCode.TEAM_NAME_NOT_FOUND);
     }
 
     User user = findUserById(userId);
