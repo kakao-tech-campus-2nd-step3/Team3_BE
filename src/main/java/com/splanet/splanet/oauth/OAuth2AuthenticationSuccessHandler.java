@@ -71,11 +71,11 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     String headers = getHeadersAsString(request);
     logService.recordLoginLog(user.getId(), deviceId, requestPath, headers);
 
-    String host = request.getHeader("host");
+    String referer = request.getHeader("referer");
     String redirectUrl;
-    if (host.contains(oAuth2Properties.getOriginDev())) {
+    if (referer.contains(oAuth2Properties.getOriginDev())) {
       redirectUrl = oAuth2Properties.getRedirectDevUrl();
-    } else if (host.contains(oAuth2Properties.getOriginProd())) {
+    } else if (referer.contains(oAuth2Properties.getOriginProd())) {
       redirectUrl = oAuth2Properties.getRedirectProdUrl();
     } else {
       redirectUrl = oAuth2Properties.getRedirectProdUrl();
