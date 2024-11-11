@@ -69,10 +69,16 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     request.getSession().setAttribute("userId", user.getId());
     request.getSession().setAttribute("deviceId", deviceId);
 
-    // Redirect URL 설정 (referer 없이 host만 기준으로 설정)
+    // Redirect URL 설정 (referer 포함)
+    String referer = request.getHeader("referer");
     String host = request.getHeader("host");
-    String redirectUrl = host.contains(oAuth2Properties.getOriginDev()) ?
-            oAuth2Properties.getRedirectDevUrl() : oAuth2Properties.getRedirectProdUrl();
+    String redirectUrl;
+
+    if (host.contains(oAuth2Properties.getOriginDev()) || (referer != null && referer.contains(oAuth2Properties.getOriginDev()))) {
+      redirectUrl = oAuth2Properties.getRedirectDevUrl();
+    } else {
+      redirectUrl = oAuth2Properties.getRedirectProdUrl();
+    }
 
     String redirectUrlWithParams = UriComponentsBuilder.fromUriString(redirectUrl)
             .queryParam("access", accessToken)
@@ -96,7 +102,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
   }
 
   private String getLoggableHeadersAsString(HttpServletRequest request) {
-    List<String> loggableHeaders = List.of("host", "user-agent", "accept");
+    List<String> loggableHeaders = List.of("host", "referer", "user-agent", "accept");
     StringBuilder headers = new StringBuilder();
     loggableHeaders.forEach(headerName -> {
       String headerValue = request.getHeader(headerName);
