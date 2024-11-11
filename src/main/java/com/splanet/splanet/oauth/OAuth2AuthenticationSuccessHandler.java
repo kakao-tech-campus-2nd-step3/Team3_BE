@@ -69,10 +69,11 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     request.getSession().setAttribute("userId", user.getId());
     request.getSession().setAttribute("deviceId", deviceId);
 
-    // Redirect URL 설정
+    // Redirect URL 설정 (referer 없이 host만 기준으로 설정)
     String host = request.getHeader("host");
     String redirectUrl = host.contains(oAuth2Properties.getOriginDev()) ?
             oAuth2Properties.getRedirectDevUrl() : oAuth2Properties.getRedirectProdUrl();
+
     String redirectUrlWithParams = UriComponentsBuilder.fromUriString(redirectUrl)
             .queryParam("access", accessToken)
             .queryParam("refresh", refreshToken)
@@ -95,7 +96,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
   }
 
   private String getLoggableHeadersAsString(HttpServletRequest request) {
-    List<String> loggableHeaders = List.of("host", "referer", "user-agent", "accept");
+    List<String> loggableHeaders = List.of("host", "user-agent", "accept");
     StringBuilder headers = new StringBuilder();
     loggableHeaders.forEach(headerName -> {
       String headerValue = request.getHeader(headerName);
@@ -108,7 +109,6 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
   private String generateUniqueNickname(String nickname) {
     String uniqueSuffix = UUID.randomUUID().toString().split("-")[0];
-
     return userRepository.findByNickname(nickname)
             .map(existingUser -> nickname + "#" + uniqueSuffix)
             .orElse(nickname);
