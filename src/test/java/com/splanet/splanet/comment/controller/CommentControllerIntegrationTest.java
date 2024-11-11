@@ -7,7 +7,6 @@ import com.splanet.splanet.comment.entity.Comment;
 import com.splanet.splanet.comment.repository.CommentRepository;
 import com.splanet.splanet.comment.service.CommentService;
 import com.splanet.splanet.core.exception.BusinessException;
-import com.splanet.splanet.core.exception.ErrorCode;
 import com.splanet.splanet.jwt.JwtTokenProvider;
 import com.splanet.splanet.user.entity.User;
 import com.splanet.splanet.user.repository.UserRepository;
@@ -17,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -103,13 +103,40 @@ class CommentControllerIntegrationTest {
     }
 
     @Test
+    void 댓글_조회_특정_유저() throws Exception {
+        // testUser가 작성한 댓글 추가
+        Comment comment = Comment.builder()
+                .user(testUser)
+                .writer(writerUser)
+                .content("testUser의 댓글")
+                .build();
+        commentRepository.save(comment);
+
+        // testUser의 댓글만 조회하는 API 요청
+        mockMvc.perform(get("/api/comments/{userId}", testUser.getId())
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].content").value("testUser의 댓글"));
+    }
+
+    @Test
+    void 댓글_조회_존재하지_않는_댓글() throws Exception {
+        Long nonExistentCommentId = 999L;
+
+        mockMvc.perform(get("/api/comments/{id}", nonExistentCommentId)
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(content().json("[]"));
+    }
+
+    @Test
     void 댓글_작성_성공() throws Exception {
-        CommentRequest commentRequest = new CommentRequest("새로운 댓글 내용");
+        // CommentRequest에서 userId와 content만 전달하도록 수정
+        CommentRequest commentRequest = new CommentRequest(testUser.getId(), "새로운 댓글 내용");
 
         mockMvc.perform(post("/api/comments")
                         .header("Authorization", token)
-                        .param("writerId", String.valueOf(writerUser.getId()))
-                        .param("userId", String.valueOf(testUser.getId()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(commentRequest)))
                 .andExpect(status().isOk())
@@ -122,12 +149,27 @@ class CommentControllerIntegrationTest {
     }
 
     @Test
+    void 댓글_작성_실패_존재하지않은_사용자ID() throws Exception {
+        // 존재하지 않는 userId로 댓글 작성 요청
+        Long invalidUserId = 999L;
+        CommentRequest commentRequest = new CommentRequest(invalidUserId, "존재하지않는 userId로 댓글 작성 시도");
+
+        mockMvc.perform(post("/api/comments")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentRequest)))
+                .andExpect(status().isNotFound())
+                .andExpect(result -> assertThat(result.getResolvedException())
+                        .isInstanceOf(BusinessException.class)
+                        .hasMessageContaining("유저가 존재하지 않습니다."));
+    }
+
+    @Test
     void 댓글_수정_성공() throws Exception {
-        CommentRequest updatedRequest = new CommentRequest("수정된 댓글 내용");
+        CommentRequest updatedRequest = new CommentRequest(testUser.getId(), "수정된 댓글 내용");
 
         mockMvc.perform(put("/api/comments/" + testComment.getId())
                         .header("Authorization", token)
-                        .param("userId", String.valueOf(writerUser.getId()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updatedRequest)))
                 .andExpect(status().isOk())
@@ -139,26 +181,13 @@ class CommentControllerIntegrationTest {
     }
 
     @Test
-    void 댓글_삭제_성공() throws Exception {
-        mockMvc.perform(delete("/api/comments/" + testComment.getId())
-                        .header("Authorization", token)
-                        .param("userId", String.valueOf(writerUser.getId())))
-                .andExpect(status().isOk())
-                .andExpect(content().string("댓글이 성공적으로 삭제되었습니다."));
-
-        // 댓글이 실제로 삭제되었는지 확인
-        assertThat(commentRepository.findById(testComment.getId())).isEmpty();
-    }
-
-    @Test
     void 댓글_수정_실패_작성자가_아님() throws Exception {
-        CommentRequest updatedRequest = new CommentRequest("권한 없는 사용자의 수정 시도");
+        CommentRequest updatedRequest = new CommentRequest(testUser.getId(), "권한 없는 사용자의 수정 시도");
 
         String unauthorizedToken = "Bearer " + jwtTokenProvider.createAccessToken(testUser.getId());
 
         mockMvc.perform(put("/api/comments/" + testComment.getId())
                         .header("Authorization", unauthorizedToken)
-                        .param("userId", String.valueOf(testUser.getId()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updatedRequest)))
                 .andExpect(status().isForbidden())
@@ -169,14 +198,13 @@ class CommentControllerIntegrationTest {
 
     @Test
     void 댓글_수정_실패_존재하지_않는_댓글() throws Exception {
-        CommentRequest updatedRequest = new CommentRequest("수정된 댓글 내용");
+        CommentRequest updatedRequest = new CommentRequest(testUser.getId(), "수정된 댓글 내용");
 
         // 존재하지 않는 댓글 ID로 수정 요청
         Long nonExistentCommentId = 999L;
 
         mockMvc.perform(put("/api/comments/" + nonExistentCommentId)
                         .header("Authorization", token)
-                        .param("userId", String.valueOf(writerUser.getId()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updatedRequest)))
                 .andExpect(status().isNotFound())
@@ -186,13 +214,23 @@ class CommentControllerIntegrationTest {
     }
 
     @Test
+    void 댓글_삭제_성공() throws Exception {
+        mockMvc.perform(delete("/api/comments/" + testComment.getId())
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(content().string("댓글이 성공적으로 삭제되었습니다."));
+
+        // 댓글이 실제로 삭제되었는지 확인
+        assertThat(commentRepository.findById(testComment.getId())).isEmpty();
+    }
+
+    @Test
     void 댓글_삭제_실패_존재하지_않는_댓글() throws Exception {
         // 존재하지 않는 댓글 ID로 삭제 요청
         Long nonExistentCommentId = 999L;
 
         mockMvc.perform(delete("/api/comments/" + nonExistentCommentId)
-                        .header("Authorization", token)
-                        .param("userId", String.valueOf(writerUser.getId())))
+                        .header("Authorization", token))
                 .andExpect(status().isNotFound())
                 .andExpect(result -> assertThat(result.getResolvedException())
                         .isInstanceOf(BusinessException.class)
