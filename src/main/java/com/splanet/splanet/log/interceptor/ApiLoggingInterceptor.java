@@ -6,10 +6,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import java.util.List;
+
 @Component
 public class ApiLoggingInterceptor implements HandlerInterceptor {
 
   private final LogService logService;
+  private final List<String> loggableHeaders = List.of("host", "referer", "user-agent", "accept");
 
   public ApiLoggingInterceptor(LogService logService) {
     this.logService = logService;
@@ -18,7 +21,7 @@ public class ApiLoggingInterceptor implements HandlerInterceptor {
   @Override
   public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
     String requestPath = request.getRequestURI();
-    String headers = getHeadersAsString(request);
+    String headers = getLoggableHeadersAsString(request);
     String deviceId = request.getHeader("deviceId"); // 예시로 Header에서 deviceId 추출
 
     // 로그 기록 (userId는 로그인 여부에 따라 추가)
@@ -28,10 +31,14 @@ public class ApiLoggingInterceptor implements HandlerInterceptor {
     return true;
   }
 
-  private String getHeadersAsString(HttpServletRequest request) {
+  private String getLoggableHeadersAsString(HttpServletRequest request) {
     StringBuilder headers = new StringBuilder();
-    request.getHeaderNames().asIterator().forEachRemaining(headerName ->
-            headers.append(headerName).append(": ").append(request.getHeader(headerName)).append(", "));
+    loggableHeaders.forEach(headerName -> {
+      String headerValue = request.getHeader(headerName);
+      if (headerValue != null) {
+        headers.append(headerName).append(": ").append(headerValue).append(", ");
+      }
+    });
     return headers.toString();
   }
 }
