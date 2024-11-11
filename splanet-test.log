@@ -7,3 +7,7 @@ eventType: API_REQUEST, userId: 2, deviceId: apiTestDeviceId, timestamp: 2024-11
 eventType: LOGIN_SUCCESS, userId: 1, deviceId: testDeviceId, timestamp: 2024-11-11T17:49:32.27013, requestPath: /test/login, headers: User-Agent: TestAgent, Accept: */*
 eventType: API_REQUEST, userId: 2, deviceId: apiTestDeviceId, timestamp: 2024-11-11T18:07:28.609726, requestPath: /test/api, headers: User-Agent: ApiTestAgent, Accept: application/json
 eventType: LOGIN_SUCCESS, userId: 1, deviceId: testDeviceId, timestamp: 2024-11-11T18:07:28.620659, requestPath: /test/login, headers: User-Agent: TestAgent, Accept: */*
+eventType: API_REQUEST, userId: 2, deviceId: apiTestDeviceId, timestamp: 2024-11-12T01:09:31.678765, requestPath: /test/api, headers: User-Agent: ApiTestAgent, Accept: application/json
+eventType: LOGIN_SUCCESS, userId: 1, deviceId: testDeviceId, timestamp: 2024-11-12T01:09:31.692107, requestPath: /test/login, headers: User-Agent: TestAgent, Accept: */*
+eventType: API_REQUEST, userId: 2, deviceId: apiTestDeviceId, timestamp: 2024-11-12T01:31:28.960904, requestPath: /test/api, headers: User-Agent: ApiTestAgent, Accept: application/json
+eventType: LOGIN_SUCCESS, userId: 1, deviceId: testDeviceId, timestamp: 2024-11-12T01:31:28.972599, requestPath: /test/login, headers: User-Agent: TestAgent, Accept: */*
