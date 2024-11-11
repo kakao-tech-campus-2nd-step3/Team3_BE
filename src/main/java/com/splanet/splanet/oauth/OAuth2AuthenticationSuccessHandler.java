@@ -60,6 +60,10 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     String deviceId = UUID.randomUUID().toString();
     String accessToken = jwtTokenProvider.createAccessToken(user.getId());
     String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
+
+    // 세션에 userId와 deviceId 저장
+    request.getSession().setAttribute("userId", user.getId());
+    request.getSession().setAttribute("deviceId", deviceId);
     tokenService.storeRefreshToken(refreshToken, user.getId(), deviceId);
 
     // 로그인 성공 시 로그 기록
