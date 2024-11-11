@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -39,7 +40,6 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
     OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-
     Map<String, Object> attributes = oAuth2User.getAttributes();
     Map<String, Object> properties = (Map<String, Object>) attributes.get("properties");
 
@@ -48,46 +48,62 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     String profileImage = (String) properties.get("profile_image_url");
 
     String uniqueNickname = generateUniqueNickname(nickname);
-
-    User user = userRepository.findByKakaoId(kakaoId)
-            .orElseGet(() -> {
-              User newUser = User.builder()
-                      .kakaoId(kakaoId)
-                      .nickname(uniqueNickname)
-                      .profileImage(profileImage)
-                      .build();
-              return userRepository.save(newUser);
-            });
+    User user = userRepository.findByKakaoId(kakaoId).orElseGet(() -> {
+      User newUser = User.builder()
+              .kakaoId(kakaoId)
+              .nickname(uniqueNickname)
+              .profileImage(profileImage)
+              .build();
+      return userRepository.save(newUser);
+    });
 
     String deviceId = UUID.randomUUID().toString();
-
     String accessToken = jwtTokenProvider.createAccessToken(user.getId());
     String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
-
     tokenService.storeRefreshToken(refreshToken, user.getId(), deviceId);
 
-    // 로그인 성공 시 로그 기록
-    String requestPath = request.getRequestURI();
-    String headers = getHeadersAsString(request);
-    logService.recordLoginLog(user.getId(), deviceId, requestPath, headers);
+    // 로그인 성공 시 로그 기록 (리다이렉트 전에 수행)
+    logService.recordLoginLog(user.getId(), deviceId, request.getRequestURI(), getLoggableHeadersAsString(request));
 
-    String referer = request.getHeader("referer");
-    String redirectUrl;
-    if (referer.contains(oAuth2Properties.getOriginDev())) {
-      redirectUrl = oAuth2Properties.getRedirectDevUrl();
-    } else if (referer.contains(oAuth2Properties.getOriginProd())) {
-      redirectUrl = oAuth2Properties.getRedirectProdUrl();
-    } else {
-      redirectUrl = oAuth2Properties.getRedirectProdUrl();
-    }
+    // 세션에 userId와 deviceId 저장
+    request.getSession().setAttribute("userId", user.getId());
+    request.getSession().setAttribute("deviceId", deviceId);
 
+    // Redirect URL 설정
+    String host = request.getHeader("host");
+    String redirectUrl = host.contains(oAuth2Properties.getOriginDev()) ?
+            oAuth2Properties.getRedirectDevUrl() : oAuth2Properties.getRedirectProdUrl();
     String redirectUrlWithParams = UriComponentsBuilder.fromUriString(redirectUrl)
             .queryParam("access", accessToken)
             .queryParam("refresh", refreshToken)
             .queryParam("deviceId", deviceId)
             .build().toUriString();
 
-    response.sendRedirect(redirectUrlWithParams);
+    // 응답 커밋 상태 확인 후 리다이렉트
+    if (!response.isCommitted()) {
+      try {
+        response.sendRedirect(redirectUrlWithParams);
+
+        // 토큰 정보는 제외하고 리다이렉트 URL만 로그에 기록
+        logService.recordApiRequestLog(user.getId(), deviceId, "Redirected to: " + redirectUrl, getLoggableHeadersAsString(request));
+      } catch (IOException e) {
+        logService.recordErrorLog("Failed to redirect after successful authentication", e);
+      }
+    } else {
+      logService.recordErrorLog("Response already committed before redirect. Unable to redirect to: " + redirectUrl);
+    }
+  }
+
+  private String getLoggableHeadersAsString(HttpServletRequest request) {
+    List<String> loggableHeaders = List.of("host", "referer", "user-agent", "accept");
+    StringBuilder headers = new StringBuilder();
+    loggableHeaders.forEach(headerName -> {
+      String headerValue = request.getHeader(headerName);
+      if (headerValue != null) {
+        headers.append(headerName).append(": ").append(headerValue).append(", ");
+      }
+    });
+    return headers.toString();
   }
 
   private String generateUniqueNickname(String nickname) {
