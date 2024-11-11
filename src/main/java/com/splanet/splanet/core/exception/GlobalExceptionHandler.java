@@ -13,7 +13,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     protected ResponseEntity<ErrorResponse> handleBusinessException(BusinessException ex) {
-        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage(), ex.getErrorCode().getStatus().value());
+        String errorMessage = ex.getMessage() != null ? ex.getMessage() : "알 수 없는 오류가 발생했습니다.";
+        ErrorResponse errorResponse = new ErrorResponse(errorMessage, ex.getErrorCode().getStatus().value());
         return new ResponseEntity<>(errorResponse, ex.getErrorCode().getStatus());
     }
 
