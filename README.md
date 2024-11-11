@@ -191,11 +191,11 @@ Splanet은 당신이 해야 할 일을 기반으로, 당신에게 맞는 일정�
     </tr>
     <tr>
         <th>Position</th>
-        <td align="center"><b>Leader</b><br>Backend<br>DevOps</td>
+        <td align="center"><b>Leader</b><br>Backend<br>DevOps<br>ML</td>
         <td align="center"><b>Tech Leader</b><br>Backend<br>DevOps</td>
         <td align="center"><b>Plan Leader</b><br>Backend</td>
-        <td align="center">Reminder<br>Frontend</td>
-        <td align="center">Planner<br>Frontend</td>
+        <td align="center"><b>Reminder</b><br>Frontend</td>
+        <td align="center"><b>Planner</b><br>Frontend</td>
     </tr>
     <tr>
         <th>GitHub</th>
