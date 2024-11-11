@@ -3,3 +3,7 @@ eventType: LOGIN_SUCCESS, userId: 1, deviceId: testDeviceId, timestamp: 2024-11-
 eventType: LOGIN_SUCCESS, userId: 1, deviceId: testDeviceId, timestamp: 2024-11-08T18:23:30.957283
 eventType: LOGIN_SUCCESS, userId: 1, deviceId: testDeviceId, timestamp: 2024-11-08T20:47:07.574235
 eventType: LOGIN_SUCCESS, userId: 1, deviceId: testDeviceId, timestamp: 2024-11-10T21:14:24.147634, requestPath: /test/login, headers: User-Agent: TestAgent, Accept: */*
+eventType: API_REQUEST, userId: 2, deviceId: apiTestDeviceId, timestamp: 2024-11-11T17:49:32.258949, requestPath: /test/api, headers: User-Agent: ApiTestAgent, Accept: application/json
+eventType: LOGIN_SUCCESS, userId: 1, deviceId: testDeviceId, timestamp: 2024-11-11T17:49:32.27013, requestPath: /test/login, headers: User-Agent: TestAgent, Accept: */*
+eventType: API_REQUEST, userId: 2, deviceId: apiTestDeviceId, timestamp: 2024-11-11T18:07:28.609726, requestPath: /test/api, headers: User-Agent: ApiTestAgent, Accept: application/json
+eventType: LOGIN_SUCCESS, userId: 1, deviceId: testDeviceId, timestamp: 2024-11-11T18:07:28.620659, requestPath: /test/login, headers: User-Agent: TestAgent, Accept: */*

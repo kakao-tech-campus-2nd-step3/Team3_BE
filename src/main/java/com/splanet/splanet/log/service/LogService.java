@@ -25,6 +25,12 @@ public class LogService {
             userId, deviceId, timestamp, requestPath, headers);
     writeLog(logMessage);
   }
+  public void recordApiRequestLog(Long userId, String deviceId, String requestPath, String headers) {
+    String timestamp = getCurrentKstTimestamp();
+    String logMessage = String.format("eventType: API_REQUEST, userId: %s, deviceId: %s, timestamp: %s, requestPath: %s, headers: %s",
+            userId, deviceId, timestamp, requestPath, headers);
+    writeLog(logMessage);
+  }
   // 실제 로그 파일에 기록
   private void writeLog(String logMessage) {
     try (FileWriter writer = new FileWriter(logPath, true)) {
