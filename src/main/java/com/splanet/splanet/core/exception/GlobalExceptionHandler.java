@@ -13,12 +13,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     protected ResponseEntity<ErrorResponse> handleBusinessException(BusinessException ex) {
-        ErrorCode errorCode = ex.getErrorCode();
-
-        String message = errorCode == ErrorCode.INVALID_PLAN_FORMAT ? ex.getMessage() : errorCode.getMessage();
-        ErrorResponse response = new ErrorResponse(message, errorCode.getStatus().value());
-
-        return new ResponseEntity<>(response, errorCode.getStatus());
+        String errorMessage = ex.getMessage() != null ? ex.getMessage() : "알 수 없는 오류가 발생했습니다.";
+        ErrorResponse errorResponse = new ErrorResponse(errorMessage, ex.getErrorCode().getStatus().value());
+        return new ResponseEntity<>(errorResponse, ex.getErrorCode().getStatus());
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
