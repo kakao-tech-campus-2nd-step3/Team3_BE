@@ -1,7 +1,6 @@
 package com.splanet.splanet.team.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jayway.jsonpath.JsonPath;
 import com.splanet.splanet.team.dto.TeamInvitationDto;
 import com.splanet.splanet.team.entity.*;
 import com.splanet.splanet.team.repository.TeamInvitationRepository;
@@ -16,14 +15,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpHeaders;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -153,5 +150,75 @@ class TeamControllerIntegrationTest {
         mockMvc.perform(delete("/api/teams/invitation/{invitationId}/cancel", invitationId)
                         .header("Authorization", accessToken))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void 유저_권한_수정_성공() throws Exception {
+        TeamInvitationDto invitationDto = teamService.inviteUserToTeamByNickname(team.getId(), adminUserId, "invitedUser");
+        Long invitationId = invitationDto.getInvitationId();
+
+        String invitedUserToken = "Bearer " + jwtTokenProvider.createAccessToken(invitedUserId);
+
+        mockMvc.perform(put("/api/teams/invitation/{invitationId}/response", invitationId)
+                        .header("Authorization", invitedUserToken)
+                        .param("isAccepted", "true"))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(put("/api/teams/{teamId}/users/{userId}/role", team.getId(), invitedUserId)
+                        .header("Authorization", accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(invitedUserId))
+                .andExpect(jsonPath("$.role").value("ADMIN"));
+
+        TeamUserRelation updatedRelation = teamUserRelationRepository.findByTeamAndUser(team, userRepository.findById(invitedUserId).get()).get();
+        assertThat(updatedRelation.getRole()).isEqualTo(UserTeamRole.ADMIN);
+    }
+
+    @Test
+    void 초대_수락_성공() throws Exception {
+        TeamInvitationDto invitationDto = teamService.inviteUserToTeamByNickname(team.getId(), adminUserId, "invitedUser");
+        Long invitationId = invitationDto.getInvitationId();
+
+        String invitedUserToken = "Bearer " + jwtTokenProvider.createAccessToken(invitedUserId);
+
+        mockMvc.perform(put("/api/teams/invitation/{invitationId}/response", invitationId)
+                        .header("Authorization", invitedUserToken)
+                        .param("isAccepted", "true"))
+                .andExpect(status().isNoContent());
+
+        TeamInvitation updatedInvitation = teamInvitationRepository.findById(invitationId).orElseThrow();
+        assertThat(updatedInvitation.getStatus()).isEqualTo(InvitationStatus.ACCEPTED);
+
+        TeamUserRelation userRelation = teamUserRelationRepository.findByTeamAndUser(team, userRepository.findById(invitedUserId).get()).orElseThrow();
+        assertThat(userRelation.getUser().getId()).isEqualTo(invitedUserId);
+    }
+
+    @Test
+    void 유저_내보내기_실패_권한없음() throws Exception {
+        User nonAdminUser = User.builder()
+                .nickname("nonAdminUser")
+                .profileImage("nonAdmin.png")
+                .build();
+        userRepository.save(nonAdminUser);
+        String nonAdminToken = "Bearer " + jwtTokenProvider.createAccessToken(nonAdminUser.getId());
+
+        mockMvc.perform(delete("/api/teams/{teamId}/users/{userId}", team.getId(), invitedUserId)
+                        .header("Authorization", nonAdminToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void 유저_내보내기_성공() throws Exception {
+        // 초대된 유저를 팀에 추가
+        TeamInvitationDto invitationDto = teamService.inviteUserToTeamByNickname(team.getId(), adminUserId, "invitedUser");
+        teamService.handleInvitationResponse(invitationDto.getInvitationId(), invitedUserId, true);
+
+        // 내보내기 요청
+        mockMvc.perform(delete("/api/teams/{teamId}/users/{userId}", team.getId(), invitedUserId)
+                        .header("Authorization", accessToken))
+                .andExpect(status().isNoContent());
+        // 팀에서 유저가 제거되었는지 확인
+        Optional<TeamUserRelation> userRelation = teamUserRelationRepository.findByTeamAndUser(team, userRepository.findById(invitedUserId).get());
+        assertThat(userRelation).isEmpty();
     }
 }
