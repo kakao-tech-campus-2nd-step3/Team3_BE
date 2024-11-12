@@ -1,6 +1,8 @@
 package com.splanet.splanet.team.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
+import com.splanet.splanet.team.dto.TeamInvitationDto;
 import com.splanet.splanet.team.entity.*;
 import com.splanet.splanet.team.repository.TeamInvitationRepository;
 import com.splanet.splanet.team.repository.TeamRepository;
@@ -17,6 +19,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -121,5 +124,34 @@ class TeamControllerIntegrationTest {
                         .header("Authorization", nonAdminToken)
                         .param("nickname", "invitedUser"))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void 팀_생성_성공() throws Exception {
+        mockMvc.perform(post("/api/teams")
+                        .header("Authorization", accessToken)
+                        .param("teamName", "New Team"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.teamName").value("New Team"))
+                .andExpect(jsonPath("$.user.nickname").value("adminUser"));
+    }
+
+    @Test
+    void 팀_멤버_조회_성공() throws Exception {
+        mockMvc.perform(get("/api/teams/{teamId}/members", team.getId())
+                        .header("Authorization", accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].nickname").value("adminUser"))
+                .andExpect(jsonPath("$[0].role").value("ADMIN"));
+    }
+
+    @Test
+    void 초대_취소_성공() throws Exception {
+        TeamInvitationDto invitationDto = teamService.inviteUserToTeamByNickname(team.getId(), adminUserId, "invitedUser");
+        Long invitationId = invitationDto.getInvitationId();
+
+        mockMvc.perform(delete("/api/teams/invitation/{invitationId}/cancel", invitationId)
+                        .header("Authorization", accessToken))
+                .andExpect(status().isNoContent());
     }
 }
