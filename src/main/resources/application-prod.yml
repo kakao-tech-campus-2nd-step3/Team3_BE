@@ -10,7 +10,10 @@ spring:
       port: 6379
   security:
     oauth2:
-      redirect-url: http://localhost:5173/oauth2/redirect # 개발기간동안 임시로 localhost로 리다이렉트한다.
+      redirect-dev-url: http://localhost:5173/oauth2/redirect
+      redirect-prod-url: https://www.splanet.co.kr/oauth2/redirect
+      origin-dev: localhost
+      origin-prod: splanet.co.kr
       client:
         registration:
           kakao:

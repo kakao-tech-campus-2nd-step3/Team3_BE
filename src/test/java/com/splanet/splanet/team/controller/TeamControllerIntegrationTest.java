@@ -1,9 +1,7 @@
 package com.splanet.splanet.team.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.splanet.splanet.team.entity.Team;
-import com.splanet.splanet.team.entity.TeamUserRelation;
-import com.splanet.splanet.team.entity.UserTeamRole;
+import com.splanet.splanet.team.entity.*;
 import com.splanet.splanet.team.repository.TeamInvitationRepository;
 import com.splanet.splanet.team.repository.TeamRepository;
 import com.splanet.splanet.team.repository.TeamUserRelationRepository;
@@ -16,10 +14,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -54,65 +55,71 @@ class TeamControllerIntegrationTest {
     private JwtTokenProvider jwtTokenProvider;
 
     private String accessToken;
-    private Long userId;
+    private Long adminUserId;
+    private Long invitedUserId;
+
+    private Team team;
 
     @BeforeEach
     void setUp() {
-        // 사용자 생성
-        User user = User.builder()
-                .nickname("testuser")
-                .profileImage("testimage.png")
+        // 관리자 유저 생성
+        User adminUser = User.builder()
+                .nickname("adminUser")
+                .profileImage("admin.png")
                 .build();
-        userRepository.save(user);
-        userId = user.getId();
+        userRepository.save(adminUser);
+        adminUserId = adminUser.getId();
+
+        // 초대할 유저 생성
+        User invitedUser = User.builder()
+                .nickname("invitedUser")
+                .profileImage("invited.png")
+                .build();
+        userRepository.save(invitedUser);
+        invitedUserId = invitedUser.getId();
+
+        // 팀 생성
+        team = new Team("Test Team", adminUser);
+        teamRepository.save(team);
+
+        // 관리자 권한 설정
+        TeamUserRelation adminRelation = new TeamUserRelation(team, adminUser, UserTeamRole.ADMIN);
+        teamUserRelationRepository.save(adminRelation);
 
         // JWT 토큰 생성
-        accessToken = "Bearer " + jwtTokenProvider.createAccessToken(userId);
+        accessToken = "Bearer " + jwtTokenProvider.createAccessToken(adminUserId);
     }
+
     @Test
-    void 팀_생성_성공() throws Exception {
-        String teamName = "My New Team";
-
-        mockMvc.perform(post("/api/teams")
+    void 팀_유저_초대_성공() throws Exception {
+        mockMvc.perform(post("/api/teams/{teamId}/invite", team.getId())
                         .header("Authorization", accessToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .param("teamName", teamName)
-                        .param("userId", userId.toString()))
+                        .param("nickname", "invitedUser"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.teamName").value(teamName))
-                .andExpect(jsonPath("$.user.id").value(userId))
-                .andExpect(jsonPath("$.teamMembers").isEmpty());
+                .andExpect(jsonPath("$.nickname").value("invitedUser"))
+                .andExpect(jsonPath("$.teamId").value(team.getId()))
+                .andExpect(jsonPath("$.status").value("PENDING"));
 
-        Team team = teamRepository.findByTeamName(teamName).orElseThrow();
-        assert team.getTeamName().equals(teamName);
-        assert team.getUser().getId().equals(userId);
-
-        TeamUserRelation teamUserRelation = teamUserRelationRepository.findByTeamAndUser(team, team.getUser()).orElseThrow();
-        assert teamUserRelation.getRole() == UserTeamRole.ADMIN;
+        TeamInvitation invitation = teamInvitationRepository.findAllByUserAndStatus(userRepository.findById(invitedUserId).get(), InvitationStatus.PENDING).get(0);
+        assertThat(invitation.getUser().getId()).isEqualTo(invitedUserId);
+        assertThat(invitation.getTeam().getId()).isEqualTo(team.getId());
+        assertThat(invitation.getStatus()).isEqualTo(InvitationStatus.PENDING);
     }
 
-//    @Test
-//    void 팀_생성_팀이름_누락() throws Exception {
-//        mockMvc.perform(post("/api/teams")
-//                        .header("Authorization", accessToken)
-//                        .contentType(MediaType.APPLICATION_JSON)
-//                        .param("userId", userId.toString()))
-//                .andExpect(status().isBadRequest())
-//                .andExpect(jsonPath("$.errorCode").value("TEAM_NAME_NOT_FOUND"))
-//                .andExpect(jsonPath("$.message").value("팀이름이 비어 있습니다."));
-//    }
-//
-//    @Test
-//    void 팀_생성_존재하지_않는_유저() throws Exception {
-//        Long invalidUserId = 999L;
-//        String teamName = "My Invalid Team";
-//
-//        mockMvc.perform(post("/api/teams")
-//                        .header("Authorization", accessToken)
-//                        .contentType(MediaType.APPLICATION_JSON)
-//                        .param("teamName", teamName)
-//                        .param("userId", invalidUserId.toString()))
-//                .andExpect(status().isNotFound())
-//                .andExpect(jsonPath("$.message").value("유저가 존재하지 않습니다."));
-//    }
+    @Test
+    void 팀_유저_초대_실패_관리자권한없음() throws Exception {
+        // 다른 유저로 JWT 토큰 발급 (관리자 권한 없음)
+        User nonAdminUser = User.builder()
+                .nickname("nonAdminUser")
+                .profileImage("nonAdmin.png")
+                .build();
+        userRepository.save(nonAdminUser);
+
+        String nonAdminToken = "Bearer " + jwtTokenProvider.createAccessToken(nonAdminUser.getId());
+
+        mockMvc.perform(post("/api/teams/{teamId}/invite", team.getId())
+                        .header("Authorization", nonAdminToken)
+                        .param("nickname", "invitedUser"))
+                .andExpect(status().isForbidden());
+    }
 }

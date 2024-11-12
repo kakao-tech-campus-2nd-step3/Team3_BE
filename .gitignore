@@ -43,7 +43,8 @@ docker/*.env
 !docker/sample.env
 docker/.DS_Store
 
-
+./splanet.log
+./splanet-test.log
 ### log ###
 logs/
 

@@ -10,5 +10,8 @@ import lombok.Setter;
 @Configuration
 @ConfigurationProperties(prefix = "spring.security.oauth2")
 public class OAuth2Properties {
-    private String redirectUrl;
+    private String redirectProdUrl;
+    private String redirectDevUrl;
+    private String originDev;
+    private String originProd;
 }
