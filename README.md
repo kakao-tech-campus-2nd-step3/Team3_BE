@@ -39,6 +39,7 @@ Splanet은 당신이 해야 할 일을 기반으로, 당신에게 맞는 일정�
   - **카카오 로그인**을 통한 간편한 사용자 인증
   - **실시간 음성 인식**을 통해 편하게 할 일 목록 작성
   - **플랜 자동 생성** 기능을 통해 사용자의 요구에 맞는 추천 일정 제공
+  - **드래그&드랍, 카드 크기 조절** 등 간편한 일정 관리
   - **플랜 관리 및 친구와의 공유** 기능을 통해 소셜 요소 추가
 
 ---
@@ -111,19 +112,20 @@ Splanet은 당신이 해야 할 일을 기반으로, 당신에게 맞는 일정�
 
 ## 💻 기술 스택
 
-| **분야**      | **사용 기술**                                                                                                           |
-|---------------|-------------------------------------------------------------------------------------------------------------------------|
-| **Frontend**  | ![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=white) ![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white) |
-| **Backend**   | ![Java](https://img.shields.io/badge/Java-007396?style=for-the-badge&logo=java&logoColor=white) ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white) |
-| **Database**  | ![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white) ![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white) |
-| **Infrastructure** | ![Amazon EC2](https://img.shields.io/badge/Amazon%20EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white) ![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white) |
+| **분야**            | **사용 기술**                                                                                                           |
+|---------------------|-------------------------------------------------------------------------------------------------------------------------|
+| **Frontend**        | ![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=white) ![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white) ![FullCalendar](https://img.shields.io/badge/FullCalendar-3A85FF?style=for-the-badge&logoColor=white) |
+| **Backend**         | ![Java](https://img.shields.io/badge/Java-007396?style=for-the-badge&logo=java&logoColor=white) ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white) |
+| **Database**        | ![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white) ![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white) ![AWS RDS](https://img.shields.io/badge/AWS%20RDS-527FFF?style=for-the-badge&logo=amazonaws&logoColor=white) |
+| **Infrastructure**  | ![Amazon EC2](https://img.shields.io/badge/Amazon%20EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white) ![AWS ELB](https://img.shields.io/badge/AWS%20ELB-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white) ![Docker Compose](https://img.shields.io/badge/Docker%20Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white) |
+| **Monitoring**      | ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=prometheus&logoColor=white) ![Grafana](https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white) ![AWS CloudWatch](https://img.shields.io/badge/AWS%20CloudWatch-FF4F8B?style=for-the-badge&logo=amazonaws&logoColor=white) |
 
 ---
 
 ## 🛠 시스템 아키텍처
 
 <div align="center">
-    <img src="https://github.com/user-attachments/assets/2b6749af-8542-4c2f-8329-d3bfa5bdcc25" width="700" alt="System Architecture Diagram">
+    <img src="https://github.com/user-attachments/assets/a20fb80e-5a00-417c-b260-5cb52bbfb187" width="700" alt="System Architecture Diagram">
 </div>
 
 ### 시스템 구성 요약
