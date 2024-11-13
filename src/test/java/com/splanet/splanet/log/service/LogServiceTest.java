@@ -64,9 +64,10 @@ class LogServiceTest {
     String deviceId = "apiTestDeviceId";
     String requestPath = "/test/api";
     String headers = "User-Agent: ApiTestAgent, Accept: application/json";
+    int statusCode = 200;
 
     // when
-    logService.recordApiRequestLog(userId, deviceId, requestPath, headers);
+    logService.recordApiRequestLog(userId, deviceId, requestPath, headers, statusCode);
 
     // then
     File logFile = new File(logPath);
@@ -75,7 +76,14 @@ class LogServiceTest {
     // 로그 파일 내용 확인
     try {
       String content = Files.readString(logFile.toPath());
-      assertThat(content).contains("eventType: API_REQUEST", "userId: 2", "deviceId: apiTestDeviceId", "requestPath: /test/api", "headers: User-Agent: ApiTestAgent, Accept: application/json");
+      assertThat(content).contains(
+              "eventType: API_REQUEST",
+              "userId: 2",
+              "deviceId: apiTestDeviceId",
+              "requestPath: /test/api",
+              "headers: User-Agent: ApiTestAgent, Accept: application/json",
+              "statusCode: 200"
+      );
     } catch (IOException e) {
       e.printStackTrace();
     }
