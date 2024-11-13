@@ -27,8 +27,11 @@ public class ApiLoggingInterceptor implements HandlerInterceptor {
     Long userId = (Long) request.getSession().getAttribute("userId");
     String deviceId = (String) request.getSession().getAttribute("deviceId");
 
+    // 상태 코드 가져오기
+    int statusCode = response.getStatus();
+
     // 로그 기록
-    logService.recordApiRequestLog(userId, deviceId, requestPath, headers);
+    logService.recordApiRequestLog(userId, deviceId, requestPath, headers, statusCode);
 
     return true;
   }
