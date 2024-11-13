@@ -18,3 +18,8 @@ spring:
         registration:
           kakao:
             redirect-uri: http://localhost:8080/login/oauth2/code/kakao
+
+logging:
+  level:
+    org.springframework.security: TRACE
+    org.hibernate.engine.internal.StatisticalLoggingSessionEventListener: OFF

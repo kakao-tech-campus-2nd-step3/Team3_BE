@@ -34,12 +34,6 @@ spring:
             scope: profile_nickname, profile_image, account_email
             client-name: Kakao
 
-logging:
-  level:
-    org.springframework.security: TRACE
-    org.hibernate.engine.internal.StatisticalLoggingSessionEventListener: OFF
-
-
 springdoc:
   swagger-ui:
     path: /swagger
