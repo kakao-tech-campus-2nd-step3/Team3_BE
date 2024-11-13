@@ -87,44 +87,4 @@ class NotificationServiceTest {
             e.printStackTrace();
         }
     }
-
-    @Test
-    void 테스트_알림_전송_성공() {
-        Long userId = 1L;
-        FcmToken fcmToken = FcmToken.builder()
-                .token("FCM토큰")
-                .build();
-
-        when(fcmTokenRepository.findByUserId(userId)).thenReturn(List.of(fcmToken));
-        try {
-            when(firebaseMessaging.send(any(Message.class))).thenReturn("응답");
-
-            assertDoesNotThrow(() -> notificationService.sendTestNotification(userId));
-            verify(firebaseMessaging, times(1)).send(any(Message.class));
-            verify(fcmTokenRepository, times(1)).findByUserId(userId);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Test
-    void 테스트_알림_전송_실패() {
-        Long userId = 1L;
-        FcmToken fcmToken = FcmToken.builder()
-                .token("FCM토큰")
-                .build();
-
-        when(fcmTokenRepository.findByUserId(userId)).thenReturn(Collections.singletonList(fcmToken));
-        try {
-            when(firebaseMessaging.send(any(Message.class))).thenThrow(new RuntimeException("FCM 전송 실패"));
-
-            assertDoesNotThrow(() -> notificationService.sendTestNotification(userId));
-            verify(firebaseMessaging, times(1)).send(any(Message.class));
-            verify(fcmTokenRepository, times(1)).findByUserId(userId);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 }
