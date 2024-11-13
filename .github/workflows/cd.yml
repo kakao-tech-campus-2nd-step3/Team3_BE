@@ -5,6 +5,7 @@ on:
     branches:
       - develop
       - 'weekly/**'
+      - bug/162-bug-push
 
 jobs:
   deploy:
