@@ -21,14 +21,15 @@ public class FcmTokenController implements FcmTokenApi {
     }
 
     @Override
-    public ResponseEntity<String> updateFcmTokenSettings(Long userId, FcmTokenUpdateRequest fcmTokenUpdateRequest) {
-        fcmTokenService.updateFcmTokenSettings(userId, fcmTokenUpdateRequest);
-        return ResponseEntity.ok("FCM token 수정 완료");
+    public ResponseEntity<String> updateFcmTokenSettings(FcmTokenUpdateRequest fcmTokenUpdateRequest) {
+        fcmTokenService.updateFcmTokenSettings(fcmTokenUpdateRequest);
+        return ResponseEntity.ok("FCM 토큰 수정 완료");
     }
 
+
     @Override
-    public ResponseEntity<String> deleteFcmToken(Long userId, String token) {
-        fcmTokenService.deleteFcmToken(userId, token);
+    public ResponseEntity<String> deleteFcmToken(String token) {
+        fcmTokenService.deleteFcmToken(token);
         return ResponseEntity.ok("FCM token 삭제 완료");
     }
 }

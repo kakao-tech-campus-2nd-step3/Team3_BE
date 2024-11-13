@@ -30,12 +30,12 @@ public interface FcmTokenApi {
     @Operation(summary = "FCM 토큰 설정 수정", description = "알림 설정 및 알림 오프셋을 수정합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "FCM 토큰 설정이 성공적으로 수정되었습니다."),
-            @ApiResponse(responseCode = "404", description = "유저를 찾을 수 없습니다.", content = @Content)
+            @ApiResponse(responseCode = "404", description = "토큰을 찾을 수 없습니다.", content = @Content)
     })
     ResponseEntity<String> updateFcmTokenSettings(
-            @AuthenticationPrincipal Long userId,
             @RequestBody FcmTokenUpdateRequest fcmTokenUpdateRequest
     );
+
 
     @DeleteMapping("/delete")
     @Operation(summary = "FCM 토큰 삭제", description = "유저의 FCM 토큰을 삭제합니다.")
@@ -44,7 +44,6 @@ public interface FcmTokenApi {
             @ApiResponse(responseCode = "404", description = "해당 토큰을 찾을 수 없습니다.", content = @Content)
     })
     ResponseEntity<String> deleteFcmToken(
-            @AuthenticationPrincipal Long userId,
             @RequestParam String token
     );
 }

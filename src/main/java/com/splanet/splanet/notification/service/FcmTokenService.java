@@ -34,9 +34,9 @@ public class FcmTokenService {
     }
 
     @Transactional
-    public void updateFcmTokenSettings(Long userId, FcmTokenUpdateRequest request) {
-        FcmToken fcmToken = fcmTokenRepository.findByUserIdAndToken(userId, request.token())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    public void updateFcmTokenSettings(FcmTokenUpdateRequest request) {
+        FcmToken fcmToken = fcmTokenRepository.findByToken(request.token())
+                .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
 
         fcmToken = fcmToken.toBuilder()
                 .isNotificationEnabled(request.isNotificationEnabled() != null
@@ -51,9 +51,9 @@ public class FcmTokenService {
     }
 
     @Transactional
-    public void deleteFcmToken(Long userId, String token) {
-        FcmToken fcmToken = fcmTokenRepository.findByUserIdAndToken(userId, token)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    public void deleteFcmToken(String token) {
+        FcmToken fcmToken = fcmTokenRepository.findByToken(token)
+                .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
         fcmTokenRepository.delete(fcmToken);
     }
 }
