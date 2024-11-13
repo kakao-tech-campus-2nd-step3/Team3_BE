@@ -27,10 +27,10 @@ public class LogService {
   }
 
   // API 요청 로그 기록
-  public void recordApiRequestLog(Long userId, String deviceId, String requestPath, String headers) {
+  public void recordApiRequestLog(Long userId, String deviceId, String requestPath, String headers, int statusCode) {
     String timestamp = getCurrentKstTimestamp();
-    String logMessage = String.format("eventType: API_REQUEST, userId: %s, deviceId: %s, timestamp: %s, requestPath: %s, headers: %s",
-            userId, deviceId, timestamp, requestPath, headers);
+    String logMessage = String.format("eventType: API_REQUEST, userId: %s, deviceId: %s, timestamp: %s, requestPath: %s, headers: %s, statusCode: %d",
+            userId, deviceId, timestamp, requestPath, headers, statusCode);
     writeLog(logMessage);
   }
 
