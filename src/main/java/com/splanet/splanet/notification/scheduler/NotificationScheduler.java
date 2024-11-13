@@ -13,28 +13,29 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class NotificationScheduler {
 
+    private static final ZoneId ZONE_ID_SEOUL = ZoneId.of("Asia/Seoul");
     private final PlanRepository planRepository;
     private final FcmTokenRepository fcmTokenRepository;
     private final NotificationLogRepository notificationLogRepository;
     private final NotificationService notificationService;
     private final QueryPerformanceService queryPerformanceService;
 
-
     @Scheduled(fixedRate = 60000)
     public void sendScheduledNotifications() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(ZONE_ID_SEOUL);
 
         List<Plan> upcomingPlans = planRepository.findUpcomingPlans(now);
 
@@ -67,7 +68,7 @@ public class NotificationScheduler {
 
             for (FcmToken fcmToken : fcmTokens) {
                 if (Boolean.TRUE.equals(fcmToken.getIsNotificationEnabled())) {
-                    LocalDateTime notificationTime = plan.getStartDate().minusMinutes(fcmToken.getNotificationOffset());
+                    LocalDateTime notificationTime = plan.getStartDate().atZone(ZONE_ID_SEOUL).toLocalDateTime().minusMinutes(fcmToken.getNotificationOffset());
 
                     if (notificationTime.isAfter(now.minusMinutes(5)) && notificationTime.isBefore(now.plusMinutes(1))) {
                         String notificationKey = fcmToken.getId() + ":" + plan.getId();
