@@ -2,6 +2,7 @@ package com.splanet.splanet.plan.service;
 
 import com.splanet.splanet.plan.dto.PlanRequestDto;
 import com.splanet.splanet.plan.dto.PlanResponseDto;
+import com.splanet.splanet.plan.dto.PlanTimeDto;
 import com.splanet.splanet.plan.entity.Plan;
 import com.splanet.splanet.plan.mapper.PlanMapper;
 import com.splanet.splanet.plan.repository.PlanRepository;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Set;
@@ -118,11 +120,11 @@ public class PlanService {
     }
 
     @Transactional(readOnly = true)
-    public List<PlanResponseDto> getAllFuturePlansByUserId(Long userId) {
-        LocalDateTime now = LocalDateTime.now();
-        List<Plan> futurePlans = planRepository.findAllByUserIdAndStartDateAfter(userId, now);
-        return futurePlans.stream()
-                .map(planMapper::toResponseDto)
+    public List<PlanTimeDto> getAllFuturePlanTimesByUserId(Long userId) {
+        LocalDateTime currentTime = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
+        return planRepository.findAllFuturePlansByUserId(userId, currentTime)
+                .stream()
+                .map(plan -> new PlanTimeDto(plan.getStartDate(), plan.getEndDate()))
                 .collect(Collectors.toList());
     }
 

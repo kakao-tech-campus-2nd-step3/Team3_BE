@@ -56,4 +56,5 @@ splanet-db
 ### env ###
 .env
 /src/main/resources/env.properties
+/src/main/resources/env.properties.base64
 splanet-firebase.json

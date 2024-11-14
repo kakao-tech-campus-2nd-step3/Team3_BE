@@ -42,7 +42,16 @@ public class NotificationService {
 
         Notification notification = new Notification(title, body);
 
-        Message message = Message.builder().setToken(fcmToken.getToken()).setNotification(notification).putData("title", plan.getTitle()).putData("title", plan.getDescription()).putData("startDate", plan.getStartDate().toString()).build();
+        String clickActionUrl = "https://www.splanet.co.kr";
+
+        Message message = Message.builder().setToken(fcmToken.getToken())
+                .setNotification(notification)
+                .putData("click_action", clickActionUrl)
+                .putData("title", plan.getTitle())
+                .putData("description", plan.getDescription())
+                .putData("startDate", plan.getStartDate().toString())
+                .build();
+
         try {
             String response = firebaseMessaging.send(message);
             log.info("알림을 정상적으로 전송하였습니다. : {}", response);

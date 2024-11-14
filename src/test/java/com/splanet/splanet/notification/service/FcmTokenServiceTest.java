@@ -1,6 +1,7 @@
 package com.splanet.splanet.notification.service;
 
 import com.splanet.splanet.core.exception.BusinessException;
+import com.splanet.splanet.core.exception.ErrorCode;
 import com.splanet.splanet.notification.dto.FcmTokenUpdateRequest;
 import com.splanet.splanet.notification.entity.FcmToken;
 import com.splanet.splanet.notification.repository.FcmTokenRepository;
@@ -8,9 +9,10 @@ import com.splanet.splanet.user.entity.User;
 import com.splanet.splanet.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
@@ -19,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class FcmTokenServiceTest {
 
     @Mock
@@ -29,11 +32,6 @@ class FcmTokenServiceTest {
 
     @InjectMocks
     private FcmTokenService fcmTokenService;
-
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
 
     @Test
     void FCM토큰_등록_성공() {
@@ -58,68 +56,85 @@ class FcmTokenServiceTest {
 
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        BusinessException exception = assertThrows(BusinessException.class, () ->
+        assertThrows(BusinessException.class, () ->
                 fcmTokenService.registerFcmToken(userId, token));
         verify(fcmTokenRepository, never()).save(any(FcmToken.class));
     }
 
     @Test
-    void FCM토큰_설정_수정_성공() {
-        Long userId = 1L;
+    void FCM알림여부_수정_성공() {
         String token = "testToken";
-        FcmTokenUpdateRequest request = new FcmTokenUpdateRequest(token, true, 30);
+        Boolean isNotificationEnabled = true;
 
         FcmToken fcmToken = FcmToken.builder()
-                .user(User.builder().id(userId).build())
                 .token(token)
                 .isNotificationEnabled(false)
-                .notificationOffset(15)
                 .build();
 
-        when(fcmTokenRepository.findByUserIdAndToken(userId, token)).thenReturn(Optional.of(fcmToken));
+        when(fcmTokenRepository.findByToken(token)).thenReturn(Optional.of(fcmToken));
 
-        assertDoesNotThrow(() -> fcmTokenService.updateFcmTokenSettings(userId, request));
+        assertDoesNotThrow(() -> fcmTokenService.updateNotificationEnabled(token, isNotificationEnabled));
         verify(fcmTokenRepository, times(1)).save(any(FcmToken.class));
     }
 
     @Test
-    void FCM토큰_설정_수정_토큰없음_예외발생() {
-        Long userId = 1L;
+    void FCM알림여부_수정_토큰없음_예외발생() {
         String token = "testToken";
-        FcmTokenUpdateRequest request = new FcmTokenUpdateRequest(token, true, 30);
 
-        when(fcmTokenRepository.findByUserIdAndToken(userId, token)).thenReturn(Optional.empty());
+        when(fcmTokenRepository.findByToken(token)).thenReturn(Optional.empty());
 
-        BusinessException exception = assertThrows(BusinessException.class, () ->
-                fcmTokenService.updateFcmTokenSettings(userId, request));
+        assertThrows(BusinessException.class, () ->
+                fcmTokenService.updateNotificationEnabled(token, true));
+        verify(fcmTokenRepository, never()).save(any(FcmToken.class));
+    }
+
+    @Test
+    void FCM알림오프셋_수정_성공() {
+        String token = "testToken";
+        Integer notificationOffset = 30;
+
+        FcmToken fcmToken = FcmToken.builder()
+                .token(token)
+                .notificationOffset(15)
+                .build();
+
+        when(fcmTokenRepository.findByToken(token)).thenReturn(Optional.of(fcmToken));
+
+        assertDoesNotThrow(() -> fcmTokenService.updateNotificationOffset(token, notificationOffset));
+        verify(fcmTokenRepository, times(1)).save(any(FcmToken.class));
+    }
+
+    @Test
+    void FCM알림오프셋_수정_토큰없음_예외발생() {
+        String token = "testToken";
+
+        when(fcmTokenRepository.findByToken(token)).thenReturn(Optional.empty());
+
+        assertThrows(BusinessException.class, () ->
+                fcmTokenService.updateNotificationOffset(token, 30));
         verify(fcmTokenRepository, never()).save(any(FcmToken.class));
     }
 
     @Test
     void FCM토큰_삭제_성공() {
-        Long userId = 1L;
         String token = "testToken";
 
-        FcmToken fcmToken = FcmToken.builder()
-                .user(User.builder().id(userId).build())
-                .token(token)
-                .build();
+        FcmToken fcmToken = FcmToken.builder().token(token).build();
 
-        when(fcmTokenRepository.findByUserIdAndToken(userId, token)).thenReturn(Optional.of(fcmToken));
+        when(fcmTokenRepository.findByToken(token)).thenReturn(Optional.of(fcmToken));
 
-        assertDoesNotThrow(() -> fcmTokenService.deleteFcmToken(userId, token));
+        assertDoesNotThrow(() -> fcmTokenService.deleteFcmToken(token));
         verify(fcmTokenRepository, times(1)).delete(fcmToken);
     }
 
     @Test
     void FCM토큰_삭제_토큰없음_예외발생() {
-        Long userId = 1L;
         String token = "testToken";
 
-        when(fcmTokenRepository.findByUserIdAndToken(userId, token)).thenReturn(Optional.empty());
+        when(fcmTokenRepository.findByToken(token)).thenReturn(Optional.empty());
 
-        BusinessException exception = assertThrows(BusinessException.class, () ->
-                fcmTokenService.deleteFcmToken(userId, token));
+        assertThrows(BusinessException.class, () ->
+                fcmTokenService.deleteFcmToken(token));
         verify(fcmTokenRepository, never()).delete(any(FcmToken.class));
     }
 }
