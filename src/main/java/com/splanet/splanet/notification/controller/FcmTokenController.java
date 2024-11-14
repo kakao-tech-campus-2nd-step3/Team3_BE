@@ -1,7 +1,6 @@
 package com.splanet.splanet.notification.controller;
 
 import com.splanet.splanet.notification.dto.FcmTokenRequest;
-import com.splanet.splanet.notification.dto.FcmTokenUpdateRequest;
 import com.splanet.splanet.notification.service.FcmTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,11 +20,16 @@ public class FcmTokenController implements FcmTokenApi {
     }
 
     @Override
-    public ResponseEntity<String> updateFcmTokenSettings(FcmTokenUpdateRequest fcmTokenUpdateRequest) {
-        fcmTokenService.updateFcmTokenSettings(fcmTokenUpdateRequest);
-        return ResponseEntity.ok("FCM 토큰 수정 완료");
+    public ResponseEntity<String> updateNotificationEnabled(String token, Boolean isNotificationEnabled) {
+        fcmTokenService.updateNotificationEnabled(token, isNotificationEnabled);
+        return ResponseEntity.ok("FCM 알림 여부 수정 완료");
     }
 
+    @Override
+    public ResponseEntity<String> updateNotificationOffset(String token, Integer notificationOffset) {
+        fcmTokenService.updateNotificationOffset(token, notificationOffset);
+        return ResponseEntity.ok("FCM 알림 오프셋 수정 완료");
+    }
 
     @Override
     public ResponseEntity<String> deleteFcmToken(String token) {
