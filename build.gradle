@@ -19,6 +19,7 @@ java {
 test {
 	useJUnitPlatform()
 	systemProperty 'spring.profiles.active', 'test'
+	finalizedBy jacocoTestReport
 }
 
 configurations {
@@ -94,6 +95,7 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	finalizedBy jacocoTestReport
 }
 
 protobuf {
@@ -122,20 +124,11 @@ sourceSets {
 	}
 }
 
-jacoco {
-	toolVersion = "0.8.10"
-}
-
-tasks.jacocoTestReport {
+jacocoTestReport {
 	dependsOn test
-
 	reports {
-		xml.required = true
-		html.required = true
-		csv.required = false
+		xml.required.set(true)
+		html.required.set(true)
+		csv.required.set(true)
 	}
-}
-
-tasks.build {
-	dependsOn jacocoTestReport
 }

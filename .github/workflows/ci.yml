@@ -80,40 +80,18 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew clean build -Dspring.profiles.active=test
 
-      - name: Run Tests and Generate Code Coverage Report
-        run: ./gradlew test jacocoTestReport -Dspring.profiles.active=test
+      - name: Run Tests
+        run: ./gradlew test -Dspring.profiles.active=test
 
-      - name: Upload Jacoco Report
-        uses: actions/upload-artifact@v3
-        with:
-          name: jacoco-report
-          path: build/reports/jacoco/test/jacocoTestReport.xml
+      - name: Generate JaCoCo Coverage Report
+        run: ./gradlew jacocoTestReport
 
-      - name: Post Coverage Comment to PR
-        uses: actions/github-script@v6
+      - name: Generate Coverage Badge and Comment
+        uses: cicirello/jacoco-badge-generator@v2
         with:
-          script: |
-            const fs = require('fs');
-            const coverageReport = fs.readFileSync('build/reports/jacoco/test/jacocoTestReport.xml', 'utf8');
-            
-            const match = coverageReport.match(/<counter type="INSTRUCTION" missed="(\d+)" covered="(\d+)"\/>/);
-            if (match) {
-              const missed = parseInt(match[1]);
-              const covered = parseInt(match[2]);
-              const coverage = ((covered / (missed + covered)) * 100).toFixed(2);
-            
-              const comment = `### Code Coverage Report\n\n- **Coverage**: ${coverage}%\n\n`;
-              github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: comment
-              });
-            } else {
-              github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: "### Code Coverage Report\n\nUnable to parse coverage report."
-              });
-            }
+          jacoco-csv-file: 'build/reports/jacoco/test/jacocoTestReport.csv'
+          badges-directory: 'badges'
+          generate-branches-badge: true
+          generate-summary: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
