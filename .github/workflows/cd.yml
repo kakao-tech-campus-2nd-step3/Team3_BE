@@ -5,7 +5,7 @@ on:
     branches:
       - develop
       - 'weekly/**'
-      - 142-refactor-cd-update
+      - refactor/166-refactor-fcm
 
 jobs:
   deploy:
