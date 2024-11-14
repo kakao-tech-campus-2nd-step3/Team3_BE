@@ -124,6 +124,10 @@ sourceSets {
 	}
 }
 
+jacoco {
+	toolVersion = "0.8.10"
+}
+
 jacocoTestReport {
 	dependsOn test
 	reports {
@@ -131,4 +135,14 @@ jacocoTestReport {
 		html.required.set(true)
 		csv.required.set(true)
 	}
+	classDirectories.setFrom(
+			files(classDirectories.files.collect {
+				fileTree(dir: it, exclude: [
+						'**/dto/**',       // dto 패키지 제외
+						'**/config/**',    // config 패키지 제외
+						'**/exception/**', // exception 패키지 제외
+						'**/core/**', // core 패키지 제외
+				])
+			})
+	)
 }
