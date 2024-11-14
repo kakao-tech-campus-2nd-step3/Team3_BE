@@ -14,11 +14,9 @@ public class PlanResponseDto {
     private String description;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
-
-    @JsonIgnore
     private Boolean accessibility;
-    @JsonIgnore
     private Boolean isCompleted;
+
     @JsonIgnore
     private LocalDateTime createdAt;
     @JsonIgnore
