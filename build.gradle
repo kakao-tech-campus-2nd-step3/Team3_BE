@@ -142,6 +142,9 @@ jacocoTestReport {
 						'**/config/**',    // config 패키지 제외
 						'**/exception/**', // exception 패키지 제외
 						'**/core/**', // core 패키지 제외
+						'**/mapper/**', // mapper 패키지 제외
+						'**/grpc/**', // grpc 패키지 제외
+						'**/log/**', // log 패키지 제외
 				])
 			})
 	)
