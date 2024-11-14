@@ -26,9 +26,9 @@ public class GptService {
 
     private static final double RESPONSE_TEMPERATURE = 0.8;
     private static final Map<Integer, String> PROMPT_TEMPLATES = Map.of(
-            3, "사용자 입력: \"%s\" (deviceId: %s) (groupId: %s) 기존 startDate와 endDate사이에 일정을 생성하지 말아줘. 기존 startDate, endDate:%s 현재 시간 이후로 가능한 자주 반복하여 짧고 집중적으로 일정을 완수할 수 있도록 계획을 세워줘. 시험이 포함된 경우, 시험 당일이 아닌 전날까지 준비가 완료되도록 해줘 (%s 기준). 모든 일정은 한국 시간(UTC+9)을 기준으로 설정해줘.",
-            2, "사용자 입력: \"%s\" (deviceId: %s) (groupId: %s) 기존 startDate와 endDate사이에 일정을 생성하지 말아줘. 기존 startDate, endDate:%s 현재 시간 이후로 적당한 간격을 두고 모든 일정을 완수할 수 있도록 계획해줘. 시험이 포함된 경우, 시험 당일이 아닌 전날까지 준비가 완료되도록 해줘 (%s 기준). 모든 일정은 한국 시간(UTC+9)을 기준으로 설정해줘.",
-            1, "사용자 입력: \"%s\" (deviceId: %s) (groupId: %s) 기존 startDate와 endDate사이에 일정을 생성하지 말아줘. 기존 startDate, endDate:%s 현재 시간 이후로 여유 있게 모든 일정을 완수할 수 있도록 계획해줘. 시험이 포함된 경우, 시험 당일이 아닌 전날까지 준비가 완료되도록 해줘 (%s 기준). 모든 일정은 한국 시간(UTC+9)을 기준으로 설정해줘."
+            3, "사용자 입력: \"%s\" (deviceId: %s) (groupId: %s) 제공된 가이드라인을 따르지 않으면 페널티가 부과될 것입니다. 모든 지침을 주의깊게 읽고 그에 따라 행동하세요. 기존 startDate와 endDate사이에 일정을 생성하지 말아줘. 기존 startDate, endDate:%s 현재 시간 이후로 가능한 자주 반복하여 짧고 집중적으로 일정을 완수할 수 있도록 계획을 세워줘. 현재 시간 : (%s 기준). 모든 일정은 한국 시간(UTC+9)을 기준으로 설정해줘. 또한, 기존 일정을 생각하고 새로운 일정을 적당한 간격을 두고 배치해줘.",
+            2, "사용자 입력: \"%s\" (deviceId: %s) (groupId: %s) 제공된 가이드라인을 따르지 않으면 페널티가 부과될 것입니다. 모든 지침을 주의깊게 읽고 그에 따라 행동하세요. 기존 startDate와 endDate사이에 일정을 생성하지 말아줘. 기존 startDate, endDate:%s 현재 시간 이후로 적당한 간격을 두고 모든 일정을 완수할 수 있도록 계획해줘. 현재 시간 : (%s 기준). 모든 일정은 한국 시간(UTC+9)을 기준으로 설정해줘. 또한, 기존 일정을 생각하고 새로운 일정을 적당한 간격을 두고 배치해줘.",
+            1, "사용자 입력: \"%s\" (deviceId: %s) (groupId: %s) 제공된 가이드라인을 따르지 않으면 페널티가 부과될 것입니다. 모든 지침을 주의깊게 읽고 그에 따라 행동하세요. 기존 startDate와 endDate사이에 일정을 생성하지 말아줘. 기존 startDate, endDate:%s 현재 시간 이후로 여유 있게 모든 일정을 완수할 수 있도록 계획해줘. 현재 시간 : (%s 기준). 모든 일정은 한국 시간(UTC+9)을 기준으로 설정해줘. 또한, 기존 일정을 생각하고 새로운 일정을 적당한 간격을 두고 배치해줘."
     );
 
     public GptService(OpenAiApi openAiApi, GptProperties gptProperties, PlanService planService, ObjectMapper objectMapper) {
@@ -89,3 +89,4 @@ public class GptService {
         }
     }
 }
+
