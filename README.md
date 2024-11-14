@@ -19,7 +19,7 @@
 </div>
 
 ## 📖 목차
-* [프로젝트 개요](#-프로젝트-개요)
+* [Introduction](#-프로젝트-개요)
 * [주요 기능](#-주요-기능)
 * [기술 스택](#-기술-스택)
 * [개발 관련 블로그](#-개발-관련-Blog)
@@ -27,20 +27,13 @@
 
 ---
 
-## 🎨 프로젝트 개요
+## 🎨 Introduction
 
-*계획을 세우는 일 마저 계획인 여러분들께 선사합니다.*
+> *계획을 세우는 일 마저 계획인 여러분들께 선사합니다.*
 <br>
-Splanet은 당신이 해야 할 일을 기반으로, 당신에게 맞는 일정표를 추천해드립니다.  
-
-### 기획 의도 및 개발 주안점
-- **기획 의도**: 복잡한 일정 관리를 지양하고, 음성을 통해 간편하고 직관적으로 일정을 생성할 수 있는 서비스를 제공하고자 했습니다.
-- **주요 개발 기능**: 
-  - **카카오 로그인**을 통한 간편한 사용자 인증
-  - **실시간 음성 인식**을 통해 편하게 할 일 목록 작성
-  - **플랜 자동 생성** 기능을 통해 사용자의 요구에 맞는 추천 일정 제공
-  - **드래그&드랍, 카드 크기 조절** 등 간편한 일정 관리
-  - **플랜 관리 및 친구와의 공유** 기능을 통해 소셜 요소 추가
+**Splanet** 은 당신이 해야 할 일을 기반으로, 당신에게 맞는 일정표를 추천해드립니다.
+<br>
+복잡한 일정 관리 대신, **간편하고 직관적으로** 일정을 관리해 보세요. 
 
 ---
 
@@ -116,8 +109,8 @@ Splanet은 당신이 해야 할 일을 기반으로, 당신에게 맞는 일정�
 |---------------------|-------------------------------------------------------------------------------------------------------------------------|
 | **Frontend**        | ![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=white) ![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white) ![FullCalendar](https://img.shields.io/badge/FullCalendar-3A85FF?style=for-the-badge&logoColor=white) |
 | **Backend**         | ![Java](https://img.shields.io/badge/Java-007396?style=for-the-badge&logo=java&logoColor=white) ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white) |
-| **Database**        | ![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white) ![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white) ![AWS RDS](https://img.shields.io/badge/AWS%20RDS-527FFF?style=for-the-badge&logo=amazonaws&logoColor=white) |
-| **Infrastructure**  | ![Amazon EC2](https://img.shields.io/badge/Amazon%20EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white) ![AWS ELB](https://img.shields.io/badge/AWS%20ELB-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white) ![Docker Compose](https://img.shields.io/badge/Docker%20Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white) |
+| **Database**        | ![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white) ![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white) ![AWS RDS](https://img.shields.io/badge/AWS%20RDS-527FFF?style=for-the-badge&logo=amazonrds&logoColor=white) |
+| **Infrastructure**  | ![Amazon EC2](https://img.shields.io/badge/Amazon%20EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white) ![AWS ELB](https://img.shields.io/badge/AWS%20ELB-8a2be2?style=for-the-badge&logo=awselasticloadbalancer&logoColor=white) ![Docker Compose](https://img.shields.io/badge/Docker%20Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white) |
 | **Monitoring**      | ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=prometheus&logoColor=white) ![Grafana](https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white) ![AWS CloudWatch](https://img.shields.io/badge/AWS%20CloudWatch-FF4F8B?style=for-the-badge&logo=amazonaws&logoColor=white) |
 
 ---
