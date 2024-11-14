@@ -60,7 +60,7 @@ class PreviewPlanControllerAccecptanceTest {
     }
 
     @Test
-    void 플랜카드_생성후_조회수_수정후_삭제() throws Exception {
+    void 플랜카드_생성후_조회후_수정후_삭제() throws Exception {
         String deviceId = "testDevice";
         String groupId = "testGroup";
         String cardId = "testCard";
