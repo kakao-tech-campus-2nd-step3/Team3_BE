@@ -95,3 +95,19 @@ jobs:
           generate-summary: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Display Coverage Summary JSON
+        run: |
+          cat badges/coverage-summary.json
+
+      - name: Extract Coverage Information
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          COVERAGE=$(jq '.coverage' badges/coverage-summary.json)
+          BRANCH_COVERAGE=$(jq '.branches' badges/coverage-summary.json)
+          FORMATTED_COVERAGE=$(printf "%.2f" $COVERAGE)
+          FORMATTED_BRANCH_COVERAGE=$(printf "%.2f" $BRANCH_COVERAGE)
+          curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+               -X POST \
+               -d "{\"body\": \"### 코드 커버리지\n- Coverage: ${FORMATTED_COVERAGE}%\n- Branches: ${FORMATTED_BRANCH_COVERAGE}%\n\"}" \
+               "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments"
