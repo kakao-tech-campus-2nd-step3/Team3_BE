@@ -48,10 +48,7 @@ public class GptService {
         OpenAiApi.ChatCompletionMessage userMessage = createUserMessage(fullPrompt);
         OpenAiApi.ChatCompletionRequest chatRequest = createChatRequest(userMessage);
 
-        System.out.println(fullPrompt);
-
         return getGptResponse(chatRequest);
-
     }
 
     private String getCurrentTime() {
