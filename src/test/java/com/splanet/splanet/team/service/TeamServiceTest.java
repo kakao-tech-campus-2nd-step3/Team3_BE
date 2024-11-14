@@ -83,28 +83,6 @@ public class TeamServiceTest {
     assertEquals(ErrorCode.TEAM_NAME_NOT_FOUND, exception.getErrorCode());
   }
 
-  @Test
-  public void testDeleteTeam_Success() {
-    when(teamUserRelationRepository.findByTeamAndUser(any(Team.class), any(User.class)))
-            .thenReturn(Optional.of(testRelation));
-
-    teamService.deleteTeam(1L, 1L);
-
-    verify(teamRepository, times(1)).delete(testTeam);
-  }
-
-  @Test
-  public void testDeleteTeam_AccessDenied() {
-    TeamUserRelation memberRelation = new TeamUserRelation(testTeam, testUser, UserTeamRole.MEMBER);
-    when(teamUserRelationRepository.findByTeamAndUser(any(Team.class), any(User.class)))
-            .thenReturn(Optional.of(memberRelation));
-
-    BusinessException exception = assertThrows(BusinessException.class, () ->
-            teamService.deleteTeam(1L, 1L)
-    );
-
-    assertEquals(ErrorCode.ACCESS_DENIED, exception.getErrorCode());
-  }
 
   @Test
   public void testLeaveTeam_Success() {
@@ -237,6 +215,50 @@ public class TeamServiceTest {
     );
 
     assertEquals(ErrorCode.INVITATION_ALREADY_SENT, exception.getErrorCode());
+  }
+  @Test
+  public void testDeleteTeam_Success() {
+    when(teamUserRelationRepository.findByTeamAndUser(testTeam, testUser))
+            .thenReturn(Optional.of(testRelation));
+
+    // 팀 삭제 시 관련 데이터 삭제 확인
+    doNothing().when(teamInvitationRepository).deleteAllByTeam(testTeam);
+    doNothing().when(teamUserRelationRepository).deleteAllByTeam(testTeam);
+    doNothing().when(teamRepository).delete(testTeam);
+
+    teamService.deleteTeam(1L, 1L);
+
+    verify(teamInvitationRepository, times(1)).deleteAllByTeam(testTeam);
+    verify(teamUserRelationRepository, times(1)).deleteAllByTeam(testTeam);
+    verify(teamRepository, times(1)).delete(testTeam);
+  }
+
+  @Test
+  public void testDeleteTeam_AccessDenied() {
+    TeamUserRelation memberRelation = new TeamUserRelation(testTeam, testUser, UserTeamRole.MEMBER);
+    when(teamUserRelationRepository.findByTeamAndUser(testTeam, testUser))
+            .thenReturn(Optional.of(memberRelation));
+
+    BusinessException exception = assertThrows(BusinessException.class, () ->
+            teamService.deleteTeam(1L, 1L)
+    );
+
+    assertEquals(ErrorCode.ACCESS_DENIED, exception.getErrorCode());
+    verify(teamRepository, never()).delete(testTeam);
+  }
+
+  @Test
+  public void testDeleteTeam_TeamNotFound() {
+    when(teamRepository.findById(1L)).thenReturn(Optional.empty());
+
+    BusinessException exception = assertThrows(BusinessException.class, () ->
+            teamService.deleteTeam(1L, 1L)
+    );
+
+    assertEquals(ErrorCode.TEAM_NOT_FOUND, exception.getErrorCode());
+    verify(teamInvitationRepository, never()).deleteAllByTeam(any());
+    verify(teamUserRelationRepository, never()).deleteAllByTeam(any());
+    verify(teamRepository, never()).delete(any());
   }
 
 }
