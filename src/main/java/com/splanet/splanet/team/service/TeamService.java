@@ -293,7 +293,13 @@ public class TeamService {
       throw new BusinessException(ErrorCode.ACCESS_DENIED);
     }
 
-    // 팀 삭제 - 연관된 엔티티도 함께 삭제되도록 설정
+    // 관련된 초대 데이터 삭제
+    teamInvitationRepository.deleteAllByTeam(team);
+
+    // 관련된 사용자 관계 삭제
+    teamUserRelationRepository.deleteAllByTeam(team);
+
+    // 팀 삭제
     teamRepository.delete(team);
   }
 
