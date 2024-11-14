@@ -56,37 +56,62 @@ class FcmTokenServiceTest {
 
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        BusinessException exception = assertThrows(BusinessException.class, () ->
+        assertThrows(BusinessException.class, () ->
                 fcmTokenService.registerFcmToken(userId, token));
         verify(fcmTokenRepository, never()).save(any(FcmToken.class));
     }
 
     @Test
-    void FCM토큰_설정_수정_성공() {
+    void FCM알림여부_수정_성공() {
         String token = "testToken";
-        FcmTokenUpdateRequest request = new FcmTokenUpdateRequest(token, true, 30);
+        Boolean isNotificationEnabled = true;
 
         FcmToken fcmToken = FcmToken.builder()
                 .token(token)
                 .isNotificationEnabled(false)
+                .build();
+
+        when(fcmTokenRepository.findByToken(token)).thenReturn(Optional.of(fcmToken));
+
+        assertDoesNotThrow(() -> fcmTokenService.updateNotificationEnabled(token, isNotificationEnabled));
+        verify(fcmTokenRepository, times(1)).save(any(FcmToken.class));
+    }
+
+    @Test
+    void FCM알림여부_수정_토큰없음_예외발생() {
+        String token = "testToken";
+
+        when(fcmTokenRepository.findByToken(token)).thenReturn(Optional.empty());
+
+        assertThrows(BusinessException.class, () ->
+                fcmTokenService.updateNotificationEnabled(token, true));
+        verify(fcmTokenRepository, never()).save(any(FcmToken.class));
+    }
+
+    @Test
+    void FCM알림오프셋_수정_성공() {
+        String token = "testToken";
+        Integer notificationOffset = 30;
+
+        FcmToken fcmToken = FcmToken.builder()
+                .token(token)
                 .notificationOffset(15)
                 .build();
 
         when(fcmTokenRepository.findByToken(token)).thenReturn(Optional.of(fcmToken));
 
-        assertDoesNotThrow(() -> fcmTokenService.updateFcmTokenSettings(request));
+        assertDoesNotThrow(() -> fcmTokenService.updateNotificationOffset(token, notificationOffset));
         verify(fcmTokenRepository, times(1)).save(any(FcmToken.class));
     }
 
     @Test
-    void FCM토큰_설정_수정_토큰없음_예외발생() {
+    void FCM알림오프셋_수정_토큰없음_예외발생() {
         String token = "testToken";
-        FcmTokenUpdateRequest request = new FcmTokenUpdateRequest(token, true, 30);
 
         when(fcmTokenRepository.findByToken(token)).thenReturn(Optional.empty());
 
-        BusinessException exception = assertThrows(BusinessException.class, () ->
-                fcmTokenService.updateFcmTokenSettings(request));
+        assertThrows(BusinessException.class, () ->
+                fcmTokenService.updateNotificationOffset(token, 30));
         verify(fcmTokenRepository, never()).save(any(FcmToken.class));
     }
 
@@ -108,7 +133,7 @@ class FcmTokenServiceTest {
 
         when(fcmTokenRepository.findByToken(token)).thenReturn(Optional.empty());
 
-        BusinessException exception = assertThrows(BusinessException.class, () ->
+        assertThrows(BusinessException.class, () ->
                 fcmTokenService.deleteFcmToken(token));
         verify(fcmTokenRepository, never()).delete(any(FcmToken.class));
     }

@@ -1,4 +1,3 @@
-// src/main/java/com/splanet/splanet/notification/service/FcmTokenService.java
 package com.splanet.splanet.notification.service;
 
 import com.splanet.splanet.core.exception.BusinessException;
@@ -34,17 +33,24 @@ public class FcmTokenService {
     }
 
     @Transactional
-    public void updateFcmTokenSettings(FcmTokenUpdateRequest request) {
-        FcmToken fcmToken = fcmTokenRepository.findByToken(request.token())
+    public void updateNotificationEnabled(String token, Boolean isNotificationEnabled) {
+        FcmToken fcmToken = fcmTokenRepository.findByToken(token)
                 .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
 
         fcmToken = fcmToken.toBuilder()
-                .isNotificationEnabled(request.isNotificationEnabled() != null
-                        ? request.isNotificationEnabled()
-                        : fcmToken.getIsNotificationEnabled())
-                .notificationOffset(request.notificationOffset() != null
-                        ? request.notificationOffset()
-                        : fcmToken.getNotificationOffset())
+                .isNotificationEnabled(isNotificationEnabled != null ? isNotificationEnabled : fcmToken.getIsNotificationEnabled())
+                .build();
+
+        fcmTokenRepository.save(fcmToken);
+    }
+
+    @Transactional
+    public void updateNotificationOffset(String token, Integer notificationOffset) {
+        FcmToken fcmToken = fcmTokenRepository.findByToken(token)
+                .orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_NOT_FOUND));
+
+        fcmToken = fcmToken.toBuilder()
+                .notificationOffset(notificationOffset != null ? notificationOffset : fcmToken.getNotificationOffset())
                 .build();
 
         fcmTokenRepository.save(fcmToken);
