@@ -18,4 +18,7 @@ public interface PlanRepository extends JpaRepository<Plan, Long> {
     @Query("SELECT p FROM Plan p JOIN FETCH p.user WHERE p.startDate > :now AND p.isCompleted = false")
     List<Plan> findUpcomingPlans(@Param("now") LocalDateTime now);
 
+    @Query("SELECT p FROM Plan p WHERE p.user.id = :userId AND p.startDate > :currentTime")
+    List<Plan> findAllFuturePlansByUserId(@Param("userId") Long userId, @Param("currentTime") LocalDateTime currentTime);
+
 }
