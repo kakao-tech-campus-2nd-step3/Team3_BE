@@ -85,8 +85,6 @@ public class FriendService {
     }
 
     // 친구 삭제(취소)하기
-
-    // 친구 삭제(취소)하기
     @Transactional
     public ResponseEntity<Map<String, String>> unfriend(Long friendId, Long userId) {
         // 내 친구 목록에 존재하는지
