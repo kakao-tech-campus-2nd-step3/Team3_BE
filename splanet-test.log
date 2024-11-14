@@ -495,3 +495,7 @@ eventType: API_REQUEST, userId: null, deviceId: null, timestamp: 2024-11-15T03:0
 eventType: API_REQUEST, userId: null, deviceId: null, timestamp: 2024-11-15T03:05:08.7888016, requestPath: /api/plans, headers: 
 eventType: API_REQUEST, userId: null, deviceId: null, timestamp: 2024-11-15T03:05:08.9704432, requestPath: /api/plans/71, headers: 
 eventType: API_REQUEST, userId: null, deviceId: null, timestamp: 2024-11-15T03:05:09.0113407, requestPath: /api/comments, headers: 
+eventType: API_REQUEST, userId: null, deviceId: null, timestamp: 2024-11-15T03:21:41.9436992, requestPath: /api/preview-plan/card, headers: 
+eventType: API_REQUEST, userId: null, deviceId: null, timestamp: 2024-11-15T03:21:42.5546871, requestPath: /api/preview-plan/card/testDevice/testGroup/testCard, headers: 
+eventType: API_REQUEST, userId: null, deviceId: null, timestamp: 2024-11-15T03:21:42.6185005, requestPath: /api/preview-plan/card/testDevice/testGroup/testCard, headers: 
+eventType: API_REQUEST, userId: null, deviceId: null, timestamp: 2024-11-15T03:21:42.6644158, requestPath: /api/preview-plan/card/testDevice/testGroup/testCard, headers: 
