@@ -84,9 +84,9 @@ class TeamAcceptanceTest {
     void 팀생성후_유저초대_유저가_수락후_내보내기() throws Exception {
         mockMvc.perform(post("/api/teams")
                         .header("Authorization", adminAccessToken)
-                        .param("teamName", "New Test Team"))
+                        .param("teamName", "새로운 팀"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.teamName").value("New Test Team"))
+                .andExpect(jsonPath("$.teamName").value("새로운 팀"))
                 .andExpect(jsonPath("$.user.nickname").value("adminUser"));
 
         mockMvc.perform(post("/api/teams/{teamId}/invite", teamId)
