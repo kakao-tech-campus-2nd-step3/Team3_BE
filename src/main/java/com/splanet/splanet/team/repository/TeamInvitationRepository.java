@@ -13,4 +13,5 @@ public interface TeamInvitationRepository extends JpaRepository<TeamInvitation, 
   List<TeamInvitation> findAllByUserAndStatus(User user, InvitationStatus status);
   List<TeamInvitation> findAllByTeamAndStatus(Team team, InvitationStatus status);
   Optional<TeamInvitation> findByTeamAndUserAndStatus(Team team, User user, InvitationStatus status);
+  void deleteAllByTeam(Team team);
 }
