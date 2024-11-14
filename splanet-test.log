@@ -483,3 +483,15 @@ eventType: API_REQUEST, userId: null, deviceId: null, timestamp: 2024-11-15T01:5
 eventType: API_REQUEST, userId: null, deviceId: null, timestamp: 2024-11-15T01:53:30.551043, requestPath: /api/friends/requests/211/reject, headers: 
 eventType: API_REQUEST, userId: null, deviceId: null, timestamp: 2024-11-15T01:53:30.7611028, requestPath: /api/friends/requests, headers: 
 eventType: API_REQUEST, userId: null, deviceId: null, timestamp: 2024-11-15T01:53:30.85865, requestPath: /api/friends/requests/212/accept, headers: 
+eventType: API_REQUEST, userId: null, deviceId: null, timestamp: 2024-11-15T03:01:33.0965042, requestPath: /api/friends, headers: 
+eventType: API_REQUEST, userId: null, deviceId: null, timestamp: 2024-11-15T03:01:33.4535829, requestPath: /api/plans, headers: 
+eventType: API_REQUEST, userId: null, deviceId: null, timestamp: 2024-11-15T03:01:33.6291489, requestPath: /api/plans/69, headers: 
+eventType: API_REQUEST, userId: null, deviceId: null, timestamp: 2024-11-15T03:01:33.6750939, requestPath: /api/comments, headers: 
+eventType: API_REQUEST, userId: null, deviceId: null, timestamp: 2024-11-15T03:03:52.9544924, requestPath: /api/friends, headers: 
+eventType: API_REQUEST, userId: null, deviceId: null, timestamp: 2024-11-15T03:03:53.4180404, requestPath: /api/plans, headers: 
+eventType: API_REQUEST, userId: null, deviceId: null, timestamp: 2024-11-15T03:03:53.6649917, requestPath: /api/plans/70, headers: 
+eventType: API_REQUEST, userId: null, deviceId: null, timestamp: 2024-11-15T03:03:53.7259943, requestPath: /api/comments, headers: 
+eventType: API_REQUEST, userId: null, deviceId: null, timestamp: 2024-11-15T03:05:08.4801025, requestPath: /api/friends, headers: 
+eventType: API_REQUEST, userId: null, deviceId: null, timestamp: 2024-11-15T03:05:08.7888016, requestPath: /api/plans, headers: 
+eventType: API_REQUEST, userId: null, deviceId: null, timestamp: 2024-11-15T03:05:08.9704432, requestPath: /api/plans/71, headers: 
+eventType: API_REQUEST, userId: null, deviceId: null, timestamp: 2024-11-15T03:05:09.0113407, requestPath: /api/comments, headers: 
