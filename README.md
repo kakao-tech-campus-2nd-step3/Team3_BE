@@ -31,7 +31,7 @@
 | [💻 기술 스택](#-기술-스택) |
 | [🛠 시스템 아키텍처](#-시스템-아키텍처) |
 | [🗂️ 데이터베이스 ERD](#-데이터베이스-erd) |
-| [🖥️ 모니터링](#-모니터링) |
+| [🔍 모니터링](#-모니터링) |
 | [🤖 AI 파인 튜닝](#-ai-파인-튜닝) |
 | [🔗 개발 관련 블로그](#-개발-관련-블로그) |
 | [👥 팀원](#-팀원) |
@@ -188,11 +188,11 @@
 
 <div align="center">
 
-## 🖥️ 모니터링
+## 🔍 모니터링
 
 <img src="https://github.com/user-attachments/assets/1d0af14f-37dd-4948-8d4a-67546c34923a" width="700" alt="Monitoring Diagram">
 
-[🖥️ 모니터링 🖥️](https://monitoring.splanet.co.kr/d/fe38bkz9ydkowa/8-splanet?from=now-7d&to=now&timezone=browser)
+[🔍 모니터링 🔍](https://monitoring.splanet.co.kr/d/fe38bkz9ydkowa/8-splanet?from=now-7d&to=now&timezone=browser)
 
 #### 👀 Viewer Account 👀
 > **ID**: splanet  
