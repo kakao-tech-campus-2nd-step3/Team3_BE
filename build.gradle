@@ -3,8 +3,9 @@ plugins {
 	id 'org.springframework.boot' version '3.3.3'
 	id 'io.spring.dependency-management' version '1.1.6'
 	id 'com.google.protobuf' version '0.9.4'
-
+	id 'jacoco'
 }
+
 
 group = 'com.splanet'
 version = '0.0.1-SNAPSHOT'
@@ -18,6 +19,7 @@ java {
 test {
 	useJUnitPlatform()
 	systemProperty 'spring.profiles.active', 'test'
+	finalizedBy jacocoTestReport
 }
 
 configurations {
@@ -93,6 +95,7 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	finalizedBy jacocoTestReport
 }
 
 protobuf {
@@ -119,4 +122,30 @@ sourceSets {
 			srcDirs 'build/generated/source/proto/main/java', 'build/generated/source/proto/main/grpc'
 		}
 	}
+}
+
+jacoco {
+	toolVersion = "0.8.10"
+}
+
+jacocoTestReport {
+	dependsOn test
+	reports {
+		xml.required.set(true)
+		html.required.set(true)
+		csv.required.set(true)
+	}
+	classDirectories.setFrom(
+			files(classDirectories.files.collect {
+				fileTree(dir: it, exclude: [
+						'**/dto/**',       // dto 패키지 제외
+						'**/config/**',    // config 패키지 제외
+						'**/exception/**', // exception 패키지 제외
+						'**/core/**', // core 패키지 제외
+						'**/mapper/**', // mapper 패키지 제외
+						'**/grpc/**', // grpc 패키지 제외
+						'**/log/**', // log 패키지 제외
+				])
+			})
+	)
 }
