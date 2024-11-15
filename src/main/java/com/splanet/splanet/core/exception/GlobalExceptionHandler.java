@@ -8,6 +8,8 @@ import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -55,20 +57,24 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
   @ExceptionHandler(Exception.class)
-  protected void handleGeneralException(HttpServletRequest request, HttpServletResponse response, Exception ex) {
+  protected ResponseEntity<ErrorResponse> handleGeneralException(HttpServletRequest request, Exception ex) {
     // 예외를 로그로 기록
     logService.recordErrorLog("처리되지 않은 예외 발생", ex);
 
-    // 응답이 이미 커밋되었는지 확인
-    if (!response.isCommitted()) {
-      try {
-        // 필요한 경우 상태 코드와 에러 메시지를 설정
-        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");
-      } catch (IOException e) {
-        // 추가로 처리할 예외가 있다면 여기서 처리
-        logService.recordErrorLog("에러 응답 전송 중 오류 발생", e);
-      }
+    HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+    String errorMessage = "서버 내부 오류가 발생했습니다.";
+
+    if (ex instanceof MissingServletRequestParameterException) {
+      status = HttpStatus.BAD_REQUEST;
+      errorMessage = "필수 파라미터가 누락되었습니다.";
+    } else if (ex instanceof MethodArgumentNotValidException) {
+      status = HttpStatus.BAD_REQUEST;
+      errorMessage = "요청 파라미터가 유효하지 않습니다.";
     }
+    // 필요한 다른 예외 처리 추가
+
+    ErrorResponse response = new ErrorResponse(errorMessage, status.value());
+    return new ResponseEntity<>(response, status);
   }
 }
 
