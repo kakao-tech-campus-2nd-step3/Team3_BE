@@ -1,10 +1,9 @@
-
 <h1 align="center">ᱝ Splanet ᱝ</h1>
 
 <div align="center" style="font-size:18px">
 <b><i>Speak And Plan It!</i></b>
 <br><br>
-<b>🗓️ 내 목소리로 만드는 나만의 플래너, Splanet 🗓️</b>  
+<b>🗓️ 내 목소리로 빛내는 나만의 플래너, Splanet 🗓️</b>  
 </div>
 
 <br>
@@ -16,6 +15,10 @@
 
 <div align="center">
     <b>Splanet:</b> <a href="https://www.splanet.co.kr" target="_blank"><b>https://www.splanet.co.kr</b></a>
+</div>
+
+<div align="center">
+    <b>Medium Blog:</b> <a href="https://medium.com/@kanguk.ku/splanet-kakao-tech-campus-step3-66c6c9531eb7" target="_blank"><b>Link</b></a>
 </div>
 
 ---
@@ -61,17 +64,6 @@
 
 ## 🌟 주요 기능
 
-### ✨️ 카카오 로그인 ✨️  
-카카오 로그인을 통해 간편하게 로그인할 수 있습니다.
-
-<table>
-  <tr>
-    <td align="center"><img src="https://github.com/user-attachments/assets/3883651a-f1a0-43f9-8272-70645035adc6" alt="카카오 로그인" width="300"></td>
-  </tr>
-</table>
-
----
-
 ### ✨️ 할 일 입력 (feat. 실시간 음성 인식) ✨  
 사용자가 해야할 일을 입력합니다. 
 <br>
@@ -79,7 +71,10 @@
 
 <table>
   <tr>
-    <td align="center"><img src="https://github.com/user-attachments/assets/66d14a1b-0396-4ca5-b16e-8574427e4319" alt="실시간 음성 인식" width="300"></td>
+    <td align="center">
+        <img src="https://github.com/user-attachments/assets/ff1b0823-4301-4298-a7c3-c3807cf8359d" alt="실시간 음성 인식" width="500">
+        <br> 음성 인식을 통한 입력
+    </td>
   </tr>
 </table>
 
@@ -90,10 +85,9 @@
 <br>
 3가지의 추천 플랜 중 마음에 드는 것을 선택하세요!
 
-
 <table>
   <tr>
-    <td align="center"><img src="https://github.com/user-attachments/assets/66d14a1b-0396-4ca5-b16e-8574427e4319" alt="플랜 자동 생성" width="300"></td>
+    <td align="center"><img src="https://github.com/user-attachments/assets/f15ebce7-3675-4c0c-8653-6eba937f1ad8" alt="플랜 자동 생성" width="400"></td>
   </tr>
 </table>
 
@@ -104,7 +98,14 @@
 
 <table>
   <tr>
-    <td align="center"><img src="https://github.com/user-attachments/assets/7c491439-0b9e-442b-a327-48f9be6b6604" alt="플랜 관리" width="300"></td>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/13ee292f-c20b-4fd1-bc4d-671b9efe2cf7" alt="플랜 관리 (드래그)" width="400">
+      <br>드래그 앤 드롭
+    </td>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/1b595901-00cd-4cd9-a63d-1e9a09b0b6ea" alt="플랜 관리 (크기 조정)" width="400">
+      <br>카드 크기 조절 및 완료
+    </td>
   </tr>
 </table>
 
@@ -115,13 +116,35 @@
 
 <table>
   <tr>
-    <td align="center"><img src="https://github.com/user-attachments/assets/d82d9137-5250-443f-9013-d7877915603a" alt="친구 관리" width="300"></td>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/e1d9b351-f76f-44e9-94df-d6054674cbe2" alt="친구 관리 (요청, 검색, 수락)" width="400">
+      <br>친구 목록 및 요청
+    </td>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/93ff0094-f9c8-4634-bc91-b0b18bad6cfe" alt="친구 플랜 (댓글)" width="400">
+      <br>플랜 공유 및 댓글
+    </td>
   </tr>
 </table>
 
-</div>
-
 ---
+
+### ✨️ 웹 푸시 알림 ✨️  
+웹 푸시 알림을 통해 일정 알림을 받을 수 있습니다.
+(iOS 환경에서는 브라우저 → 홈 화면에 페이지 추가 이후 알림을 허용해야합니다.)
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/19d4e046-ca2d-41dc-b9eb-46a6adf2406d" alt="웹 푸시 알림 - 예시 1" width="400">
+    </td>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/59a8091b-5ae7-4b3f-8237-8f8a8ac7f924" alt="웹 푸시 알림 - 예시 2" width="400">
+    </td>
+  </tr>
+</table>
+
+
 
 <div align="center">
 
@@ -347,6 +370,8 @@
 | 웹 푸시 알림 - 스케줄링 쿼리 최적화 | [Blog](https://kanguk-room.notion.site/12c036cad7a88073b0a0e1098775c723?pvs=4) | GPT Model Fine-Tuning 과정 | [Blog](https://cobalt-macaroni-f0a.notion.site/Splanet-Fine-Tuning-12be61e098d78092ad05f9addeed7ea4?pvs=4) |
 | CLOVA Speech 실시간 스트리밍 | [Blog](https://kanguk-room.notion.site/STT-CLOVA-Speech-API-123036cad7a88098b644c957f8420080?pvs=4) | 모니터링 | [Blog](https://cobalt-macaroni-f0a.notion.site/Prometheus-Grafana-134e61e098d7804da8e6ef7fcdec80f2?pvs=4) |
 | Redis 사용기 | [Blog](https://medium.com/@kanguk.ku/redis-%EC%82%AC%EC%9A%A9%EA%B8%B0-4fd3695ab0c7) | 무중단 배포 구현 | [Blog](https://kanguk-room.notion.site/132036cad7a880e68d7bd8846b25f8a6?pvs=4) |
+
+ **전체적인 내용을 담은 Medium**  [Medium](https://medium.com/@kanguk.ku/splanet-kakao-tech-campus-step3-66c6c9531eb7)
 
 </div>
 
