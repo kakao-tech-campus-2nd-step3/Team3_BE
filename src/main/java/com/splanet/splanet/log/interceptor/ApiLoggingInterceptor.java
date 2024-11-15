@@ -36,6 +36,18 @@ public class ApiLoggingInterceptor implements HandlerInterceptor {
     return true;
   }
 
+  @Override
+  public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+    Long userId = (Long) request.getSession().getAttribute("userId");
+    String deviceId = (String) request.getSession().getAttribute("deviceId");
+    String requestPath = request.getRequestURI();
+    String headers = getLoggableHeadersAsString(request);
+    int statusCode = response.getStatus();
+
+    // 로그 기록
+    logService.recordApiRequestLog(userId, deviceId, requestPath, headers, statusCode);
+  }
+
   private String getLoggableHeadersAsString(HttpServletRequest request) {
     StringBuilder headers = new StringBuilder();
     loggableHeaders.forEach(headerName -> {

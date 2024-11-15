@@ -91,15 +91,13 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
             .queryParam("refresh", refreshToken)
             .queryParam("deviceId", deviceId)
             .build().toUriString();
-
+    // 토큰 정보는 제외하고 리다이렉트 URL만 로그에 기록
+    int statusCode = response.getStatus(); // 상태 코드 가져오기
+    logService.recordApiRequestLog(user.getId(), deviceId, "Redirected to: " + redirectUrl, headers, statusCode);
     // 응답 커밋 상태 확인 후 리다이렉트
     if (!response.isCommitted()) {
       try {
         response.sendRedirect(redirectUrlWithParams);
-
-        // 토큰 정보는 제외하고 리다이렉트 URL만 로그에 기록
-        int statusCode = response.getStatus(); // 상태 코드 가져오기
-        logService.recordApiRequestLog(user.getId(), deviceId, "Redirected to: " + redirectUrl, headers, statusCode);
       } catch (IOException e) {
         logService.recordErrorLog("Failed to redirect after successful authentication", e);
       }
