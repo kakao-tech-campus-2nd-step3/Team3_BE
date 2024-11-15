@@ -9,7 +9,7 @@
 <br>
 
 <div align="center">
-    <img src="https://github.com/user-attachments/assets/b773b8a7-26e9-4b55-a6d0-adba7ddd922f" width="500" alt="Splanet Landing GIF">
+    <img src="https://github.com/user-attachments/assets/59dee0d6-90ba-42f7-8e85-421b4d11bfbe" width="500" alt="Splanet Landing GIF">
 </div>
 <br>
 
@@ -54,7 +54,13 @@
 
 <br>
 
-복잡한 일정 관리 대신, **간편하고 직관적으로** 일정을 관리해 보세요. 
+💼 현대인을 위한 똑똑한 일정 매니저
+
+🗣 말 한마디로 끝나는 일정 등록
+
+✅ 친구와 함께 더 즐겁게, 더 효율적으로
+
+🤖 스마트한 일정 관리로 시간 절약
 
 </div>
 
