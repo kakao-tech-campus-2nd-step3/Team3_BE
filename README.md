@@ -1,6 +1,8 @@
 <h1 align="center">ᱝ Splanet ᱝ</h1>
 
 <div align="center" style="font-size:18px">
+<b>🥇카카오 테크 캠퍼스 2기 STEP3 최우수상🥇</b>
+<br><br>
 <b><i>Speak And Plan It!</i></b>
 <br><br>
 <b>🗓️ 내 목소리로 빛내는 나만의 플래너, Splanet 🗓️</b>  
