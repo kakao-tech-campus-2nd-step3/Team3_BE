@@ -375,7 +375,7 @@
 
 | 설명 | 링크 | 설명 | 링크 |
 | --- | --- | --- | --- |
-| 웹 푸시 알림 - 스케줄링 쿼리 최적화 | [Blog](https://kanguk-room.notion.site/12c036cad7a88073b0a0e1098775c723?pvs=4) | GPT Model Fine-Tuning 과정 | [Blog](https://cobalt-macaroni-f0a.notion.site/Splanet-Fine-Tuning-12be61e098d78092ad05f9addeed7ea4?pvs=4) |
+| 웹 푸시 알림 - 스케줄링 쿼리 최적화 | [Blog](https://kanguk-room.notion.site/12c036cad7a88073b0a0e1098775c723?pvs=4) | GPT Model Fine-Tuning 과정 | [Blog](https://medium.com/@mok3759/splanet-b71a50060307) |
 | CLOVA Speech 실시간 스트리밍 | [Blog](https://kanguk-room.notion.site/STT-CLOVA-Speech-API-123036cad7a88098b644c957f8420080?pvs=4) | 모니터링 | [Blog](https://cobalt-macaroni-f0a.notion.site/Prometheus-Grafana-134e61e098d7804da8e6ef7fcdec80f2?pvs=4) |
 | Redis 사용기 | [Blog](https://medium.com/@kanguk.ku/redis-%EC%82%AC%EC%9A%A9%EA%B8%B0-4fd3695ab0c7) | 무중단 배포 구현 | [Blog](https://kanguk-room.notion.site/132036cad7a880e68d7bd8846b25f8a6?pvs=4) |
 
